@@ -204,21 +204,43 @@ export function ApiTokensDrawer({ onClose }: ApiTokensDrawerProps) {
             </div>
           )}
 
-          {/* MCP-Hinweis */}
+          {/* MCP-Setup */}
           <div className="apit-mcp">
             <div className="apit-mcp-head">
               <Icon name="sparkles" size={14} style={{ color: 'var(--accent-500)' }} />
               <span>Mit Claude verbinden (MCP)</span>
             </div>
             <p>
-              BTM stellt einen MCP-Server zur Verfügung, mit dem du in Claude Desktop oder Claude Code direkt
-              Aufgaben anlegst, durchsuchst und abhakst. Du brauchst dafür einen Token von oben.
+              BTM hat einen eingebauten MCP-Server. Damit kannst du in Claude Desktop oder Claude Web direkt
+              Aufgaben anlegen, planen und abhaken — per natürlicher Sprache, ohne BTM zu öffnen.
             </p>
-            <p>
-              Setup-Anleitung folgt hier — bis dahin lässt sich der Token bereits programmatisch nutzen:
+
+            <div className="apit-mcp-step-label">1. Claude Desktop · ~/Library/Application Support/Claude/claude_desktop_config.json</div>
+            <pre className="apit-mcp-code">{`{
+  "mcpServers": {
+    "btm": {
+      "url": "https://btm.bethesna.org/api/mcp",
+      "headers": {
+        "Authorization": "Bearer btm_<dein-token-oben>"
+      }
+    }
+  }
+}`}</pre>
+
+            <div className="apit-mcp-step-label">2. Verfügbare Tools (15+):</div>
+            <p style={{ fontSize: 12, lineHeight: 1.55, color: 'var(--ink-700)' }}>
+              <code>me</code> · <code>list_tasks</code> · <code>create_task</code> ·{' '}
+              <code>update_task</code> · <code>move_task</code> · <code>delete_task</code> ·{' '}
+              <code>list_projects</code> · <code>create_project</code> · <code>list_users</code> ·{' '}
+              <code>start_timer</code> · <code>stop_timer</code> · <code>get_live_timer</code> ·{' '}
+              <code>list_week</code> · <code>list_activity</code>
             </p>
-            <pre className="apit-mcp-code">{`curl https://btm.bethesna.org/api/me \\
-  -H "Authorization: Bearer btm_<dein-token>"`}</pre>
+
+            <div className="apit-mcp-step-label">3. Test:</div>
+            <pre className="apit-mcp-code">{`curl https://btm.bethesna.org/api/mcp \\
+  -H "Authorization: Bearer btm_<token>" \\
+  -H "Content-Type: application/json" \\
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'`}</pre>
           </div>
         </div>
       </div>

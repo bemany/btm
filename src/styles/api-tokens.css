@@ -148,6 +148,24 @@
   line-height: 1.55;
   color: var(--ink-700);
 }
+.apit-mcp-step-label {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-700);
+  margin: 14px 0 6px;
+}
+.apit-mcp p code {
+  background: var(--cream-50);
+  border: 1px solid var(--ink-100);
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--accent-600);
+}
 .apit-mcp-code {
   margin: 8px 0 0;
   font-family: var(--font-mono);

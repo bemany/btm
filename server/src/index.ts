@@ -14,6 +14,7 @@ import { apiTokensRoute } from './routes/api-tokens.js';
 import { teamsRoute } from './routes/teams.js';
 import { activityRoute } from './routes/activity.js';
 import { aiRoute } from './routes/ai.js';
+import { mcpRoute } from './routes/mcp.js';
 
 const app = new Hono<{ Variables: Variables }>();
 
@@ -49,6 +50,7 @@ app.route('/api/api-tokens', apiTokensRoute);
 app.route('/api/teams', teamsRoute);
 app.route('/api/activity', activityRoute);
 app.route('/api/ai', aiRoute);
+app.route('/api/mcp', mcpRoute);
 
 app.get('/api/healthz', (c) => c.json({ ok: true, ts: Date.now() }));
 
