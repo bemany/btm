@@ -1,21 +1,21 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { useAuth } from './AuthContext';
 import { LoginScreen } from './LoginScreen';
 import { LandingPage } from '../landing/LandingPage';
+import { InvitePage } from './InvitePage';
 import { useServerSync } from '../data/sync';
+import { isLoginPath, matchInvite, navigate, useLocation } from '../router';
 
 function AuthenticatedShell({ children }: { children: ReactNode }) {
-  // Lädt Tasks/Projects/Timer + Polling — nur wenn authenticated.
   useServerSync();
   return <>{children}</>;
 }
 
 export function AppGate({ children }: { children: ReactNode }) {
   const { status, refresh } = useAuth();
-  const [showLogin, setShowLogin] = useState(false);
+  const location = useLocation();
 
-  // Better-Auth schickt nach erfolgreichem Magic-Link-Verify auf callbackURL=/
-  // mit Query-Param `?token=…` zurück. In dem Fall noch ein refresh, danach Cleanup.
+  // Better-Auth callback redirect → ?token=… in der URL → einmal refreshen + cleanup.
   useEffect(() => {
     if (status === 'anon') {
       const url = new URL(window.location.href);
@@ -25,16 +25,24 @@ export function AppGate({ children }: { children: ReactNode }) {
         url.searchParams.delete('token');
         history.replaceState({}, '', url.pathname + url.search);
         refresh();
-        // Wenn der User über einen Magic-Link kommt, soll er nicht erst die Landing sehen.
-        setShowLogin(true);
+        if (!isLoginPath(window.location.pathname)) navigate('/login', { replace: true });
       }
     }
   }, [status, refresh]);
 
-  // Hash-basiert: #login öffnet direkt das Login-Formular (Deep-Link von extern).
+  // Hash-Deeplink #login (von der Mail z.B.) → /login
   useEffect(() => {
-    if (window.location.hash === '#login') setShowLogin(true);
+    if (window.location.hash === '#login' && !isLoginPath(window.location.pathname)) {
+      navigate('/login', { replace: true });
+    }
   }, []);
+
+  // Eingeloggte User sollten nicht auf /login oder Landing rumstehen
+  useEffect(() => {
+    if (status === 'authenticated' && isLoginPath(location.pathname)) {
+      navigate('/', { replace: true });
+    }
+  }, [status, location.pathname]);
 
   if (status === 'loading') {
     return (
@@ -53,9 +61,16 @@ export function AppGate({ children }: { children: ReactNode }) {
     );
   }
 
+  // /invite/:token funktioniert für anon UND auth (auch ein eingeloggter User
+  // kann eine Einladung über den Token-Link annehmen, z.B. Rolle/Team-Update).
+  const inviteToken = matchInvite(location.pathname);
+  if (inviteToken) {
+    return <InvitePage token={inviteToken} />;
+  }
+
   if (status === 'anon') {
-    if (showLogin) return <LoginScreen />;
-    return <LandingPage onLogin={() => setShowLogin(true)} />;
+    if (isLoginPath(location.pathname)) return <LoginScreen />;
+    return <LandingPage onLogin={() => navigate('/login')} />;
   }
 
   return <AuthenticatedShell>{children}</AuthenticatedShell>;

@@ -3,6 +3,7 @@ import { useStore } from '../../store/store';
 import type { ScreenId, ThemeMode } from '../../store/types';
 import { composeTheme, decomposeTheme } from '../../store/types';
 import { useAuth } from '../../auth/AuthContext';
+import { navigate } from '../../router';
 import { Icon } from '../shared/Icon';
 import { showToast } from '../shared/Toast';
 
@@ -355,6 +356,7 @@ export function Sidebar({
                 onClick={async () => {
                   setProfileOpen(false);
                   await signOut();
+                  navigate('/', { replace: true });
                   showToast('Abgemeldet');
                 }}
               >

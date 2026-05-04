@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { LayoutMode, ScreenId, ThemeMode } from './store/types';
 import { useStore } from './store/store';
 import { useAuth } from './auth/AuthContext';
+import { useLocation, navigate, pathToScreen, SCREEN_TO_PATH } from './router';
 
 import { Sidebar } from './components/shell/Sidebar';
 import { Topbar } from './components/shell/Topbar';
@@ -59,7 +60,13 @@ export function App() {
 
   const { user: authUser } = useAuth();
 
-  const [active, setActive] = useState<ScreenId>('week');
+  // Router-State: Pfad → ScreenId, setActive pushed neuen Pfad
+  const location = useLocation();
+  const active: ScreenId = pathToScreen(location.pathname) ?? 'week';
+  const setActive = useCallback((id: ScreenId) => {
+    navigate(SCREEN_TO_PATH[id]);
+  }, []);
+
   const [collapsed, setCollapsed] = useState(false);
   const [cmdkOpen, setCmdkOpen] = useState(false);
   const [tweaksOpen, setTweaksOpen] = useState(false);
