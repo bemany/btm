@@ -19,12 +19,15 @@ export function AppGate({ children }: { children: ReactNode }) {
   const location = useLocation();
 
   // Better-Auth callback redirect → ?token=… in der URL → einmal refreshen + cleanup.
+  // ABER: /tv?token=… ist ein API-Token für Fullscreen-Display, NICHT zum Aufräumen.
+  // Auch /invite/<token> hat einen Token im Pfad, aber kein Query-Param.
   useEffect(() => {
     if (status === 'anon') {
       const url = new URL(window.location.href);
       const hasToken = url.searchParams.has('token');
       const fromMagic = url.pathname.startsWith('/login-success');
-      if (hasToken || fromMagic) {
+      const isTvRoute = url.pathname === '/tv' || url.pathname === '/tv/';
+      if ((hasToken && !isTvRoute) || fromMagic) {
         url.searchParams.delete('token');
         history.replaceState({}, '', url.pathname + url.search);
         refresh();
