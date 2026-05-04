@@ -1,0 +1,148 @@
+import { useEffect, useRef, useState } from 'react';
+import { Icon } from '../shared/Icon';
+import { showToast } from '../shared/Toast';
+import { mockReply, type ChatMessage } from '../../lib/mockReply';
+
+export interface ChatPaneProps {
+  setText: (s: string) => void;
+  setTab: (s: 'text' | 'file' | 'chat') => void;
+  extract: () => void;
+}
+
+interface ChatBubbleProps {
+  msg: ChatMessage;
+  onSuggest: (s: string) => void;
+  onUseAsBrief: (t: string) => void;
+  onExtractNow: () => void;
+}
+
+function ChatBubble({ msg, onSuggest, onUseAsBrief, onExtractNow }: ChatBubbleProps) {
+  const isUser = msg.role === 'user';
+  return (
+    <div className={`chat-msg ${msg.role}`}>
+      {!isUser && (
+        <div className="chat-avatar">
+          <Icon name="sparkles" size={11} />
+        </div>
+      )}
+      <div className="chat-bubble-wrap">
+        <div className="chat-bubble">
+          {msg.text.split('\n').map((line, j) => (
+            <div key={j}>{line || ' '}</div>
+          ))}
+        </div>
+        {msg.brief && (
+          <div className="chat-brief">
+            <div className="chat-brief-head">
+              <Icon name="file-text" size={11} />
+              <span>{msg.brief.title}</span>
+              <div style={{ flex: 1 }} />
+              <button className="chat-brief-action" onClick={() => onUseAsBrief(msg.brief!.body)}>
+                <Icon name="arrow-right" size={11} /> In Freitext laden
+              </button>
+              <button className="chat-brief-action accent" onClick={onExtractNow}>
+                <Icon name="sparkles" size={11} /> Direkt extrahieren
+              </button>
+            </div>
+            <pre className="chat-brief-body">{msg.brief.body}</pre>
+          </div>
+        )}
+        {msg.suggestions && msg.suggestions.length > 0 && (
+          <div className="chat-suggestions">
+            {msg.suggestions.map((s, k) => (
+              <button key={k} className="chat-suggest" onClick={() => onSuggest(s)}>
+                {s}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export function ChatPane({ setText, setTab, extract }: ChatPaneProps) {
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    {
+      role: 'assistant',
+      text:
+        'Hi Arne 👋  Ich helfe beim Planen. Schick mir eine PM-Anleitung, eine E-Mail vom Anwalt oder beschreib einfach was ansteht — ich verteile auf Projekte, Personen und schätze Zeiten.',
+      suggestions: ['Etappe 2 planen (Legal & Impressum)', 'Was hat Arne diese Woche offen?', 'Push-Setup briefen'],
+    },
+  ]);
+  const [draft, setDraft] = useState('');
+  const [busy, setBusy] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+  }, [messages, busy]);
+
+  const send = (textOverride?: string) => {
+    const userText = (textOverride ?? draft).trim();
+    if (!userText) return;
+    setDraft('');
+    setMessages((m) => [...m, { role: 'user', text: userText }]);
+    setBusy(true);
+
+    setTimeout(() => {
+      const reply = mockReply(userText);
+      setMessages((m) => [...m, reply]);
+      setBusy(false);
+    }, 900 + Math.random() * 400);
+  };
+
+  return (
+    <div className="chat-pane">
+      <div className="chat-stream" ref={scrollRef}>
+        {messages.map((msg, i) => (
+          <ChatBubble
+            key={i}
+            msg={msg}
+            onSuggest={(s) => send(s)}
+            onUseAsBrief={(t) => {
+              setText(t);
+              setTab('text');
+              showToast('In Freitext-Tab übernommen');
+            }}
+            onExtractNow={() => {
+              setTab('text');
+              setTimeout(() => extract(), 250);
+            }}
+          />
+        ))}
+        {busy && (
+          <div className="chat-msg assistant">
+            <div className="chat-avatar">
+              <Icon name="sparkles" size={11} />
+            </div>
+            <div className="chat-bubble thinking">
+              <span className="dots">
+                <span />
+                <span />
+                <span />
+              </span>
+            </div>
+          </div>
+        )}
+      </div>
+      <div className="chat-input">
+        <input
+          type="text"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              send();
+            }
+          }}
+          placeholder="Frag den Planungsassistenten…"
+        />
+        <button className="chat-send" onClick={() => send()} disabled={!draft.trim()}>
+          <Icon name="arrow-up" size={14} />
+        </button>
+      </div>
+    </div>
+  );
+}

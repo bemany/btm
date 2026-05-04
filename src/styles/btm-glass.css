@@ -1,0 +1,339 @@
+/* =========================================================
+   BTM — Glass-Theme Override
+   Aktiviert mit <body data-theme="glass">
+   Tropfen wir frosted/glass surfaces, weichere Schatten,
+   macOS-style segmented controls.
+   ========================================================= */
+
+body[data-theme="glass"] {
+  /* Ambient gradient hinter dem App-Shell, sodass Glass-Layer
+     etwas zum durchscheinen haben. */
+  background:
+    radial-gradient(1100px 700px at 88% -8%, rgba(200, 90, 44, 0.18), transparent 60%),
+    radial-gradient(900px 600px at -10% 110%, rgba(85, 115, 160, 0.18), transparent 55%),
+    radial-gradient(700px 500px at 50% 50%, rgba(94, 127, 78, 0.10), transparent 60%),
+    var(--bg-page);
+  background-attachment: fixed;
+}
+
+/* App background semi-transparent so the gradient bleeds through */
+body[data-theme="glass"] .app {
+  background: transparent;
+}
+
+/* ----------------------- SIDEBAR --------------------------- */
+body[data-theme="glass"] .app-sidebar {
+  background: rgba(250, 247, 242, 0.55);
+  backdrop-filter: blur(32px) saturate(180%);
+  -webkit-backdrop-filter: blur(32px) saturate(180%);
+  border-right: 1px solid rgba(28, 26, 23, 0.06);
+  color: var(--ink-900);
+}
+
+/* Sidebar text colors */
+body[data-theme="glass"] .app-sidebar .sb-brand-mark {
+  background: var(--ink-900);
+  color: var(--cream-50);
+}
+body[data-theme="glass"] .app-sidebar .sb-brand-text {
+  color: var(--ink-900);
+}
+body[data-theme="glass"] .app-sidebar .sb-section-label {
+  color: var(--ink-500);
+}
+body[data-theme="glass"] .app-sidebar .sb-item {
+  color: var(--ink-700);
+  background: transparent;
+}
+body[data-theme="glass"] .app-sidebar .sb-item:hover {
+  background: rgba(28, 26, 23, 0.05);
+  color: var(--ink-900);
+}
+body[data-theme="glass"] .app-sidebar .sb-item.active {
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--ink-900);
+  box-shadow:
+    0 0 0 0.5px rgba(28, 26, 23, 0.06),
+    0 1px 2px rgba(28, 26, 23, 0.06),
+    0 2px 6px rgba(28, 26, 23, 0.04);
+}
+body[data-theme="glass"] .app-sidebar .sb-count {
+  background: var(--accent-600);
+  color: #fff;
+}
+
+/* Sidebar footer (persona) */
+body[data-theme="glass"] .app-sidebar .sb-foot {
+  border-color: rgba(28, 26, 23, 0.06);
+  color: var(--ink-700);
+}
+body[data-theme="glass"] .app-sidebar .sb-foot .who .name {
+  color: var(--ink-900);
+}
+body[data-theme="glass"] .app-sidebar .sb-foot:hover {
+  background: rgba(28, 26, 23, 0.04);
+}
+
+/* ----------------------- TOPBAR ---------------------------- */
+body[data-theme="glass"] .app-topbar {
+  background: rgba(250, 247, 242, 0.55);
+  backdrop-filter: blur(22px) saturate(180%);
+  -webkit-backdrop-filter: blur(22px) saturate(180%);
+  border-bottom: 1px solid rgba(28, 26, 23, 0.06);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.4) inset;
+}
+
+body[data-theme="glass"] .tb-search {
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(28, 26, 23, 0.06);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 1px 2px rgba(28, 26, 23, 0.04);
+}
+
+body[data-theme="glass"] .tb-btn {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(28, 26, 23, 0.08);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 1px 2px rgba(28, 26, 23, 0.06);
+}
+body[data-theme="glass"] .tb-btn:hover {
+  background: rgba(255, 255, 255, 0.92);
+}
+body[data-theme="glass"] .tb-btn.primary {
+  background: rgba(28, 26, 23, 0.92);
+  border-color: rgba(28, 26, 23, 0.92);
+  box-shadow: 0 1px 2px rgba(28, 26, 23, 0.18), 0 4px 14px rgba(28, 26, 23, 0.18);
+}
+body[data-theme="glass"] .tb-btn.accent {
+  background: rgba(200, 90, 44, 0.92);
+  border-color: rgba(200, 90, 44, 0.92);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.25) inset,
+    0 1px 2px rgba(200, 90, 44, 0.25),
+    0 6px 18px rgba(200, 90, 44, 0.22);
+}
+
+body[data-theme="glass"] .timer-chip {
+  background: rgba(28, 26, 23, 0.92);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.05) inset,
+    0 4px 18px rgba(28, 26, 23, 0.22);
+}
+
+body[data-theme="glass"] .persona-trigger {
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(28, 26, 23, 0.08);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 1px 2px rgba(28, 26, 23, 0.05);
+}
+
+body[data-theme="glass"] .tb-icon-btn {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(28, 26, 23, 0.08);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* ---------------- CARDS, KPIs, TASKS ----------------------- */
+body[data-theme="glass"] .kpi,
+body[data-theme="glass"] .task-card,
+body[data-theme="glass"] .proj-card,
+body[data-theme="glass"] .kanban-col {
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(28, 26, 23, 0.07);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.6) inset,
+    0 1px 2px rgba(28, 26, 23, 0.04),
+    0 8px 24px rgba(28, 26, 23, 0.05);
+}
+body[data-theme="glass"] .task-card:hover {
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.8) inset,
+    0 2px 4px rgba(28, 26, 23, 0.06),
+    0 12px 30px rgba(28, 26, 23, 0.08);
+}
+
+/* Timer hero — frosted dark */
+body[data-theme="glass"] .timer-hero {
+  background: linear-gradient(135deg, rgba(28, 26, 23, 0.86), rgba(38, 35, 30, 0.86));
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.06) inset,
+    0 16px 40px rgba(28, 26, 23, 0.25);
+}
+
+/* AI drawer button glow */
+body[data-theme="glass"] .quickaction-btn {
+  background: linear-gradient(180deg, rgba(216, 110, 64, 1), rgba(200, 90, 44, 1));
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.25) inset,
+    0 6px 22px rgba(200, 90, 44, 0.32);
+}
+
+/* ----------- macOS-STYLE SEGMENTED CONTROLS ---------------- */
+/* Used by: layout-toggle (Kanban/Liste/Timeline), filter pills row,
+   Tweak panel radios, Times week-toggle, etc. */
+body[data-theme="glass"] .layout-toggle,
+body[data-theme="glass"] .seg-control,
+body[data-theme="glass"] .twk-radio {
+  background: rgba(28, 26, 23, 0.06);
+  border: 0.5px solid rgba(28, 26, 23, 0.08);
+  border-radius: 8px;
+  padding: 2px;
+  display: inline-flex;
+  gap: 0;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.4) inset;
+}
+body[data-theme="glass"] .layout-toggle button,
+body[data-theme="glass"] .seg-control button,
+body[data-theme="glass"] .twk-radio button {
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-700);
+  cursor: pointer;
+  transition: background 120ms, color 120ms, box-shadow 120ms;
+}
+body[data-theme="glass"] .layout-toggle button.active,
+body[data-theme="glass"] .seg-control button.active,
+body[data-theme="glass"] .twk-radio button[data-on="1"] {
+  background: rgba(255, 255, 255, 1);
+  color: var(--ink-900);
+  font-weight: 600;
+  box-shadow:
+    0 0 0 0.5px rgba(28, 26, 23, 0.06),
+    0 1px 2px rgba(28, 26, 23, 0.06),
+    0 2px 6px rgba(28, 26, 23, 0.04);
+}
+
+/* Filter pills (Meine/Team/Alle Projekte/E1/E2/...) */
+body[data-theme="glass"] .filter-pill {
+  background: rgba(255, 255, 255, 0.6);
+  border: 0.5px solid rgba(28, 26, 23, 0.08);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+body[data-theme="glass"] .filter-pill.active {
+  background: rgba(28, 26, 23, 0.92);
+  border-color: rgba(28, 26, 23, 0.92);
+  color: var(--cream-50);
+  box-shadow: 0 2px 6px rgba(28, 26, 23, 0.15);
+}
+
+/* ----------------- DRAWERS & MODALS ------------------------ */
+body[data-theme="glass"] .drawer {
+  background: rgba(250, 247, 242, 0.78);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border-left: 1px solid rgba(28, 26, 23, 0.08);
+  box-shadow: -16px 0 60px rgba(28, 26, 23, 0.12);
+}
+body[data-theme="glass"] .drawer-backdrop {
+  background: rgba(28, 26, 23, 0.18);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+body[data-theme="glass"] .modal {
+  background: rgba(250, 247, 242, 0.86);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border: 1px solid rgba(28, 26, 23, 0.08);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.6) inset,
+    0 24px 60px rgba(28, 26, 23, 0.18);
+}
+body[data-theme="glass"] .modal-backdrop {
+  background: rgba(28, 26, 23, 0.22);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+body[data-theme="glass"] .form-row input[type="text"],
+body[data-theme="glass"] .form-row input[type="date"],
+body[data-theme="glass"] .form-row textarea,
+body[data-theme="glass"] .form-row select {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(28, 26, 23, 0.1);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 1px 2px rgba(28, 26, 23, 0.03) inset;
+}
+
+/* Tweaks panel itself — already glass-y, just match the theme */
+body[data-theme="glass"] .tweaks-panel {
+  background: rgba(250, 247, 242, 0.78) !important;
+  backdrop-filter: blur(40px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(40px) saturate(180%) !important;
+  border: 1px solid rgba(28, 26, 23, 0.08) !important;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.6) inset,
+    0 16px 40px rgba(28, 26, 23, 0.12) !important;
+}
+
+/* AI drawer body */
+body[data-theme="glass"] .ai-input-wrap textarea,
+body[data-theme="glass"] .ai-task-row {
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(28, 26, 23, 0.07);
+  backdrop-filter: blur(10px);
+}
+
+/* Empty states */
+body[data-theme="glass"] .empty-state {
+  background: rgba(255, 255, 255, 0.4);
+  border: 1px dashed rgba(28, 26, 23, 0.12);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* Project card NEW */
+body[data-theme="glass"] .proj-card-new {
+  background: rgba(255, 255, 255, 0.3);
+  border: 1.5px dashed rgba(28, 26, 23, 0.15);
+  backdrop-filter: blur(10px);
+}
+body[data-theme="glass"] .proj-card-new:hover {
+  background: rgba(255, 255, 255, 0.55);
+  border-color: rgba(200, 90, 44, 0.6);
+}
+
+/* Buttons in modal/drawer footers */
+body[data-theme="glass"] .btn-primary {
+  background: rgba(28, 26, 23, 0.92);
+  border-color: rgba(28, 26, 23, 0.92);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.06) inset,
+    0 2px 6px rgba(28, 26, 23, 0.18),
+    0 8px 18px rgba(28, 26, 23, 0.12);
+}
+body[data-theme="glass"] .btn-ghost {
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(28, 26, 23, 0.08);
+  backdrop-filter: blur(8px);
+}
+
+/* Sidebar items keep dark surface but get a subtle hover sheen */
+body[data-theme="glass"] .sb-item.active {
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+}
+
+/* Page background slight transparency so background gradient peeks through */
+body[data-theme="glass"] .app-main { background: transparent; }

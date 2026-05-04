@@ -1,0 +1,235 @@
+/* =========================================================
+   Globio Design System — Core Tokens
+   colors_and_type.css
+   ========================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  /* ---------- Color: Cream / Neutral ---------- */
+  --cream-50:  #FAF7F2;   /* Haupt-Hintergrund */
+  --cream-100: #F4EFE7;   /* Sekundärfläche, Sidebar */
+  --cream-200: #ECE5D8;   /* Hover auf cream-100 */
+
+  --ink-900: #1C1A17;     /* Haupttext */
+  --ink-800: #2A2620;
+  --ink-700: #3D3833;     /* Sekundärtext */
+  --ink-500: #6B6359;     /* Tertiärtext, Meta */
+  --ink-400: #8B8279;
+  --ink-300: #A8A097;     /* Deaktiviert */
+  --ink-200: #CFC7BB;     /* Borders */
+  --ink-100: #E3DCCE;     /* Subtile Borders */
+
+  /* ---------- Color: Accent (Terrakotta) ---------- */
+  --accent-50:  #FBECE3;
+  --accent-100: #F4D0BA;
+  --accent-500: #C85A2C;  /* Primary */
+  --accent-600: #A84722;  /* Hover / Pressed */
+  --accent-700: #86381B;
+
+  /* ---------- Color: Semantic (gedeckt, nicht leuchtend) ---------- */
+  --ok-50:   #EDF1E7;
+  --ok-500:  #5E7F4E;
+  --ok-700:  #415A36;
+
+  --warn-50:  #F7EFDD;
+  --warn-500: #B88A2E;
+  --warn-700: #845F1B;
+
+  --err-50:   #F5E3E3;
+  --err-500:  #B63C3C;
+  --err-700:  #842828;
+
+  --info-50:  #E6EAEF;
+  --info-500: #5573A0;
+  --info-700: #39527A;
+
+  /* ---------- Foreground semantic aliases ---------- */
+  --fg1: var(--ink-900);
+  --fg2: var(--ink-700);
+  --fg3: var(--ink-500);
+  --fg-mute: var(--ink-400);
+  --fg-disabled: var(--ink-300);
+  --fg-on-accent: var(--cream-50);
+
+  /* ---------- Background semantic aliases ---------- */
+  --bg-page:    var(--cream-50);
+  --bg-surface: var(--cream-50);
+  --bg-panel:   var(--cream-100);
+  --bg-panel-hover: var(--cream-200);
+
+  --border: var(--ink-200);
+  --border-subtle: var(--ink-100);
+  --border-strong: var(--ink-300);
+
+  /* ---------- Typography: Font families ---------- */
+  --font-display: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
+  --font-body: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  /* ---------- Type scale ---------- */
+  --text-11: 11px;
+  --text-12: 12px;
+  --text-13: 13px;
+  --text-14: 14px;
+  --text-15: 15px;
+  --text-16: 16px;
+  --text-18: 18px;
+  --text-20: 20px;
+  --text-24: 24px;
+  --text-28: 28px;
+  --text-32: 32px;
+  --text-40: 40px;
+  --text-48: 48px;
+  --text-64: 64px;
+
+  /* ---------- Line-heights ---------- */
+  --lh-tight: 1.08;
+  --lh-snug: 1.2;
+  --lh-normal: 1.4;
+  --lh-relaxed: 1.55;
+
+  /* ---------- Letter-spacing ---------- */
+  --tracking-label: 0.08em; /* Mono-Labels uppercase */
+  --tracking-tight: -0.015em; /* Display */
+  --tracking-normal: 0;
+
+  /* ---------- Spacing (8-px-Grid) ---------- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* ---------- Radii ---------- */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-pill: 999px; /* nur für Status-Pills, nicht für Buttons */
+
+  /* ---------- Borders ---------- */
+  --border-thin: 1px;
+  --border-med: 1.5px;
+
+  /* ---------- Shadows (sparsam) ---------- */
+  --shadow-none: none;
+  --shadow-input: inset 0 1px 0 rgba(28, 26, 23, 0.05);
+  --shadow-menu: 0 1px 2px rgba(28, 26, 23, 0.06), 0 6px 16px rgba(28, 26, 23, 0.08);
+  --shadow-modal: 0 2px 4px rgba(28, 26, 23, 0.06), 0 24px 48px rgba(28, 26, 23, 0.18);
+
+  /* ---------- Motion ---------- */
+  --ease-out: cubic-bezier(0.2, 0.7, 0.3, 1);
+  --dur-fast: 120ms;
+  --dur-base: 160ms;
+  --dur-slow: 240ms;
+
+  /* ---------- Focus ---------- */
+  --focus-ring: 0 0 0 2px var(--bg-page), 0 0 0 4px var(--accent-500);
+}
+
+/* =========================================================
+   Semantic element styles (base reset)
+   ========================================================= */
+
+html, body {
+  background: var(--bg-page);
+  color: var(--fg1);
+  font-family: var(--font-body);
+  font-size: var(--text-14);
+  line-height: var(--lh-normal);
+  font-feature-settings: "ss01", "cv11";
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, .h1 {
+  font-family: var(--font-display);
+  font-size: var(--text-40);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tracking-tight);
+  font-weight: 700;
+  color: var(--fg1);
+  margin: 0;
+}
+
+h2, .h2 {
+  font-family: var(--font-display);
+  font-size: var(--text-28);
+  line-height: var(--lh-snug);
+  letter-spacing: var(--tracking-tight);
+  font-weight: 700;
+  color: var(--fg1);
+  margin: 0;
+}
+
+h3, .h3 {
+  font-family: var(--font-display);
+  font-size: var(--text-20);
+  line-height: var(--lh-snug);
+  font-weight: 600;
+  color: var(--fg1);
+  margin: 0;
+}
+
+h4, .h4 {
+  font-family: var(--font-body);
+  font-size: var(--text-16);
+  line-height: var(--lh-snug);
+  font-weight: 600;
+  color: var(--fg1);
+  margin: 0;
+}
+
+p, .p {
+  font-size: var(--text-14);
+  line-height: var(--lh-relaxed);
+  color: var(--fg2);
+  margin: 0;
+}
+
+small, .caption {
+  font-size: var(--text-12);
+  line-height: var(--lh-normal);
+  color: var(--fg3);
+}
+
+code, pre, .mono {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  font-feature-settings: "zero", "ss01";
+}
+
+.label {
+  font-family: var(--font-mono);
+  font-size: var(--text-11);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--fg3);
+  font-weight: 500;
+}
+
+.metric {
+  font-family: var(--font-display);
+  font-size: var(--text-32);
+  letter-spacing: var(--tracking-tight);
+  font-weight: 700;
+  color: var(--fg1);
+  line-height: 1;
+}
+
+.metric-unit {
+  font-family: var(--font-body);
+  font-size: var(--text-14);
+  color: var(--fg3);
+  font-weight: 500;
+}
+
+/* Always render technical values (plates, IMEIs, coords, timestamps) in Mono */
+.tech, [data-tech] {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
