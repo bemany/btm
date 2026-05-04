@@ -62,6 +62,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (e) {
       console.warn('sign-out failed', e);
     }
+    // Body-Theme zurück auf default (hell) — die Landing soll für Anon hell sein.
+    // localStorage bleibt unverändert, damit die User-Theme-Wahl beim nächsten
+    // Login wiederhergestellt wird.
+    document.body.dataset.theme = 'default';
     setUser(null);
     setAuthMode(null);
     setStatus('anon');

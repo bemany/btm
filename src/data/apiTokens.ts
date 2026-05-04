@@ -9,6 +9,8 @@ export interface ApiTokenRow {
   expiresAt: string | null;
   createdAt: string;
   revokedAt: string | null;
+  displayUrl: string | null;
+  refreshSeconds: number | null;
 }
 
 export interface CreatedApiToken {
@@ -25,6 +27,8 @@ export async function createApiToken(input: {
   name: string;
   scopes?: ('read' | 'write')[];
   expiresAt?: string | null;
+  displayUrlTemplate?: string; // {plain} wird ersetzt
+  refreshSeconds?: number;
 }): Promise<CreatedApiToken> {
   return apiFetch<CreatedApiToken>('/api-tokens', { method: 'POST', body: input });
 }

@@ -1,6 +1,7 @@
-// Office-Display: Admin generiert einen TV-Token + bekommt die URL zum Aufkleben
-// auf einen Office-Bildschirm. Nutzt das bestehende API-Token-System mit
-// einem Naming-Schema "TV: <Bezeichnung>" damit man sie auf einen Blick erkennt.
+// Office-Display: Admin generiert TV-Token + bekommt eine URL.
+// URL wird zusammen mit einem Auto-Reload-Intervall im Backend gespeichert
+// (apiTokens.displayUrl + refreshSeconds), damit der Admin sie später
+// nochmal kopieren kann ohne den Token zu rotieren.
 
 import { useEffect, useState } from 'react';
 import { Icon } from '../shared/Icon';
@@ -17,17 +18,28 @@ interface Props {
 }
 
 const TV_PREFIX = 'TV: ';
+const RELOAD_PRESETS: Array<{ s: number; label: string }> = [
+  { s: 300, label: '5 min' },
+  { s: 900, label: '15 min' },
+  { s: 1800, label: '30 min' },
+  { s: 3600, label: '1 h' },
+  { s: 14400, label: '4 h' },
+  { s: 86400, label: '24 h' },
+];
 
-function tvUrl(plain: string): string {
-  return `${window.location.origin}/tv?token=${encodeURIComponent(plain)}`;
+function fullUrl(displayUrl: string | null): string {
+  if (!displayUrl) return '';
+  if (displayUrl.startsWith('http')) return displayUrl;
+  return window.location.origin + displayUrl;
 }
 
 export function TVSetupDrawer({ onClose }: Props) {
   const [tokens, setTokens] = useState<ApiTokenRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState('Empfangsbildschirm');
+  const [refreshSec, setRefreshSec] = useState(1800);
   const [creating, setCreating] = useState(false);
-  const [freshUrl, setFreshUrl] = useState<{ url: string; name: string } | null>(null);
+  const [freshUrl, setFreshUrl] = useState<string | null>(null);
 
   const refresh = async () => {
     setLoading(true);
@@ -48,8 +60,18 @@ export function TVSetupDrawer({ onClose }: Props) {
     if (!name.trim()) return;
     setCreating(true);
     try {
-      const { token, plain } = await createApiToken({ name: TV_PREFIX + name.trim() });
-      setFreshUrl({ url: tvUrl(plain), name: token.name });
+      const { token, plain } = await createApiToken({
+        name: TV_PREFIX + name.trim(),
+        // Server speichert die URL — wir geben das Template mit Platzhalter rein
+        displayUrlTemplate: `/tv?token={plain}&reload=${refreshSec}`,
+        refreshSeconds: refreshSec,
+      });
+      // Live-URL anzeigen (frisch erstellt = enthält den plain-Token bereits ersetzt
+      // im display_url des Servers, ABER um sicher zu sein nehmen wir den plain hier).
+      const url = `${window.location.origin}/tv?token=${encodeURIComponent(plain)}&reload=${refreshSec}`;
+      setFreshUrl(url);
+      // Token-Display in der Liste sehen alle danach via displayUrl
+      void token; // wird gespeichert mit displayUrl
       setName('Empfangsbildschirm');
       await refresh();
     } catch (e) {
@@ -110,20 +132,18 @@ export function TVSetupDrawer({ onClose }: Props) {
             <div className="apit-fresh">
               <div className="apit-fresh-head">
                 <Icon name="check-circle-2" size={14} style={{ color: 'var(--ok-500)' }} />
-                <span>
-                  „{freshUrl.name}" angelegt — kopier&#39;s dir jetzt, der Token wird nie wieder
-                  angezeigt:
-                </span>
+                <span>URL erstellt — bleibt auch in der Liste unten gespeichert.</span>
               </div>
               <div className="apit-fresh-row">
-                <code className="apit-fresh-code">{freshUrl.url}</code>
-                <button className="tb-btn" onClick={() => copy(freshUrl.url)}>
+                <code className="apit-fresh-code">{freshUrl}</code>
+                <button className="tb-btn" onClick={() => copy(freshUrl)}>
                   <Icon name="copy" size={12} /> URL kopieren
                 </button>
               </div>
               <div className="apit-fresh-foot">
                 Diese URL auf dem Office-Bildschirm öffnen — kein Login nötig. Die Seite läuft
-                fullscreen und aktualisiert sich automatisch.
+                fullscreen und reloaded sich automatisch alle{' '}
+                {RELOAD_PRESETS.find((p) => p.s === refreshSec)?.label ?? `${refreshSec}s`}.
               </div>
             </div>
           )}
@@ -154,11 +174,35 @@ export function TVSetupDrawer({ onClose }: Props) {
                   )}
                 </button>
               </div>
-              <div className="hint">
-                Erzeugt einen API-Token mit Schreibrechten — die TV-Seite liest aber nur. Bei
-                Verlust des Bildschirms (Display geklaut, Cache geleert) hier widerrufen.
-              </div>
             </label>
+
+            <div style={{ marginTop: 14 }}>
+              <div
+                className="eyebrow"
+                style={{ marginBottom: 6, display: 'flex', alignItems: 'center', gap: 8 }}
+              >
+                Auto-Reload alle
+                <span className="mono" style={{ color: 'var(--ink-700)', fontSize: 11 }}>
+                  {RELOAD_PRESETS.find((p) => p.s === refreshSec)?.label ?? `${refreshSec}s`}
+                </span>
+              </div>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                {RELOAD_PRESETS.map((p) => (
+                  <button
+                    key={p.s}
+                    type="button"
+                    onClick={() => setRefreshSec(p.s)}
+                    className={`filter-chip ${refreshSec === p.s ? 'active' : ''}`}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+              <div className="hint">
+                Die TV-Seite reloaded sich automatisch im gewählten Intervall — sorgt für frische
+                Daten ohne manuellen Eingriff.
+              </div>
+            </div>
           </form>
 
           {/* Bestehende */}
@@ -177,40 +221,88 @@ export function TVSetupDrawer({ onClose }: Props) {
             </div>
           ) : (
             <div className="apit-list">
-              {tokens.map((t) => (
-                <div key={t.id} className="apit-row">
-                  <div className="apit-row-main">
-                    <div className="apit-row-name">{t.name.replace(TV_PREFIX, '')}</div>
-                    <div className="apit-row-meta">
-                      <code>{t.prefix}…</code>
-                      <span>·</span>
-                      <span>angelegt {new Date(t.createdAt).toLocaleDateString('de-DE')}</span>
-                      {t.lastUsedAt ? (
-                        <>
+              {tokens.map((t) => {
+                const url = fullUrl(t.displayUrl);
+                return (
+                  <div
+                    key={t.id}
+                    className="apit-row"
+                    style={{ flexDirection: 'column', alignItems: 'stretch', gap: 10 }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <div className="apit-row-main">
+                        <div className="apit-row-name">{t.name.replace(TV_PREFIX, '')}</div>
+                        <div className="apit-row-meta">
+                          <code>{t.prefix}…</code>
                           <span>·</span>
-                          <span>
-                            zuletzt online{' '}
-                            {new Date(t.lastUsedAt).toLocaleString('de-DE', {
-                              day: '2-digit',
-                              month: '2-digit',
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                          </span>
-                        </>
-                      ) : (
-                        <>
-                          <span>·</span>
-                          <span style={{ color: 'var(--ink-400)' }}>noch nie online</span>
-                        </>
-                      )}
+                          <span>angelegt {new Date(t.createdAt).toLocaleDateString('de-DE')}</span>
+                          {t.refreshSeconds && (
+                            <>
+                              <span>·</span>
+                              <span>
+                                Reload alle{' '}
+                                {RELOAD_PRESETS.find((p) => p.s === t.refreshSeconds)?.label ??
+                                  `${t.refreshSeconds}s`}
+                              </span>
+                            </>
+                          )}
+                          {t.lastUsedAt ? (
+                            <>
+                              <span>·</span>
+                              <span>
+                                zuletzt online{' '}
+                                {new Date(t.lastUsedAt).toLocaleString('de-DE', {
+                                  day: '2-digit',
+                                  month: '2-digit',
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                })}
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              <span>·</span>
+                              <span style={{ color: 'var(--ink-400)' }}>noch nie online</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      <button className="apit-revoke" onClick={() => onRevoke(t.id)}>
+                        <Icon name="trash-2" size={13} /> Widerrufen
+                      </button>
                     </div>
+                    {url && (
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                        <code
+                          style={{
+                            flex: 1,
+                            fontFamily: 'var(--font-mono)',
+                            fontSize: 11,
+                            color: 'var(--ink-700)',
+                            background: 'var(--cream-100)',
+                            border: '1px solid var(--ink-100)',
+                            borderRadius: 6,
+                            padding: '6px 10px',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            userSelect: 'all',
+                          }}
+                          title={url}
+                        >
+                          {url}
+                        </code>
+                        <button className="tb-btn" onClick={() => copy(url)}>
+                          <Icon name="copy" size={12} /> Kopieren
+                        </button>
+                        <a className="tb-btn" href={url} target="_blank" rel="noopener noreferrer">
+                          <Icon name="external-link" size={12} /> Öffnen
+                        </a>
+                      </div>
+                    )}
                   </div>
-                  <button className="apit-revoke" onClick={() => onRevoke(t.id)}>
-                    <Icon name="trash-2" size={13} /> Widerrufen
-                  </button>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
 
@@ -221,10 +313,10 @@ export function TVSetupDrawer({ onClose }: Props) {
               <span>So richtest du den Bildschirm ein</span>
             </div>
             <ol style={{ margin: '4px 0 0 18px', padding: 0, fontSize: 12.5, color: 'var(--ink-700)', lineHeight: 1.6 }}>
-              <li>Oben einen neuen Display-Token erstellen, URL kopieren.</li>
+              <li>Oben einen neuen Display anlegen (Name + Reload-Intervall).</li>
+              <li>URL aus der Liste kopieren oder „Öffnen" klicken.</li>
               <li>Auf dem Office-Bildschirm Browser → URL öffnen → F11 (Vollbild).</li>
-              <li>Tab nicht schließen — die Seite hält sich selbst aktuell.</li>
-              <li>Neu starten via Browser-Reload reicht — kein Login nötig.</li>
+              <li>Tab nicht schließen — die Seite reloaded sich automatisch.</li>
             </ol>
           </div>
         </div>

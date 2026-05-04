@@ -28,6 +28,16 @@ export function TVRoute({ token }: Props) {
     };
   }, [token]);
 
+  // Auto-Reload-Intervall aus ?reload=… (Sekunden, default keiner).
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const reloadStr = params.get('reload');
+    const seconds = reloadStr ? parseInt(reloadStr, 10) : NaN;
+    if (!Number.isFinite(seconds) || seconds < 30) return;
+    const id = setTimeout(() => window.location.reload(), seconds * 1000);
+    return () => clearTimeout(id);
+  }, []);
+
   // Eigene Polling-Loops (15 s) — sind aggressiver als die normale App weil das
   // Display ja immer aktuell sein soll.
   const tasksQ = useQuery({

@@ -11,6 +11,10 @@ const createSchema = z.object({
   name: z.string().min(1).max(120),
   scopes: z.array(z.enum(['read', 'write'])).default(['read', 'write']),
   expiresAt: z.string().nullable().optional(),
+  // Für TV-Display-Tokens: zusätzliche Felder die in der DB gespeichert werden,
+  // damit Admins die URL später wieder ablesen können.
+  displayUrlTemplate: z.string().optional(), // z.B. "/tv?token={plain}&reload=1800"
+  refreshSeconds: z.number().int().min(30).max(86400).optional(),
 });
 
 export const apiTokensRoute = new Hono<{ Variables: Variables }>()
@@ -27,6 +31,8 @@ export const apiTokensRoute = new Hono<{ Variables: Variables }>()
         expiresAt: apiTokens.expiresAt,
         createdAt: apiTokens.createdAt,
         revokedAt: apiTokens.revokedAt,
+        displayUrl: apiTokens.displayUrl,
+        refreshSeconds: apiTokens.refreshSeconds,
       })
       .from(apiTokens)
       .where(and(eq(apiTokens.userId, user.id), isNull(apiTokens.revokedAt)))
@@ -43,6 +49,12 @@ export const apiTokensRoute = new Hono<{ Variables: Variables }>()
     const { plain, hash, prefix } = generateApiToken();
     const id = `K${nanoid(10)}`;
     const expiresAt = body.expiresAt ? new Date(body.expiresAt) : null;
+
+    // displayUrl: optional als persistierbare URL (für TV-Display-Tokens)
+    const displayUrl = body.displayUrlTemplate
+      ? body.displayUrlTemplate.replace('{plain}', encodeURIComponent(plain))
+      : null;
+
     const [row] = await db
       .insert(apiTokens)
       .values({
@@ -53,9 +65,12 @@ export const apiTokensRoute = new Hono<{ Variables: Variables }>()
         prefix,
         scopes: body.scopes,
         expiresAt,
+        displayUrl,
+        refreshSeconds: body.refreshSeconds ?? null,
       })
       .returning();
-    // ⚠️ plain wird nur EIN MAL zurückgegeben.
+    // ⚠️ plain wird nur EIN MAL zurückgegeben (außer wenn displayUrl gespeichert ist —
+    // dann steht der Token implizit auch in der URL).
     return c.json({ token: { ...row, tokenHash: undefined }, plain }, 201);
   })
   .post('/:id/revoke', async (c) => {

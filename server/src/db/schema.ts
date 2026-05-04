@@ -185,6 +185,8 @@ export const activityLog = pgTable(
 );
 
 // API-Tokens für MCP / CLI / Programmatic Access — pro User, hashed.
+// Für Office-Displays optional zusätzlich displayUrl (Plain-URL) +
+// refreshSeconds, damit Admins die URL später nochmal ablesen können.
 export const apiTokens = pgTable(
   'api_tokens',
   {
@@ -200,6 +202,11 @@ export const apiTokens = pgTable(
     expiresAt: timestamp('expires_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     revokedAt: timestamp('revoked_at', { withTimezone: true }),
+    // Plain-URL für nicht-sicherheitskritische Tokens (TV-Display).
+    // Bei normalen API-Tokens bleibt das null.
+    displayUrl: text('display_url'),
+    // Auto-Reload-Intervall in Sekunden für /tv-Display.
+    refreshSeconds: integer('refresh_seconds'),
   },
   (t) => [index('api_tokens_user_idx').on(t.userId)],
 );

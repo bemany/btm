@@ -26,15 +26,32 @@ const trustedOrigins = (process.env.TRUSTED_ORIGINS ?? 'https://btm.bethesna.org
   .map((s) => s.trim())
   .filter(Boolean);
 
-app.use(
-  '/api/*',
-  cors({
-    origin: trustedOrigins,
-    credentials: true,
-    allowMethods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
-    allowHeaders: ['Content-Type', 'Authorization'],
-  }),
-);
+// MCP-Server: muss von beliebigen Origins erreichbar sein (Claude.ai,
+// Claude Desktop, eigene Tools). Bearer-Token statt Cookie → credentials=false.
+const mcpCors = cors({
+  origin: '*',
+  credentials: false,
+  allowMethods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
+  allowHeaders: ['Content-Type', 'Authorization', 'Mcp-Session-Id', 'mcp-session-id', 'mcp-protocol-version'],
+  exposeHeaders: ['Mcp-Session-Id'],
+  maxAge: 86400,
+});
+app.use('/api/mcp', mcpCors);
+app.use('/api/mcp/*', mcpCors);
+
+// Restliche /api/*-Routes nur von eigener Origin (Cookie-Sessions).
+// MCP-Pfade werden geskippt damit deren liberale CORS nicht überschrieben wird.
+const restCors = cors({
+  origin: trustedOrigins,
+  credentials: true,
+  allowMethods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
+  allowHeaders: ['Content-Type', 'Authorization'],
+});
+app.use('/api/*', async (c, next) => {
+  const p = c.req.path;
+  if (p === '/api/mcp' || p.startsWith('/api/mcp/')) return next();
+  return restCors(c, next);
+});
 
 // Better-Auth übernimmt /api/auth/* selbst (Sign-In, Sign-Out, Sessions, Magic-Link).
 app.on(['POST', 'GET'], '/api/auth/*', (c) => auth.handler(c.req.raw));
