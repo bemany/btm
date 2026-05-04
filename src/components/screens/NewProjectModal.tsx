@@ -34,27 +34,28 @@ export function NewProjectModal({ onClose, existing }: NewProjectModalProps) {
 
   const canSave = code.trim().length > 0 && name.trim().length > 0;
 
-  const submit = (e?: React.FormEvent) => {
+  const submit = async (e?: React.FormEvent) => {
     e?.preventDefault?.();
     if (!canSave) return;
+    const codeUp = code.trim().toUpperCase();
     if (isEdit && existing) {
-      updateProject(existing.id, {
-        code: code.trim().toUpperCase(),
+      await updateProject(existing.id, {
+        code: codeUp,
         name: name.trim(),
         client: client.trim(),
         due: due || null,
         color,
       });
-      showToast(`Projekt „${code.trim().toUpperCase()}" gespeichert`);
+      showToast(`Projekt „${codeUp}" gespeichert`);
     } else {
-      const p = addProject({
-        code: code.trim().toUpperCase(),
+      const p = await addProject({
+        code: codeUp,
         name: name.trim(),
         client: client.trim(),
         due: due || null,
         color,
       });
-      showToast(`Projekt „${p.code}" angelegt`);
+      showToast(p ? `Projekt „${p.code}" angelegt` : 'Projekt konnte nicht angelegt werden');
     }
     onClose();
   };

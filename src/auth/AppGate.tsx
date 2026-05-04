@@ -1,6 +1,13 @@
 import { useEffect, type ReactNode } from 'react';
 import { useAuth } from './AuthContext';
 import { LoginScreen } from './LoginScreen';
+import { useServerSync } from '../data/sync';
+
+function AuthenticatedShell({ children }: { children: ReactNode }) {
+  // Lädt Tasks/Projects/Timer + Polling — nur wenn authenticated.
+  useServerSync();
+  return <>{children}</>;
+}
 
 export function AppGate({ children }: { children: ReactNode }) {
   const { status, refresh } = useAuth();
@@ -39,5 +46,5 @@ export function AppGate({ children }: { children: ReactNode }) {
     return <LoginScreen />;
   }
 
-  return <>{children}</>;
+  return <AuthenticatedShell>{children}</AuthenticatedShell>;
 }

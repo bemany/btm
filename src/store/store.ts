@@ -1,49 +1,75 @@
+// Zustand-Store als Cache für Server-State + UI-State.
+//
+// Lese-Daten (tasks/projects/timer) werden vom useServerSync()-Hook
+// beim Mount + Polling befüllt. Mutations (addTask, moveTask, ...) rufen
+// die API und schreiben das Ergebnis lokal — invalidiert wird über
+// TanStack Query, das wiederum useServerSync triggert.
+//
+// Persistiert wird in localStorage NUR der UI-State (filter, ui, currentUser),
+// nicht die Server-Daten — beim Reload kommt alles frisch vom Server.
+
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import type { BTMState, Task, Project, LayoutMode, UIState, Filter } from './types';
-import { SEED_PROJECTS, seedTasks } from './seed';
+import type { BTMState, Task, Project, LayoutMode, UIState, Filter, Timer } from './types';
+import * as api from '../data/api';
 
 interface BTMActions {
-  moveTask: (taskId: string, toCol: Task['col']) => void;
-  reorderTask: (taskId: string, toCol: Task['col'], beforeTaskId: string | null) => void;
-  addTask: (partial: Partial<Task> & { title: string }) => Task;
-  updateTask: (id: string, patch: Partial<Task>) => void;
-  deleteTask: (id: string) => void;
+  // Bridge: Server → Store (vom Sync-Layer aufgerufen)
+  setTasks: (tasks: Task[]) => void;
+  setProjects: (projects: Project[]) => void;
+  setTimer: (timer: Timer | null) => void;
 
-  startTimer: (taskId: string, withPomodoro?: boolean) => void;
-  stopTimer: () => void;
+  // Mutations: rufen API + cachen Ergebnis lokal (optimistic-style)
+  moveTask: (taskId: string, toCol: Task['col']) => Promise<void>;
+  reorderTask: (taskId: string, toCol: Task['col'], beforeTaskId: string | null) => Promise<void>;
+  addTask: (partial: Partial<Task> & { title: string }) => Promise<Task | null>;
+  updateTask: (id: string, patch: Partial<Task>) => Promise<void>;
+  deleteTask: (id: string) => Promise<void>;
+
+  startTimer: (taskId: string, withPomodoro?: boolean) => Promise<void>;
+  stopTimer: () => Promise<void>;
   togglePomodoro: () => void;
 
-  addProject: (partial: Partial<Project>) => Project;
-  updateProject: (id: string, patch: Partial<Project>) => void;
-  deleteProject: (id: string) => void;
+  addProject: (partial: Partial<Project> & { code?: string; name?: string }) => Promise<Project | null>;
+  updateProject: (id: string, patch: Partial<Project>) => Promise<void>;
+  deleteProject: (id: string) => Promise<void>;
 
+  // UI-State (rein lokal)
   setUI: (patch: Partial<UIState>) => void;
   setFilter: (patch: Partial<Filter>) => void;
   setUser: (id: string) => void;
   setLayout: (layout: LayoutMode) => void;
 
+  // Lokalen UI-State zurücksetzen (Server-Daten bleiben unangetastet)
   resetDemo: () => void;
 }
 
 export type BTMStore = BTMState & BTMActions;
 
-// v5 = Demo-Daten entfernt, leere DB beim ersten Start
-const STORAGE_KEY = 'btm.state.v5';
+const STORAGE_KEY = 'btm.ui.v1';
 
 function initialState(): BTMState {
   return {
-    currentUser: 'AR',
-    projects: SEED_PROJECTS.slice(),
-    tasks: seedTasks(),
+    currentUser: '',
+    projects: [],
+    tasks: [],
     filter: { proj: 'all', who: 'mine', q: '' },
     timer: null,
     ui: { drawer: null, taskDetailId: null, layout: 'kanban' },
   };
 }
 
-function shortId(prefix: string): string {
-  return prefix + Math.random().toString(36).slice(2, 7).toUpperCase();
+function mapPatchToServer(patch: Partial<Task>): api.UpdateTaskInput {
+  const out: api.UpdateTaskInput = {};
+  if (patch.title !== undefined) out.title = patch.title;
+  if ('desc' in patch) out.description = patch.desc ?? null;
+  if (patch.col !== undefined) out.column = patch.col;
+  if (patch.prio !== undefined) out.priority = patch.prio;
+  if (patch.estH !== undefined) out.estH = patch.estH;
+  if ('proj' in patch) out.projectId = patch.proj ?? null;
+  if ('who' in patch) out.assigneeId = patch.who || null;
+  if ('due' in patch) out.due = (patch.due as string | null | undefined) ?? null;
+  return out;
 }
 
 export const useStore = create<BTMStore>()(
@@ -51,101 +77,98 @@ export const useStore = create<BTMStore>()(
     (set, get) => ({
       ...initialState(),
 
-      moveTask: (taskId, toCol) =>
-        set((s) => ({
-          tasks: s.tasks.map((t) => (t.id === taskId ? { ...t, col: toCol } : t)),
-        })),
+      setTasks: (tasks) => set({ tasks }),
+      setProjects: (projects) => set({ projects }),
+      setTimer: (timer) => set({ timer }),
 
-      reorderTask: (taskId, toCol, beforeTaskId) =>
-        set((s) => {
-          const moving = s.tasks.find((t) => t.id === taskId);
-          if (!moving) return s;
-          const others = s.tasks.filter((t) => t.id !== taskId);
-          const updated: Task = { ...moving, col: toCol };
-          if (!beforeTaskId) {
-            const colTasks = others.filter((t) => t.col === toCol);
-            const last = colTasks[colTasks.length - 1];
-            const insertIdx = last ? others.indexOf(last) + 1 : others.length;
-            const out = [...others];
-            out.splice(insertIdx, 0, updated);
-            return { tasks: out };
-          }
-          const idx = others.findIndex((t) => t.id === beforeTaskId);
-          const out = [...others];
-          out.splice(idx, 0, updated);
-          return { tasks: out };
-        }),
-
-      addTask: (partial) => {
-        const t: Task = {
-          col: 'todo',
-          estH: 1.0,
-          loggedH: 0,
-          who: get().currentUser,
-          prio: 'med',
-          proj: null,
-          ...partial,
-          id: shortId('T'),
-          createdAt: Date.now(),
-          sessions: [],
-        };
-        set((s) => ({ tasks: [...s.tasks, t] }));
-        return t;
+      moveTask: async (taskId, toCol) => {
+        const before = get().tasks;
+        // Optimistic
+        set({ tasks: before.map((t) => (t.id === taskId ? { ...t, col: toCol } : t)) });
+        try {
+          const updated = await api.updateTask(taskId, { column: toCol });
+          set((s) => ({
+            tasks: s.tasks.map((t) => (t.id === updated.id ? api.fromServerTask(updated, []) : t)),
+          }));
+        } catch (e) {
+          set({ tasks: before });
+          console.error('moveTask failed', e);
+        }
       },
 
-      updateTask: (id, patch) =>
-        set((s) => ({ tasks: s.tasks.map((t) => (t.id === id ? { ...t, ...patch } : t)) })),
+      reorderTask: async (taskId, toCol) => {
+        // Server hat aktuell kein expliziertes Reorder-Endpoint — Spalte ändern reicht.
+        return get().moveTask(taskId, toCol);
+      },
 
-      deleteTask: (id) => set((s) => ({ tasks: s.tasks.filter((t) => t.id !== id) })),
+      addTask: async (partial) => {
+        try {
+          const created = await api.createTask({
+            title: partial.title,
+            description: partial.desc ?? null,
+            column: partial.col,
+            priority: partial.prio,
+            estH: partial.estH,
+            due: (partial.due as string | null | undefined) ?? null,
+            projectId: partial.proj ?? null,
+            assigneeId: partial.who ?? get().currentUser ?? null,
+          });
+          const t = api.fromServerTask(created, []);
+          set((s) => ({ tasks: [...s.tasks, t] }));
+          return t;
+        } catch (e) {
+          console.error('addTask failed', e);
+          return null;
+        }
+      },
 
-      startTimer: (taskId, withPomodoro = false) =>
-        set((s) => {
-          const now = Date.now();
-          let tasks = s.tasks;
-          if (s.timer) {
-            const elapsedH = (now - s.timer.startedAt) / 1000 / 3600;
-            const prevId = s.timer.taskId;
-            const prevStart = s.timer.startedAt;
-            tasks = tasks.map((t) =>
-              t.id === prevId
-                ? {
-                    ...t,
-                    loggedH: +(t.loggedH + elapsedH).toFixed(2),
-                    sessions: [...t.sessions, { from: prevStart, to: now, h: +elapsedH.toFixed(2), source: 'timer' }],
-                  }
-                : t,
-            );
-          }
-          return {
-            tasks,
-            timer: {
-              taskId,
-              startedAt: now,
-              pomodoro: withPomodoro
-                ? { mode: 'focus', blockIndex: 0, blocksDone: 0, startedAt: now }
-                : null,
-            },
-          };
-        }),
+      updateTask: async (id, patch) => {
+        const before = get().tasks;
+        // Optimistic
+        set({ tasks: before.map((t) => (t.id === id ? { ...t, ...patch } : t)) });
+        try {
+          const serverPatch = mapPatchToServer(patch);
+          if (Object.keys(serverPatch).length === 0) return; // nichts auf Server zu schicken
+          const updated = await api.updateTask(id, serverPatch);
+          set((s) => ({
+            tasks: s.tasks.map((t) =>
+              t.id === id ? { ...api.fromServerTask(updated, []), sessions: t.sessions } : t,
+            ),
+          }));
+        } catch (e) {
+          set({ tasks: before });
+          console.error('updateTask failed', e);
+        }
+      },
 
-      stopTimer: () =>
-        set((s) => {
-          if (!s.timer) return s;
-          const now = Date.now();
-          const elapsedH = (now - s.timer.startedAt) / 1000 / 3600;
-          const prevId = s.timer.taskId;
-          const prevStart = s.timer.startedAt;
-          const tasks = s.tasks.map((t) =>
-            t.id === prevId
-              ? {
-                  ...t,
-                  loggedH: +(t.loggedH + elapsedH).toFixed(2),
-                  sessions: [...t.sessions, { from: prevStart, to: now, h: +elapsedH.toFixed(2), source: 'timer' as const }],
-                }
-              : t,
-          );
-          return { tasks, timer: null };
-        }),
+      deleteTask: async (id) => {
+        const before = get().tasks;
+        set({ tasks: before.filter((t) => t.id !== id) });
+        try {
+          await api.deleteTask(id);
+        } catch (e) {
+          set({ tasks: before });
+          console.error('deleteTask failed', e);
+        }
+      },
+
+      startTimer: async (taskId, withPomodoro = true) => {
+        try {
+          const live = await api.startServerTimer(taskId, withPomodoro);
+          set({ timer: api.fromServerLiveTimer(live) });
+        } catch (e) {
+          console.error('startTimer failed', e);
+        }
+      },
+
+      stopTimer: async () => {
+        try {
+          await api.stopServerTimer();
+          set({ timer: null });
+        } catch (e) {
+          console.error('stopTimer failed', e);
+        }
+      },
 
       togglePomodoro: () =>
         set((s) => {
@@ -160,45 +183,82 @@ export const useStore = create<BTMStore>()(
           };
         }),
 
-      addProject: (partial) => {
-        const p: Project = {
-          id: shortId('P'),
-          code: 'NEU',
-          name: 'Neues Projekt',
-          color: '#6B6359',
-          client: '',
-          due: null,
-          ...partial,
-        };
-        set((s) => ({ projects: [...s.projects, p] }));
-        return p;
+      addProject: async (partial) => {
+        if (!partial.code || !partial.name) {
+          console.warn('addProject braucht code+name');
+          return null;
+        }
+        try {
+          const created = await api.createProject({
+            code: partial.code,
+            name: partial.name,
+            color: partial.color ?? '#6B6359',
+            client: partial.client ?? null,
+            due: partial.due ?? null,
+          });
+          const p = api.fromServerProject(created);
+          set((s) => ({ projects: [...s.projects, p] }));
+          return p;
+        } catch (e) {
+          console.error('addProject failed', e);
+          return null;
+        }
       },
 
-      updateProject: (id, patch) =>
-        set((s) => ({ projects: s.projects.map((p) => (p.id === id ? { ...p, ...patch } : p)) })),
+      updateProject: async (id, patch) => {
+        const before = get().projects;
+        set({ projects: before.map((p) => (p.id === id ? { ...p, ...patch } : p)) });
+        try {
+          const updated = await api.updateProject(id, {
+            code: patch.code,
+            name: patch.name,
+            color: patch.color,
+            client: patch.client,
+            due: patch.due,
+          });
+          set((s) => ({
+            projects: s.projects.map((p) => (p.id === id ? api.fromServerProject(updated) : p)),
+          }));
+        } catch (e) {
+          set({ projects: before });
+          console.error('updateProject failed', e);
+        }
+      },
 
-      deleteProject: (id) =>
-        set((s) => ({
-          projects: s.projects.filter((p) => p.id !== id),
-          tasks: s.tasks.map((t) => (t.proj === id ? { ...t, proj: null } : t)),
-        })),
+      deleteProject: async (id) => {
+        const before = get().projects;
+        set({
+          projects: before.filter((p) => p.id !== id),
+          tasks: get().tasks.map((t) => (t.proj === id ? { ...t, proj: null } : t)),
+        });
+        try {
+          await api.deleteProject(id);
+        } catch (e) {
+          set({ projects: before });
+          console.error('deleteProject failed', e);
+        }
+      },
 
       setUI: (patch) => set((s) => ({ ui: { ...s.ui, ...patch } })),
       setFilter: (patch) => set((s) => ({ filter: { ...s.filter, ...patch } })),
       setUser: (id) => set({ currentUser: id }),
       setLayout: (layout) => set((s) => ({ ui: { ...s.ui, layout } })),
 
-      resetDemo: () => set({ ...initialState() }),
+      // Reset rein-lokaler UI-State (Server-Daten bleiben).
+      resetDemo: () =>
+        set((s) => ({
+          ...s,
+          filter: { proj: 'all', who: 'mine', q: '' },
+          ui: { drawer: null, taskDetailId: null, layout: 'kanban' },
+        })),
     }),
     {
       name: STORAGE_KEY,
       storage: createJSONStorage(() => localStorage),
-      partialize: (s): BTMState => ({
+      // Persistiere NUR UI-Settings, nicht die Server-Daten.
+      partialize: (s) => ({
         currentUser: s.currentUser,
-        projects: s.projects,
-        tasks: s.tasks,
         filter: s.filter,
-        timer: s.timer,
         ui: s.ui,
       }),
     },
