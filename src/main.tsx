@@ -8,16 +8,22 @@ import { AppGate } from './auth/AppGate';
 import './styles/globio-tokens.css';
 import './styles/btm.css';
 import './styles/btm-glass.css';
+import './styles/btm-dark.css';
+import './styles/btm-admin.css';
 import './styles/cmdk.css';
 import './styles/sidebar-profile.css';
 import './styles/auth.css';
 import './styles/api-tokens.css';
 
 // Theme früh setzen — sonst hat der Login-Screen kein Glass.
+const VALID_THEMES = ['default', 'glass', 'default-dark', 'glass-dark'] as const;
+type ValidTheme = (typeof VALID_THEMES)[number];
 try {
   const raw = localStorage.getItem('btm.tweaks.v1');
   const t = raw ? (JSON.parse(raw).theme as string | undefined) : undefined;
-  document.body.dataset.theme = t === 'default' ? 'default' : 'glass';
+  document.body.dataset.theme = (VALID_THEMES as readonly string[]).includes(t ?? '')
+    ? (t as ValidTheme)
+    : 'glass';
 } catch {
   document.body.dataset.theme = 'glass';
 }

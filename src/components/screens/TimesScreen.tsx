@@ -1,6 +1,5 @@
 import { Fragment, useMemo } from 'react';
 import { useStore } from '../../store/store';
-import { PERSONAS } from '../../store/seed';
 import { useTick } from '../shared/hooks';
 import { Icon } from '../shared/Icon';
 import { ProjTag } from '../shared/ProjTag';
@@ -17,8 +16,10 @@ export function TimesScreen() {
   const stopTimer = useStore((s) => s.stopTimer);
   const togglePomodoro = useStore((s) => s.togglePomodoro);
 
+  const users = useStore((s) => s.users);
   useTick(!!timer);
-  const me = PERSONAS.find((p) => p.id === currentUser) ?? PERSONAS[0];
+  const meUser = users.find((u) => u.id === currentUser);
+  const me = { name: meUser ? meUser.name.split(' ')[0] || meUser.name : '—' };
   const myTasks = tasks.filter((t) => t.who === currentUser);
   const days = DEMO_DAYS;
   const todayIdx = 0;

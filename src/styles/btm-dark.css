@@ -1,0 +1,346 @@
+/* =========================================================
+   BTM — Dark-Theme Override
+   Aktiviert mit body[data-theme="default-dark"] oder
+   body[data-theme="glass-dark"].
+
+   Strategie: wir flippen die semantischen Tokens (cream-* und
+   ink-*) auf dunkle Werte. Alles andere im App-CSS rendert
+   automatisch korrekt, weil es schon var() benutzt.
+   ========================================================= */
+
+body[data-theme="default-dark"],
+body[data-theme="glass-dark"] {
+  /* Cream → dunkle Surfaces (von hell-warm zu kalt-dunkel) */
+  --cream-50:  #1A1815;   /* Page-Hintergrund */
+  --cream-100: #232019;   /* Sidebar, Panels */
+  --cream-200: #2D2922;   /* Hover */
+
+  /* Ink-Skala invertiert: 900 ist jetzt fast weiß, 100 fast schwarz */
+  --ink-900: #F4EFE7;
+  --ink-800: #E3DCCE;
+  --ink-700: #C8C0B2;     /* Sekundär-Text */
+  --ink-500: #948A7C;     /* Meta-Text */
+  --ink-400: #6E6557;
+  --ink-300: #4D453A;     /* Disabled / Lines */
+  --ink-200: #3A332A;     /* Borders */
+  --ink-100: #2D2922;     /* Subtle Borders */
+
+  /* Accent etwas heller, damit er auf Dunkel pop't */
+  --accent-50:  #3A1F12;
+  --accent-100: #5A2E1A;
+  --accent-500: #E07140;
+  --accent-600: #C85A2C;
+  --accent-700: #A84722;
+
+  /* Info / Semantic für Dunkel */
+  --info-50:  #1F2935;
+  --info-500: #7A9CC8;
+  --info-700: #A6BFE0;
+
+  --bg-page:    var(--cream-50);
+  --bg-surface: var(--cream-50);
+  --bg-panel:   var(--cream-100);
+  --bg-panel-hover: var(--cream-200);
+
+  --border: var(--ink-200);
+  --border-subtle: var(--ink-100);
+  --border-strong: var(--ink-300);
+
+  color-scheme: dark;
+}
+
+/* ---------- Studio-Dark spezifisch ---------- */
+/* Active sidebar item: war schwarz auf cream — jetzt accent-tinted highlight */
+body[data-theme="default-dark"] .sb-item.active {
+  background: var(--accent-500);
+  color: #1A1815;
+}
+body[data-theme="default-dark"] .sb-item.active .sb-count {
+  background: rgba(0, 0, 0, 0.25);
+  color: #fff;
+}
+
+/* Topbar primary button war .tb-btn.primary { background: ink-900 } —
+   in Dark wird das ein helles Off-White. Wir wollen aber, dass „primär"
+   visuell der Akzent ist. */
+body[data-theme="default-dark"] .tb-btn.primary {
+  background: var(--accent-500);
+  border-color: var(--accent-500);
+  color: #1A1815;
+}
+body[data-theme="default-dark"] .tb-btn.primary:hover {
+  background: var(--accent-600);
+}
+
+/* Layout-Toggle (Kanban/Liste/Timeline) — der active-State war ink-900 */
+body[data-theme="default-dark"] .layout-toggle button.active {
+  background: var(--accent-500);
+  color: #1A1815;
+}
+
+/* Timer-hero card war ink-900 — bleibt dunkel, aber etwas Akzent dazu */
+body[data-theme="default-dark"] .timer-hero {
+  background: linear-gradient(135deg, #2A2620, #1F1C18);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Brand-Mark plate */
+body[data-theme="default-dark"] .sb-brand-mark {
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.06) inset,
+    0 1px 2px rgba(0, 0, 0, 0.4),
+    0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Scrollbars */
+body[data-theme="default-dark"] .scrollable,
+body[data-theme="glass-dark"]   .scrollable {
+  scrollbar-color: var(--ink-300) transparent;
+}
+
+/* Pills auf Dunkel */
+body[data-theme="default-dark"] .pill.todo,
+body[data-theme="glass-dark"]   .pill.todo {
+  background: var(--cream-200);
+  color: var(--ink-700);
+  border-color: var(--ink-200);
+}
+body[data-theme="default-dark"] .pill.doing,
+body[data-theme="glass-dark"]   .pill.doing {
+  background: rgba(224, 113, 64, 0.15);
+  color: #E89770;
+  border-color: rgba(224, 113, 64, 0.3);
+}
+body[data-theme="default-dark"] .pill.review,
+body[data-theme="glass-dark"]   .pill.review {
+  background: rgba(122, 156, 200, 0.15);
+  color: #A6BFE0;
+  border-color: rgba(122, 156, 200, 0.3);
+}
+
+/* Empty states / dashed boxes — der border-dashed war ink-300 (jetzt sehr hell);
+   wir fixen ihn zurück auf etwas Dunkles */
+body[data-theme="default-dark"] .empty-state,
+body[data-theme="glass-dark"]   .empty-state {
+  border-color: var(--ink-200);
+}
+
+/* ---------- Glass-Dark spezifisch ---------- */
+/* Den ambient gradient für Dark Glass anders färben, dunkler basieren,
+   dann frosted Surfaces dunkel mit weißem Inner-Highlight */
+body[data-theme="glass-dark"] {
+  background:
+    radial-gradient(1100px 700px at 88% -8%, rgba(224, 113, 64, 0.22), transparent 60%),
+    radial-gradient(900px 600px at -10% 110%, rgba(122, 156, 200, 0.16), transparent 55%),
+    radial-gradient(700px 500px at 50% 50%, rgba(140, 175, 110, 0.10), transparent 60%),
+    #100E0C;
+  background-attachment: fixed;
+}
+
+body[data-theme="glass-dark"] .app { background: transparent; }
+
+/* Sidebar / Topbar — frosted dunkel */
+body[data-theme="glass-dark"] .app-sidebar {
+  background: rgba(28, 26, 23, 0.55);
+  backdrop-filter: blur(32px) saturate(180%);
+  -webkit-backdrop-filter: blur(32px) saturate(180%);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  color: var(--ink-900);
+}
+body[data-theme="glass-dark"] .app-sidebar .sb-brand-mark {
+  background: var(--cream-100);
+  color: var(--cream-50);
+}
+body[data-theme="glass-dark"] .app-sidebar .sb-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--ink-900);
+}
+body[data-theme="glass-dark"] .app-sidebar .sb-item.active {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--ink-900);
+  box-shadow:
+    0 0 0 0.5px rgba(255, 255, 255, 0.08),
+    0 1px 2px rgba(0, 0, 0, 0.3);
+}
+body[data-theme="glass-dark"] .app-sidebar .sb-foot:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+body[data-theme="glass-dark"] .app-topbar {
+  background: rgba(28, 26, 23, 0.55);
+  backdrop-filter: blur(22px) saturate(180%);
+  -webkit-backdrop-filter: blur(22px) saturate(180%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+}
+
+body[data-theme="glass-dark"] .tb-search {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+body[data-theme="glass-dark"] .tb-btn,
+body[data-theme="glass-dark"] .tb-icon-btn,
+body[data-theme="glass-dark"] .persona-trigger {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.05) inset,
+    0 1px 2px rgba(0, 0, 0, 0.25);
+}
+body[data-theme="glass-dark"] .tb-btn:hover,
+body[data-theme="glass-dark"] .tb-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+body[data-theme="glass-dark"] .tb-btn.primary {
+  background: rgba(224, 113, 64, 0.92);
+  border-color: rgba(224, 113, 64, 0.92);
+  color: #1A1815;
+}
+body[data-theme="glass-dark"] .tb-btn.accent {
+  background: rgba(224, 113, 64, 0.92);
+  border-color: rgba(224, 113, 64, 0.92);
+  color: #fff;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.15) inset,
+    0 6px 18px rgba(224, 113, 64, 0.32);
+}
+
+body[data-theme="glass-dark"] .timer-chip {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--ink-900);
+}
+
+/* Cards / KPIs / Kanban-Spalten */
+body[data-theme="glass-dark"] .kpi,
+body[data-theme="glass-dark"] .task-card,
+body[data-theme="glass-dark"] .proj-card,
+body[data-theme="glass-dark"] .kanban-col {
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.05) inset,
+    0 1px 2px rgba(0, 0, 0, 0.2),
+    0 8px 24px rgba(0, 0, 0, 0.18);
+}
+body[data-theme="glass-dark"] .task-card:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Timer-hero in Glass-Dark — frosted accent */
+body[data-theme="glass-dark"] .timer-hero {
+  background: linear-gradient(135deg, rgba(224, 113, 64, 0.22), rgba(168, 71, 34, 0.22));
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.08) inset,
+    0 16px 40px rgba(0, 0, 0, 0.4);
+}
+
+/* macOS-style segmented controls in Glass-Dark */
+body[data-theme="glass-dark"] .layout-toggle,
+body[data-theme="glass-dark"] .seg-control,
+body[data-theme="glass-dark"] .twk-radio {
+  background: rgba(255, 255, 255, 0.05);
+  border: 0.5px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+}
+body[data-theme="glass-dark"] .layout-toggle button.active,
+body[data-theme="glass-dark"] .seg-control button.active,
+body[data-theme="glass-dark"] .twk-radio button[data-on="1"] {
+  background: rgba(255, 255, 255, 0.14);
+  color: var(--ink-900);
+  box-shadow:
+    0 0 0 0.5px rgba(255, 255, 255, 0.12),
+    0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+body[data-theme="glass-dark"] .filter-pill {
+  background: rgba(255, 255, 255, 0.05);
+  border: 0.5px solid rgba(255, 255, 255, 0.08);
+}
+body[data-theme="glass-dark"] .filter-pill.active {
+  background: var(--accent-500);
+  border-color: var(--accent-500);
+  color: #1A1815;
+}
+
+/* Drawer / Modal in Glass-Dark */
+body[data-theme="glass-dark"] .drawer {
+  background: rgba(28, 26, 23, 0.78);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: -16px 0 60px rgba(0, 0, 0, 0.5);
+}
+body[data-theme="glass-dark"] .drawer-backdrop,
+body[data-theme="glass-dark"] .modal-backdrop {
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+}
+body[data-theme="glass-dark"] .modal {
+  background: rgba(28, 26, 23, 0.86);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+body[data-theme="glass-dark"] .form-row input[type="text"],
+body[data-theme="glass-dark"] .form-row input[type="date"],
+body[data-theme="glass-dark"] .form-row textarea,
+body[data-theme="glass-dark"] .form-row select,
+body[data-theme="glass-dark"] .field input[type="text"],
+body[data-theme="glass-dark"] .field textarea,
+body[data-theme="glass-dark"] .field select {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--ink-900);
+}
+
+body[data-theme="glass-dark"] .tweaks-panel {
+  background: rgba(28, 26, 23, 0.82) !important;
+  backdrop-filter: blur(40px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(40px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: var(--ink-900);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.08) inset,
+    0 16px 40px rgba(0, 0, 0, 0.5) !important;
+}
+
+body[data-theme="glass-dark"] .ai-input-wrap textarea,
+body[data-theme="glass-dark"] .ai-task-row {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+body[data-theme="glass-dark"] .empty-state {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+}
+
+body[data-theme="glass-dark"] .proj-card-new {
+  background: rgba(255, 255, 255, 0.025);
+  border: 1.5px dashed rgba(255, 255, 255, 0.15);
+}
+body[data-theme="glass-dark"] .proj-card-new:hover {
+  border-color: rgba(224, 113, 64, 0.6);
+}
+
+body[data-theme="glass-dark"] .btn-primary {
+  background: var(--accent-500);
+  border-color: var(--accent-500);
+  color: #1A1815;
+}
+body[data-theme="glass-dark"] .btn-ghost {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}

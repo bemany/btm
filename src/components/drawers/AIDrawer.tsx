@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import type { ScreenId, Priority } from '../../store/types';
 import { useStore } from '../../store/store';
-import { PERSONAS } from '../../store/seed';
 import { Icon } from '../shared/Icon';
 import { Avatar } from '../shared/Avatar';
 import { ProjTag } from '../shared/ProjTag';
@@ -54,6 +53,7 @@ export interface AIDrawerProps {
 export function AIDrawer({ setActive }: AIDrawerProps) {
   const projects = useStore((s) => s.projects);
   const tasks = useStore((s) => s.tasks);
+  const users = useStore((s) => s.users);
   const addTask = useStore((s) => s.addTask);
   const setUI = useStore((s) => s.setUI);
 
@@ -72,17 +72,26 @@ export function AIDrawer({ setActive }: AIDrawerProps) {
     setTimeout(() => setPhase('result'), 1600);
   };
 
-  const create = () => {
+  const create = async () => {
     let added = 0;
-    editedTasks.forEach((e, i) => {
-      if (picks[i]) {
-        const exists = tasks.find((t) => t.title === e.title);
-        if (!exists) {
-          addTask({ title: e.title, proj: e.proj, who: e.who, estH: e.estH, prio: e.prio });
-          added++;
-        }
-      }
-    });
+    for (let i = 0; i < editedTasks.length; i++) {
+      if (!picks[i]) continue;
+      const e = editedTasks[i];
+      const exists = tasks.find((t) => t.title === e.title);
+      if (exists) continue;
+      // Demo-Persona-IDs (AR/HK/AM/PM) sind keine gültigen User-IDs am Server.
+      // Fallback: nur durchreichen wenn die ID auch in der User-Liste existiert.
+      const validAssignee = users.find((u) => u.id === e.who) ? e.who : null;
+      const validProj = projects.find((p) => p.id === e.proj) ? e.proj : null;
+      await addTask({
+        title: e.title,
+        proj: validProj,
+        who: validAssignee ?? '',
+        estH: e.estH,
+        prio: e.prio,
+      });
+      added++;
+    }
     showToast(`${added} Aufgabe${added === 1 ? '' : 'n'} angelegt → Wochenboard`);
     close();
     setActive('board');
@@ -273,7 +282,7 @@ export function AIDrawer({ setActive }: AIDrawerProps) {
                           <div className="eyebrow">Zugewiesen</div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
                             <Avatar id={e.who} size={18} />
-                            {PERSONAS.find((p) => p.id === e.who)?.full}
+                            {users.find((u) => u.id === e.who)?.name ?? e.who}
                           </div>
                         </div>
                         <div className="ai-prev-cell">
@@ -370,11 +379,13 @@ export function AIDrawer({ setActive }: AIDrawerProps) {
                               )
                             }
                           >
-                            {PERSONAS.map((p) => (
-                              <option key={p.id} value={p.id}>
-                                {p.full}
-                              </option>
-                            ))}
+                            {users
+                              .filter((u) => u.status === 'active')
+                              .map((u) => (
+                                <option key={u.id} value={u.id}>
+                                  {u.name}
+                                </option>
+                              ))}
                           </select>
                         </label>
                         <label>

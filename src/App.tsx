@@ -31,7 +31,6 @@ type Density = 'comfortable' | 'compact';
 
 interface BTMTweaks {
   sidebarCollapsed: boolean;
-  boardLayout: LayoutMode;
   showLiveTimerOnLoad: boolean;
   density: Density;
   theme: ThemeMode;
@@ -39,7 +38,6 @@ interface BTMTweaks {
 
 const TWEAK_DEFAULTS: BTMTweaks = {
   sidebarCollapsed: false,
-  boardLayout: 'kanban',
   showLiveTimerOnLoad: false,
   density: 'comfortable',
   theme: 'glass',
@@ -81,12 +79,6 @@ export function App() {
   useEffect(() => {
     setCollapsed(!!tweaks.sidebarCollapsed);
   }, [tweaks.sidebarCollapsed]);
-
-  useEffect(() => {
-    if (tweaks.boardLayout && tweaks.boardLayout !== layout) {
-      setLayout(tweaks.boardLayout);
-    }
-  }, [tweaks.boardLayout, layout, setLayout]);
 
   useEffect(() => {
     document.body.dataset.theme = tweaks.theme || 'default';
@@ -191,13 +183,13 @@ export function App() {
           />
           <TweakRadio
             label="Board-Ansicht"
-            value={tweaks.boardLayout}
+            value={layout}
             options={[
               { value: 'kanban', label: 'Kanban' },
               { value: 'list', label: 'Liste' },
               { value: 'timeline', label: 'Timeline' },
             ]}
-            onChange={(v) => setTweak('boardLayout', v)}
+            onChange={(v) => setLayout(v)}
           />
           <TweakRadio
             label="Dichte"

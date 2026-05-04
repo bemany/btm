@@ -1,5 +1,4 @@
 import { useStore } from '../../store/store';
-import { PERSONAS } from '../../store/seed';
 import { useTick } from '../shared/hooks';
 import { Icon } from '../shared/Icon';
 import { ProjTag } from '../shared/ProjTag';
@@ -16,8 +15,6 @@ export function MobileScreen() {
   const togglePomodoro = useStore((s) => s.togglePomodoro);
 
   useTick(!!timer);
-  // Persona derived for future avatar use
-  PERSONAS.find((p) => p.id === currentUser);
   const myTasks = tasks.filter((t) => t.who === currentUser);
   const today = myTasks.filter((t) => t.col === 'doing' || t.col === 'todo').slice(0, 4);
   const pomo = timer ? computePomo(timer.pomodoro, Date.now()) : null;

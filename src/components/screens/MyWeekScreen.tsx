@@ -1,5 +1,4 @@
 import { useStore } from '../../store/store';
-import { PERSONAS } from '../../store/seed';
 import type { ScreenId } from '../../store/types';
 import { useTick } from '../shared/hooks';
 import { Icon } from '../shared/Icon';
@@ -21,8 +20,12 @@ export function MyWeekScreen({ setActive }: MyWeekScreenProps) {
   const stopTimer = useStore((s) => s.stopTimer);
   const togglePomodoro = useStore((s) => s.togglePomodoro);
 
+  const users = useStore((s) => s.users);
   useTick(!!timer);
-  const me = PERSONAS.find((p) => p.id === currentUser) ?? PERSONAS[0];
+  const meUser = users.find((u) => u.id === currentUser);
+  const me = meUser
+    ? { name: meUser.name.split(' ')[0] || meUser.name, cap: meUser.cap }
+    : { name: '—', cap: 40 };
   const myTasks = tasks.filter((t) => t.who === currentUser);
   const today = myTasks.filter((t) => t.col === 'doing').slice(0, 5);
   const inReview = myTasks.filter((t) => t.col === 'review');

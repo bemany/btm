@@ -6,7 +6,17 @@
 // Mapping isoliert hier — UI-Code bleibt unverändert.
 
 import { apiFetch } from '../lib/api';
-import type { Task, Project, ColumnId, Priority, Session, Timer } from '../store/types';
+import type {
+  Task,
+  Project,
+  ColumnId,
+  Priority,
+  Session,
+  Timer,
+  AppUser,
+  AppTeam,
+  AppInvitation,
+} from '../store/types';
 
 // ── Server-DTOs ─────────────────────────────────────────────────────────
 
@@ -204,6 +214,114 @@ export async function stopServerTimer(): Promise<ServerLiveTimer | null> {
     method: 'POST',
   });
   return liveTimer;
+}
+
+// ── Users ──────────────────────────────────────────────────────────────
+
+export async function listUsers(): Promise<AppUser[]> {
+  const { users } = await apiFetch<{ users: AppUser[] }>('/users');
+  return users;
+}
+
+export async function updateUser(
+  id: string,
+  patch: Partial<Pick<AppUser, 'name' | 'jobTitle' | 'phone' | 'cap' | 'color' | 'role' | 'status' | 'teamId'>>,
+): Promise<AppUser> {
+  const { user } = await apiFetch<{ user: AppUser }>(`/users/${id}`, {
+    method: 'PATCH',
+    body: patch,
+  });
+  return user;
+}
+
+// ── Teams ──────────────────────────────────────────────────────────────
+
+export async function listTeams(): Promise<AppTeam[]> {
+  const { teams } = await apiFetch<{ teams: AppTeam[] }>('/teams');
+  return teams;
+}
+
+export async function createTeam(name: string, color: string): Promise<AppTeam> {
+  const { team } = await apiFetch<{ team: AppTeam }>('/teams', {
+    method: 'POST',
+    body: { name, color },
+  });
+  return team;
+}
+
+export async function updateTeam(id: string, patch: { name?: string; color?: string }): Promise<AppTeam> {
+  const { team } = await apiFetch<{ team: AppTeam }>(`/teams/${id}`, { method: 'PATCH', body: patch });
+  return team;
+}
+
+export async function deleteTeam(id: string): Promise<void> {
+  await apiFetch(`/teams/${id}`, { method: 'DELETE' });
+}
+
+// ── Invitations ────────────────────────────────────────────────────────
+
+export async function listInvitations(): Promise<AppInvitation[]> {
+  const { invitations } = await apiFetch<{ invitations: AppInvitation[] }>('/invitations');
+  return invitations;
+}
+
+export interface InviteInput {
+  email: string;
+  name?: string;
+  role?: 'admin' | 'member';
+  teamId?: string | null;
+  cap?: number;
+}
+
+export async function sendInvitation(input: InviteInput): Promise<{ created?: boolean; updated?: boolean }> {
+  return apiFetch<{ created?: boolean; updated?: boolean }>('/invitations', {
+    method: 'POST',
+    body: input,
+  });
+}
+
+export async function resendInvitation(id: string): Promise<void> {
+  await apiFetch(`/invitations/${id}/resend`, { method: 'POST' });
+}
+
+export async function cancelInvitation(id: string): Promise<void> {
+  await apiFetch(`/invitations/${id}`, { method: 'DELETE' });
+}
+
+export async function lookupInvitation(token: string): Promise<{
+  email: string;
+  name: string | null;
+  role: 'admin' | 'member';
+  teamId: string | null;
+  cap: number;
+  invitedAt: string;
+}> {
+  return apiFetch(`/invitations/accept/${token}`);
+}
+
+export async function acceptInvitation(token: string): Promise<void> {
+  await apiFetch(`/invitations/accept/${token}`, { method: 'POST' });
+}
+
+// ── Activity ───────────────────────────────────────────────────────────
+
+export interface ActivityEntry {
+  id: string;
+  kind: string;
+  actorId: string | null;
+  target: string | null;
+  meta: Record<string, unknown> | null;
+  createdAt: string;
+}
+
+export async function listActivity(opts: { limit?: number; before?: string; kind?: string } = {}): Promise<ActivityEntry[]> {
+  const params = new URLSearchParams();
+  if (opts.limit) params.set('limit', String(opts.limit));
+  if (opts.before) params.set('before', opts.before);
+  if (opts.kind) params.set('kind', opts.kind);
+  const path = `/activity${params.toString() ? '?' + params.toString() : ''}`;
+  const { activity } = await apiFetch<{ activity: ActivityEntry[] }>(path);
+  return activity;
 }
 
 // ── Sessions ───────────────────────────────────────────────────────────

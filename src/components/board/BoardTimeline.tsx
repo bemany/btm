@@ -1,7 +1,6 @@
 import type { CSSProperties } from 'react';
 import type { Task } from '../../store/types';
 import { useStore } from '../../store/store';
-import { PERSONAS } from '../../store/seed';
 import { Avatar } from '../shared/Avatar';
 import { DEMO_DAYS } from '../../lib/format';
 
@@ -11,6 +10,7 @@ export interface BoardTimelineProps {
 
 export function BoardTimeline({ tasks }: BoardTimelineProps) {
   const projects = useStore((s) => s.projects);
+  const users = useStore((s) => s.users);
   const setUI = useStore((s) => s.setUI);
 
   const days = DEMO_DAYS;
@@ -70,7 +70,7 @@ export function BoardTimeline({ tasks }: BoardTimelineProps) {
         ))}
       </div>
       {Object.keys(byPerson).map((personId) => {
-        const person = PERSONAS.find((p) => p.id === personId);
+        const person = users.find((u) => u.id === personId);
         const list = byPerson[personId];
         return (
           <div

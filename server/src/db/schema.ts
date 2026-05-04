@@ -3,7 +3,7 @@
 // nutzen kann. Domain-Tabellen (projects, tasks, task_sessions, invitations,
 // api_tokens) sind eigen.
 
-import { pgTable, text, timestamp, integer, real, boolean, primaryKey, index } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, integer, real, boolean, jsonb, index } from 'drizzle-orm/pg-core';
 
 // ── Better-Auth Tabellen ──────────────────────────────────────────────
 
@@ -13,10 +13,14 @@ export const users = pgTable('users', {
   emailVerified: boolean('email_verified').notNull().default(false),
   name: text('name').notNull(),
   image: text('image'),
-  // App-spezifisch ergänzt:
+  // App-spezifisch:
   role: text('role', { enum: ['admin', 'member'] }).notNull().default('member'),
+  status: text('status', { enum: ['active', 'inactive'] }).notNull().default('active'),
   cap: integer('cap').notNull().default(40), // Wochenkapazität in h
   color: text('color').notNull().default('#6B6359'),
+  jobTitle: text('job_title'), // Funktion / Rolle (z.B. "Backend-Engineer")
+  phone: text('phone'),
+  teamId: text('team_id'), // FK zu teams.id (set null on team delete)
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
@@ -140,15 +144,45 @@ export const liveTimers = pgTable('live_timers', {
 export const invitations = pgTable('invitations', {
   id: text('id').primaryKey(),
   email: text('email').notNull(),
+  name: text('name'), // gewünschter Name (Anzeige in Admin-Liste)
   role: text('role', { enum: ['admin', 'member'] })
     .notNull()
     .default('member'),
+  teamId: text('team_id'), // optional vorab zugewiesen
+  cap: integer('cap').notNull().default(40),
   invitedById: text('invited_by_id').references(() => users.id, { onDelete: 'set null' }),
   token: text('token').notNull().unique(),
   expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
   acceptedAt: timestamp('accepted_at', { withTimezone: true }),
+  cancelledAt: timestamp('cancelled_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
+
+// ── Teams ──────────────────────────────────────────────────────────────
+
+export const teams = pgTable('teams', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  color: text('color').notNull().default('#5E7F4E'),
+  createdById: text('created_by_id').references(() => users.id, { onDelete: 'set null' }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+// ── Activity Log ───────────────────────────────────────────────────────
+
+export const activityLog = pgTable(
+  'activity_log',
+  {
+    id: text('id').primaryKey(),
+    kind: text('kind').notNull(), // 'task_created' | 'task_moved' | 'timer_started' | 'invite_sent' | ...
+    actorId: text('actor_id').references(() => users.id, { onDelete: 'set null' }),
+    target: text('target'), // freie ID oder Email — was die Aktion betraf
+    meta: jsonb('meta'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index('activity_created_idx').on(t.createdAt)],
+);
 
 // API-Tokens für MCP / CLI / Programmatic Access — pro User, hashed.
 export const apiTokens = pgTable(
@@ -182,3 +216,7 @@ export type TaskSession = typeof taskSessions.$inferSelect;
 export type LiveTimer = typeof liveTimers.$inferSelect;
 export type Invitation = typeof invitations.$inferSelect;
 export type ApiToken = typeof apiTokens.$inferSelect;
+export type Team = typeof teams.$inferSelect;
+export type NewTeam = typeof teams.$inferInsert;
+export type ActivityEntry = typeof activityLog.$inferSelect;
+export type NewActivityEntry = typeof activityLog.$inferInsert;

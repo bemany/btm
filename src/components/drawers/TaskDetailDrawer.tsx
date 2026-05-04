@@ -1,6 +1,6 @@
 import type { ColumnId, Priority } from '../../store/types';
 import { useStore } from '../../store/store';
-import { COLUMNS, PERSONAS } from '../../store/seed';
+import { COLUMNS } from '../../store/seed';
 import { useTick } from '../shared/hooks';
 import { Icon } from '../shared/Icon';
 import { ProjTag } from '../shared/ProjTag';
@@ -13,6 +13,7 @@ export interface TaskDetailDrawerProps {
 export function TaskDetailDrawer({ id }: TaskDetailDrawerProps) {
   const tasks = useStore((s) => s.tasks);
   const projects = useStore((s) => s.projects);
+  const users = useStore((s) => s.users);
   const timer = useStore((s) => s.timer);
   const setUI = useStore((s) => s.setUI);
   const updateTask = useStore((s) => s.updateTask);
@@ -102,9 +103,10 @@ export function TaskDetailDrawer({ id }: TaskDetailDrawerProps) {
                 fontSize: 12,
               }}
             >
-              {PERSONAS.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.full}
+              <option value="">— niemand —</option>
+              {users.filter((u) => u.status === 'active').map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.name}
                 </option>
               ))}
             </select>

@@ -10,7 +10,18 @@
 
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import type { BTMState, Task, Project, LayoutMode, UIState, Filter, Timer } from './types';
+import type {
+  BTMState,
+  Task,
+  Project,
+  LayoutMode,
+  UIState,
+  Filter,
+  Timer,
+  AppUser,
+  AppTeam,
+  AppInvitation,
+} from './types';
 import * as api from '../data/api';
 
 interface BTMActions {
@@ -18,6 +29,9 @@ interface BTMActions {
   setTasks: (tasks: Task[]) => void;
   setProjects: (projects: Project[]) => void;
   setTimer: (timer: Timer | null) => void;
+  setUsers: (users: AppUser[]) => void;
+  setTeams: (teams: AppTeam[]) => void;
+  setInvitations: (invitations: AppInvitation[]) => void;
 
   // Mutations: rufen API + cachen Ergebnis lokal (optimistic-style)
   moveTask: (taskId: string, toCol: Task['col']) => Promise<void>;
@@ -53,6 +67,9 @@ function initialState(): BTMState {
     currentUser: '',
     projects: [],
     tasks: [],
+    users: [],
+    teams: [],
+    invitations: [],
     filter: { proj: 'all', who: 'mine', q: '' },
     timer: null,
     ui: { drawer: null, taskDetailId: null, layout: 'kanban' },
@@ -80,6 +97,9 @@ export const useStore = create<BTMStore>()(
       setTasks: (tasks) => set({ tasks }),
       setProjects: (projects) => set({ projects }),
       setTimer: (timer) => set({ timer }),
+      setUsers: (users) => set({ users }),
+      setTeams: (teams) => set({ teams }),
+      setInvitations: (invitations) => set({ invitations }),
 
       moveTask: async (taskId, toCol) => {
         const before = get().tasks;

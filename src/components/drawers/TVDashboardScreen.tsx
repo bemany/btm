@@ -1,5 +1,4 @@
 import { useStore } from '../../store/store';
-import { PERSONAS } from '../../store/seed';
 import { useTick } from '../shared/hooks';
 import { Icon } from '../shared/Icon';
 import { fmtHMS } from '../../lib/format';
@@ -7,6 +6,7 @@ import { fmtHMS } from '../../lib/format';
 export function TVDashboardScreen() {
   const tasks = useStore((s) => s.tasks);
   const projects = useStore((s) => s.projects);
+  const users = useStore((s) => s.users);
   const timer = useStore((s) => s.timer);
 
   useTick(true); // 1s tick for live clock + timer
@@ -17,7 +17,13 @@ export function TVDashboardScreen() {
   const timeStr = now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   const kw = 'KW 19';
 
-  const personaById = (id: string) => PERSONAS.find((p) => p.id === id);
+  const personaById = (id: string | null | undefined) => {
+    if (!id) return undefined;
+    const u = users.find((x) => x.id === id);
+    if (!u) return undefined;
+    const initials = (u.name || u.email).slice(0, 2).toUpperCase();
+    return { id: initials, full: u.name, color: u.color };
+  };
   const projectById = (id: string | null) => (id ? projects.find((p) => p.id === id) : undefined);
 
   const inProgress = tasks.filter((t) => t.col === 'doing');

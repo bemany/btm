@@ -1,18 +1,19 @@
 import type { CSSProperties } from 'react';
 import { useStore } from '../../store/store';
-import { PERSONAS } from '../../store/seed';
 import { Avatar } from '../shared/Avatar';
 
 export function CapacityScreen() {
   const tasks = useStore((s) => s.tasks);
+  const users = useStore((s) => s.users);
 
-  const rows = PERSONAS.filter((p) => p.id !== 'PM').map((p) => {
-    const myTasks = tasks.filter((t) => t.who === p.id && t.col !== 'done');
+  const activeUsers = users.filter((u) => u.status === 'active');
+  const rows = activeUsers.map((u) => {
+    const myTasks = tasks.filter((t) => t.who === u.id && t.col !== 'done');
     const planned = myTasks.reduce((a, b) => a + b.estH, 0);
-    const logged = tasks.filter((t) => t.who === p.id).reduce((a, b) => a + b.loggedH, 0);
-    return { ...p, planned, logged };
+    const logged = tasks.filter((t) => t.who === u.id).reduce((a, b) => a + b.loggedH, 0);
+    return { ...u, full: u.name, role: u.jobTitle ?? '—', planned, logged };
   });
-  const totalCap = rows.reduce((a, r) => a + r.cap, 0);
+  const totalCap = rows.reduce((a, r) => a + r.cap, 0) || 1;
   const totalPlan = rows.reduce((a, r) => a + r.planned, 0);
   const totalLog = rows.reduce((a, r) => a + r.logged, 0);
 

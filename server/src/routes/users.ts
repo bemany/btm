@@ -1,39 +1,51 @@
 import { Hono } from 'hono';
-import { eq, asc } from 'drizzle-orm';
+import { eq, asc, and } from 'drizzle-orm';
 import { z } from 'zod';
 import { nanoid } from 'nanoid';
 import { db } from '../db/client.js';
 import { users, invitations } from '../db/schema.js';
 import { requireAuth, requireAdmin, type Variables } from '../lib/context.js';
 import { sendMail, inviteEmail } from '../lib/mailer.js';
+import { logActivity } from '../lib/activity.js';
 
 const inviteSchema = z.object({
   email: z.string().email(),
+  name: z.string().max(120).optional(),
   role: z.enum(['admin', 'member']).default('member'),
+  teamId: z.string().nullable().optional(),
+  cap: z.number().int().min(0).max(168).default(40),
 });
 
 const updateUserSchema = z.object({
   name: z.string().min(1).max(120).optional(),
+  jobTitle: z.string().max(120).nullable().optional(),
+  phone: z.string().max(40).nullable().optional(),
   cap: z.number().int().min(0).max(168).optional(),
   color: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
   role: z.enum(['admin', 'member']).optional(),
+  status: z.enum(['active', 'inactive']).optional(),
+  teamId: z.string().nullable().optional(),
 });
+
+const projectionFields = {
+  id: users.id,
+  email: users.email,
+  name: users.name,
+  image: users.image,
+  role: users.role,
+  status: users.status,
+  cap: users.cap,
+  color: users.color,
+  jobTitle: users.jobTitle,
+  phone: users.phone,
+  teamId: users.teamId,
+  createdAt: users.createdAt,
+} as const;
 
 export const usersRoute = new Hono<{ Variables: Variables }>()
   .use('*', requireAuth)
   .get('/', async (c) => {
-    const list = await db
-      .select({
-        id: users.id,
-        email: users.email,
-        name: users.name,
-        image: users.image,
-        role: users.role,
-        cap: users.cap,
-        color: users.color,
-      })
-      .from(users)
-      .orderBy(asc(users.name));
+    const list = await db.select(projectionFields).from(users).orderBy(asc(users.name));
     return c.json({ users: list });
   })
   .patch('/:id', async (c) => {
@@ -41,34 +53,70 @@ export const usersRoute = new Hono<{ Variables: Variables }>()
     const id = c.req.param('id');
     const body = updateUserSchema.parse(await c.req.json());
 
-    // Nur Admins dürfen role ändern oder andere User editieren
+    // Nur Admins dürfen role/status ändern oder andere User editieren
     if (id !== me.id && me.role !== 'admin') return c.json({ error: 'forbidden' }, 403);
-    if (body.role && me.role !== 'admin') return c.json({ error: 'admin only' }, 403);
+    if ((body.role || body.status) && me.role !== 'admin') return c.json({ error: 'admin only' }, 403);
 
+    const before = await db.select().from(users).where(eq(users.id, id)).limit(1);
     const [row] = await db
       .update(users)
       .set({ ...body, updatedAt: new Date() })
       .where(eq(users.id, id))
-      .returning();
+      .returning(projectionFields);
     if (!row) return c.json({ error: 'not found' }, 404);
+
+    if (body.role && before[0]?.role !== body.role) {
+      logActivity({ kind: 'role_changed', actorId: me.id, target: id, meta: { from: before[0]?.role, to: body.role } });
+    }
+    if (body.status && before[0]?.status !== body.status) {
+      logActivity({
+        kind: body.status === 'inactive' ? 'user_deactivated' : 'user_activated',
+        actorId: me.id,
+        target: id,
+      });
+    }
+    if (Object.keys(body).some((k) => !['role', 'status'].includes(k))) {
+      logActivity({ kind: 'user_updated', actorId: me.id, target: id, meta: body });
+    }
+
     return c.json({ user: row });
   });
 
 export const invitationsRoute = new Hono<{ Variables: Variables }>()
   .use('*', requireAuth)
   .get('/', requireAdmin, async (c) => {
-    const list = await db.select().from(invitations).orderBy(asc(invitations.createdAt));
-    return c.json({ invitations: list });
+    // Nur "offene" Einladungen (nicht akzeptiert, nicht zurückgezogen, nicht abgelaufen)
+    const now = new Date();
+    const list = await db
+      .select()
+      .from(invitations)
+      .orderBy(asc(invitations.createdAt));
+    return c.json({
+      invitations: list.filter(
+        (i) => !i.acceptedAt && !i.cancelledAt && i.expiresAt > now,
+      ),
+    });
   })
   .post('/', requireAdmin, async (c) => {
     const inviter = c.get('user')!;
     const body = inviteSchema.parse(await c.req.json());
     const email = body.email.toLowerCase().trim();
 
-    // Existiert User schon? Dann nur Rolle anpassen.
+    // Existiert User schon? Dann nur Felder anpassen + reaktivieren
     const [existing] = await db.select().from(users).where(eq(users.email, email)).limit(1);
     if (existing) {
-      await db.update(users).set({ role: body.role, updatedAt: new Date() }).where(eq(users.id, existing.id));
+      await db
+        .update(users)
+        .set({
+          role: body.role,
+          teamId: body.teamId ?? existing.teamId,
+          cap: body.cap,
+          status: 'active',
+          name: body.name?.trim() || existing.name,
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, existing.id));
+      logActivity({ kind: 'user_updated', actorId: inviter.id, target: existing.id, meta: { reinvited: true } });
       return c.json({ updated: true, user: existing });
     }
 
@@ -77,7 +125,17 @@ export const invitationsRoute = new Hono<{ Variables: Variables }>()
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
     const [row] = await db
       .insert(invitations)
-      .values({ id, email, role: body.role, invitedById: inviter.id, token, expiresAt })
+      .values({
+        id,
+        email,
+        name: body.name?.trim() || null,
+        role: body.role,
+        teamId: body.teamId ?? null,
+        cap: body.cap,
+        invitedById: inviter.id,
+        token,
+        expiresAt,
+      })
       .returning();
 
     const baseUrl = process.env.BETTER_AUTH_URL ?? 'https://btm.bethesna.org';
@@ -85,25 +143,89 @@ export const invitationsRoute = new Hono<{ Variables: Variables }>()
     const mail = inviteEmail({ url, inviterName: inviter.name, role: body.role });
     await sendMail({ to: email, ...mail });
 
+    logActivity({ kind: 'invite_sent', actorId: inviter.id, target: email, meta: { role: body.role, teamId: body.teamId } });
     return c.json({ invitation: row }, 201);
   })
-  .delete('/:id', requireAdmin, async (c) => {
+  .post('/:id/resend', requireAdmin, async (c) => {
+    const inviter = c.get('user')!;
     const id = c.req.param('id');
-    await db.delete(invitations).where(eq(invitations.id, id));
+    const [inv] = await db.select().from(invitations).where(eq(invitations.id, id)).limit(1);
+    if (!inv) return c.json({ error: 'not found' }, 404);
+    if (inv.acceptedAt) return c.json({ error: 'already accepted' }, 410);
+    if (inv.cancelledAt) return c.json({ error: 'cancelled' }, 410);
+
+    // Frische Expiry + Token
+    const newToken = nanoid(32);
+    const newExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    await db
+      .update(invitations)
+      .set({ token: newToken, expiresAt: newExpiry })
+      .where(eq(invitations.id, id));
+
+    const baseUrl = process.env.BETTER_AUTH_URL ?? 'https://btm.bethesna.org';
+    const url = `${baseUrl}/invite/${newToken}`;
+    const mail = inviteEmail({ url, inviterName: inviter.name, role: inv.role });
+    await sendMail({ to: inv.email, ...mail });
+
+    logActivity({ kind: 'invite_resent', actorId: inviter.id, target: inv.email });
     return c.json({ ok: true });
   })
-  // Token-basiertes Akzeptieren — der eingeladene User klickt auf den Link,
-  // landet auf /invite/<token>. Frontend ruft dann diese Route auf und
-  // löst Magic-Link-Login aus.
-  .post('/accept/:token', async (c) => {
+  .delete('/:id', requireAdmin, async (c) => {
+    const inviter = c.get('user')!;
+    const id = c.req.param('id');
+    const [inv] = await db.select().from(invitations).where(eq(invitations.id, id)).limit(1);
+    if (!inv) return c.json({ error: 'not found' }, 404);
+    await db
+      .update(invitations)
+      .set({ cancelledAt: new Date() })
+      .where(eq(invitations.id, id));
+    logActivity({ kind: 'invite_cancelled', actorId: inviter.id, target: inv.email });
+    return c.json({ ok: true });
+  })
+  // Token-basiertes Akzeptieren — Public-Route, kein Auth
+  .get('/accept/:token', async (c) => {
     const token = c.req.param('token');
-    const [inv] = await db.select().from(invitations).where(eq(invitations.token, token)).limit(1);
-    if (!inv) return c.json({ error: 'invalid or used' }, 400);
+    const [inv] = await db
+      .select()
+      .from(invitations)
+      .where(and(eq(invitations.token, token)))
+      .limit(1);
+    if (!inv) return c.json({ error: 'invalid or used' }, 404);
     if (inv.acceptedAt) return c.json({ error: 'already accepted', email: inv.email }, 410);
+    if (inv.cancelledAt) return c.json({ error: 'cancelled' }, 410);
     if (inv.expiresAt < new Date()) return c.json({ error: 'expired' }, 410);
     return c.json({
       email: inv.email,
+      name: inv.name,
       role: inv.role,
+      teamId: inv.teamId,
+      cap: inv.cap,
       invitedAt: inv.createdAt,
     });
+  })
+  // Markiert Einladung als angenommen (wird vom Frontend nach erfolgreichem Magic-Link aufgerufen)
+  .post('/accept/:token', async (c) => {
+    const token = c.req.param('token');
+    const [inv] = await db.select().from(invitations).where(eq(invitations.token, token)).limit(1);
+    if (!inv) return c.json({ error: 'invalid' }, 404);
+    if (inv.acceptedAt) return c.json({ ok: true });
+
+    await db.update(invitations).set({ acceptedAt: new Date() }).where(eq(invitations.id, inv.id));
+    // User mit den Invite-Werten anreichern (falls schon angelegt durch Magic-Link)
+    const [u] = await db.select().from(users).where(eq(users.email, inv.email)).limit(1);
+    if (u) {
+      await db
+        .update(users)
+        .set({
+          role: inv.role,
+          teamId: inv.teamId,
+          cap: inv.cap,
+          name: inv.name?.trim() || u.name,
+          status: 'active',
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, u.id));
+      logActivity({ kind: 'invite_accepted', actorId: u.id, target: inv.email });
+    }
+    return c.json({ ok: true });
   });

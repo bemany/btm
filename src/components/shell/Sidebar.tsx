@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useStore } from '../../store/store';
 import type { ScreenId, ThemeMode } from '../../store/types';
+import { composeTheme, decomposeTheme } from '../../store/types';
 import { useAuth } from '../../auth/AuthContext';
 import { Icon } from '../shared/Icon';
 import { showToast } from '../shared/Toast';
@@ -203,7 +204,14 @@ export function Sidebar({
                 </span>
               )}
             </div>
-            <div className="r">{theme === 'glass' ? 'Glass-Modus' : 'Studio-Modus'}</div>
+            <div className="r">
+              {(() => {
+                const { base, brightness } = decomposeTheme(theme);
+                return `${base === 'glass' ? 'Glass' : 'Studio'} · ${
+                  brightness === 'dark' ? 'Dunkel' : 'Hell'
+                }`;
+              })()}
+            </div>
           </div>
           <Icon
             name={profileOpen ? 'chevron-down' : 'chevron-up'}
@@ -225,35 +233,70 @@ export function Sidebar({
               </>
             )}
 
-            <div className="sb-profile-section-label">Aussehen</div>
-            <button
-              className={`sb-profile-item ${theme === 'glass' ? 'active' : ''}`}
-              onClick={() => {
-                setTheme('glass');
-                showToast('Glass-Modus aktiv');
-              }}
-            >
-              <span className="sb-profile-swatch glass" />
-              <div className="sb-profile-item-text">
-                <div className="sb-profile-item-title">Glass</div>
-                <div className="sb-profile-item-sub">Frosted, macOS-ähnlich</div>
-              </div>
-              {theme === 'glass' && <Icon name="check" size={14} style={{ color: 'var(--accent-500)' }} />}
-            </button>
-            <button
-              className={`sb-profile-item ${theme === 'default' ? 'active' : ''}`}
-              onClick={() => {
-                setTheme('default');
-                showToast('Studio-Modus aktiv');
-              }}
-            >
-              <span className="sb-profile-swatch studio" />
-              <div className="sb-profile-item-text">
-                <div className="sb-profile-item-title">Studio</div>
-                <div className="sb-profile-item-sub">Solid Cream, dichter</div>
-              </div>
-              {theme === 'default' && <Icon name="check" size={14} style={{ color: 'var(--accent-500)' }} />}
-            </button>
+            {(() => {
+              const { base: curBase, brightness: curBright } = decomposeTheme(theme);
+              const setBase = (b: 'default' | 'glass') =>
+                setTheme(composeTheme(b, curBright));
+              const setBright = (br: 'light' | 'dark') =>
+                setTheme(composeTheme(curBase, br));
+              return (
+                <>
+                  <div className="sb-profile-section-label">Aussehen</div>
+                  <button
+                    className={`sb-profile-item ${curBase === 'glass' ? 'active' : ''}`}
+                    onClick={() => setBase('glass')}
+                  >
+                    <span className="sb-profile-swatch glass" />
+                    <div className="sb-profile-item-text">
+                      <div className="sb-profile-item-title">Glass</div>
+                      <div className="sb-profile-item-sub">Frosted, macOS-ähnlich</div>
+                    </div>
+                    {curBase === 'glass' && <Icon name="check" size={14} style={{ color: 'var(--accent-500)' }} />}
+                  </button>
+                  <button
+                    className={`sb-profile-item ${curBase === 'default' ? 'active' : ''}`}
+                    onClick={() => setBase('default')}
+                  >
+                    <span className="sb-profile-swatch studio" />
+                    <div className="sb-profile-item-text">
+                      <div className="sb-profile-item-title">Studio</div>
+                      <div className="sb-profile-item-sub">Solid Cream, dichter</div>
+                    </div>
+                    {curBase === 'default' && <Icon name="check" size={14} style={{ color: 'var(--accent-500)' }} />}
+                  </button>
+
+                  <div className="sb-profile-section-label" style={{ marginTop: 6 }}>
+                    Helligkeit
+                  </div>
+                  <button
+                    className={`sb-profile-item ${curBright === 'light' ? 'active' : ''}`}
+                    onClick={() => setBright('light')}
+                  >
+                    <span className="sb-profile-icon">
+                      <Icon name="sun" size={14} style={{ color: 'var(--ink-700)' }} />
+                    </span>
+                    <div className="sb-profile-item-text">
+                      <div className="sb-profile-item-title">Hell</div>
+                      <div className="sb-profile-item-sub">Cream-Hintergründe</div>
+                    </div>
+                    {curBright === 'light' && <Icon name="check" size={14} style={{ color: 'var(--accent-500)' }} />}
+                  </button>
+                  <button
+                    className={`sb-profile-item ${curBright === 'dark' ? 'active' : ''}`}
+                    onClick={() => setBright('dark')}
+                  >
+                    <span className="sb-profile-icon">
+                      <Icon name="moon" size={14} style={{ color: 'var(--ink-700)' }} />
+                    </span>
+                    <div className="sb-profile-item-text">
+                      <div className="sb-profile-item-title">Dunkel</div>
+                      <div className="sb-profile-item-sub">Augenfreundlich, abends</div>
+                    </div>
+                    {curBright === 'dark' && <Icon name="check" size={14} style={{ color: 'var(--accent-500)' }} />}
+                  </button>
+                </>
+              );
+            })()}
 
             <div className="sb-profile-divider" />
 

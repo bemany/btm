@@ -11,6 +11,8 @@ import { projectsRoute } from './routes/projects.js';
 import { tasksRoute } from './routes/tasks.js';
 import { usersRoute, invitationsRoute } from './routes/users.js';
 import { apiTokensRoute } from './routes/api-tokens.js';
+import { teamsRoute } from './routes/teams.js';
+import { activityRoute } from './routes/activity.js';
 
 const app = new Hono<{ Variables: Variables }>();
 
@@ -43,6 +45,8 @@ app.route('/api/tasks', tasksRoute);
 app.route('/api/users', usersRoute);
 app.route('/api/invitations', invitationsRoute);
 app.route('/api/api-tokens', apiTokensRoute);
+app.route('/api/teams', teamsRoute);
+app.route('/api/activity', activityRoute);
 
 app.get('/api/healthz', (c) => c.json({ ok: true, ts: Date.now() }));
 

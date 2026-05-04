@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import type { ScreenId } from '../../store/types';
 import { useStore } from '../../store/store';
-import { PERSONAS } from '../../store/seed';
 import { Icon } from '../shared/Icon';
 import { showToast } from '../shared/Toast';
 
@@ -28,6 +27,7 @@ export interface CommandPaletteProps {
 export function CommandPalette({ onClose, setActive }: CommandPaletteProps) {
   const tasks = useStore((s) => s.tasks);
   const projects = useStore((s) => s.projects);
+  const users = useStore((s) => s.users);
   const setUI = useStore((s) => s.setUI);
   const setFilter = useStore((s) => s.setFilter);
   const resetDemo = useStore((s) => s.resetDemo);
@@ -114,13 +114,13 @@ export function CommandPalette({ onClose, setActive }: CommandPaletteProps) {
       .slice(0, 8);
     taskMatches.forEach((t) => {
       const proj = projects.find((p) => p.id === t.proj);
-      const persona = PERSONAS.find((p) => p.id === t.who);
+      const u = users.find((u) => u.id === t.who);
       out.push({
         kind: 'task',
         group: 'Aufgaben',
         id: 'task-' + t.id,
         title: t.title,
-        subtitle: `${proj?.code || '—'} · ${persona?.name || ''} · ${t.estH.toFixed(1).replace('.', ',')}h`,
+        subtitle: `${proj?.code || '—'} · ${u?.name || '—'} · ${t.estH.toFixed(1).replace('.', ',')}h`,
         accent: proj?.color,
         run: () => setUI({ taskDetailId: t.id }),
       });
@@ -148,7 +148,7 @@ export function CommandPalette({ onClose, setActive }: CommandPaletteProps) {
     });
 
     return out;
-  }, [q, tasks, projects, setUI, setFilter, setActive, resetDemo]);
+  }, [q, tasks, projects, users, setUI, setFilter, setActive, resetDemo]);
 
   useEffect(() => {
     setActiveIdx(0);

@@ -5,6 +5,7 @@ import { nanoid } from 'nanoid';
 import { db } from '../db/client.js';
 import { tasks, taskSessions, liveTimers } from '../db/schema.js';
 import { requireAuth, type Variables } from '../lib/context.js';
+import { logActivity } from '../lib/activity.js';
 
 const ColumnEnum = z.enum(['todo', 'doing', 'review', 'done']);
 const PrioEnum = z.enum(['low', 'med', 'high']);
@@ -47,23 +48,39 @@ export const tasksRoute = new Hono<{ Variables: Variables }>()
         createdById: user.id,
       })
       .returning();
+    logActivity({ kind: 'task_created', actorId: user.id, target: id, meta: { title: row.title, projectId: row.projectId } });
     return c.json({ task: row }, 201);
   })
   .patch('/:id', async (c) => {
+    const me = c.get('user')!;
     const id = c.req.param('id');
     const body = updateSchema.parse(await c.req.json());
+    const [before] = await db.select().from(tasks).where(eq(tasks.id, id)).limit(1);
     const [row] = await db
       .update(tasks)
       .set({ ...body, updatedAt: new Date() })
       .where(eq(tasks.id, id))
       .returning();
     if (!row) return c.json({ error: 'not found' }, 404);
+    if (before && body.column && body.column !== before.column) {
+      logActivity({
+        kind: body.column === 'done' ? 'task_done' : 'task_moved',
+        actorId: me.id,
+        target: id,
+        meta: { title: row.title, from: before.column, to: body.column, who: row.assigneeId },
+      });
+    } else if (Object.keys(body).length > 0) {
+      logActivity({ kind: 'task_updated', actorId: me.id, target: id, meta: { title: row.title } });
+    }
     return c.json({ task: row });
   })
   .delete('/:id', async (c) => {
+    const me = c.get('user')!;
     const id = c.req.param('id');
+    const [before] = await db.select().from(tasks).where(eq(tasks.id, id)).limit(1);
     const result = await db.delete(tasks).where(eq(tasks.id, id)).returning();
     if (!result.length) return c.json({ error: 'not found' }, 404);
+    logActivity({ kind: 'task_deleted', actorId: me.id, target: id, meta: { title: before?.title } });
     return c.json({ ok: true });
   })
 
@@ -107,6 +124,8 @@ export const tasksRoute = new Hono<{ Variables: Variables }>()
         pomodoroStartedAt: pomodoro ? startedAt : null,
       })
       .returning();
+    const [task] = await db.select().from(tasks).where(eq(tasks.id, taskId)).limit(1);
+    logActivity({ kind: 'timer_started', actorId: user.id, target: taskId, meta: { title: task?.title, who: user.id } });
     return c.json({ liveTimer: row });
   })
   .post('/timer/stop', async (c) => {
@@ -133,6 +152,13 @@ export const tasksRoute = new Hono<{ Variables: Variables }>()
       .set({ loggedH: sql`${tasks.loggedH} + ${hours}` })
       .where(eq(tasks.id, existing.taskId));
     await db.delete(liveTimers).where(eq(liveTimers.userId, user.id));
+    const [task] = await db.select().from(tasks).where(eq(tasks.id, existing.taskId)).limit(1);
+    logActivity({
+      kind: 'timer_stopped',
+      actorId: user.id,
+      target: existing.taskId,
+      meta: { title: task?.title, who: user.id, hours: Number(hours.toFixed(2)) },
+    });
     return c.json({ liveTimer: null, session });
   })
   .get('/timer/live', async (c) => {

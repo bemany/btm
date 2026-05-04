@@ -67,6 +67,26 @@ export default defineConfig({
       },
     }),
   ],
+  build: {
+    target: 'es2022',
+    cssCodeSplit: true,
+    sourcemap: false,
+    rollupOptions: {
+      output: {
+        manualChunks: (id) => {
+          if (!id.includes('node_modules')) return undefined;
+          if (id.includes('react-dom')) return 'react-dom';
+          if (id.includes('react')) return 'react';
+          if (id.includes('@tanstack')) return 'tanstack';
+          if (id.includes('lucide-react')) return 'icons';
+          if (id.includes('zustand')) return 'zustand';
+          if (id.includes('workbox') || id.includes('vite-plugin-pwa')) return 'pwa';
+          return 'vendor';
+        },
+      },
+    },
+    chunkSizeWarningLimit: 600,
+  },
   server: {
     host: '127.0.0.1',
     port: 5173,

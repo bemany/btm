@@ -1,0 +1,6 @@
+# BTM ist ein internes Tool — komplett aus Suchmaschinen raushalten.
+User-agent: *
+Disallow: /
+
+# Auch keine API-Endpoints
+Disallow: /api/

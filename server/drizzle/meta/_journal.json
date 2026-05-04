@@ -8,6 +8,13 @@
       "when": 1777931533432,
       "tag": "0000_gorgeous_pepper_potts",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1777933849283,
+      "tag": "0001_shocking_sersi",
+      "breakpoints": true
     }
   ]
 }

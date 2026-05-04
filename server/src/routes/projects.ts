@@ -5,6 +5,7 @@ import { nanoid } from 'nanoid';
 import { db } from '../db/client.js';
 import { projects } from '../db/schema.js';
 import { requireAuth, type Variables } from '../lib/context.js';
+import { logActivity } from '../lib/activity.js';
 
 const createSchema = z.object({
   code: z.string().min(1).max(40),
@@ -30,9 +31,11 @@ export const projectsRoute = new Hono<{ Variables: Variables }>()
       .insert(projects)
       .values({ id, createdById: user.id, ...body })
       .returning();
+    logActivity({ kind: 'project_created', actorId: user.id, target: id, meta: { code: row.code, name: row.name } });
     return c.json({ project: row }, 201);
   })
   .patch('/:id', async (c) => {
+    const me = c.get('user')!;
     const id = c.req.param('id');
     const body = updateSchema.parse(await c.req.json());
     const [row] = await db
@@ -41,11 +44,15 @@ export const projectsRoute = new Hono<{ Variables: Variables }>()
       .where(eq(projects.id, id))
       .returning();
     if (!row) return c.json({ error: 'not found' }, 404);
+    logActivity({ kind: 'project_updated', actorId: me.id, target: id, meta: { code: row.code } });
     return c.json({ project: row });
   })
   .delete('/:id', async (c) => {
+    const me = c.get('user')!;
     const id = c.req.param('id');
+    const [before] = await db.select().from(projects).where(eq(projects.id, id)).limit(1);
     const result = await db.delete(projects).where(eq(projects.id, id)).returning();
     if (!result.length) return c.json({ error: 'not found' }, 404);
+    logActivity({ kind: 'project_deleted', actorId: me.id, target: id, meta: { code: before?.code } });
     return c.json({ ok: true });
   });

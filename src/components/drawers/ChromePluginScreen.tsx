@@ -1,5 +1,5 @@
 import { useStore } from '../../store/store';
-import { PERSONAS, COLUMNS } from '../../store/seed';
+import { COLUMNS } from '../../store/seed';
 import { useTick } from '../shared/hooks';
 import { Icon } from '../shared/Icon';
 import { ProjTag } from '../shared/ProjTag';
@@ -13,8 +13,9 @@ export function ChromePluginScreen() {
   const startTimer = useStore((s) => s.startTimer);
   const stopTimer = useStore((s) => s.stopTimer);
 
+  const users = useStore((s) => s.users);
   useTick(!!timer);
-  const me = PERSONAS.find((p) => p.id === currentUser) ?? PERSONAS[0];
+  const me = users.find((u) => u.id === currentUser) ?? { name: '—', email: '—', cap: 40 };
   const liveTask = timer ? tasks.find((t) => t.id === timer.taskId) : null;
   const elapsed = timer ? Date.now() - timer.startedAt : 0;
   const myTasks = tasks.filter((t) => t.who === currentUser);
@@ -67,7 +68,7 @@ export function ChromePluginScreen() {
                 <div style={{ flex: 1 }}>
                   <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 13 }}>BTM</div>
                   <div className="mono" style={{ fontSize: 9, color: 'var(--ink-500)' }}>
-                    {me.full} · KW 19
+                    {me.name} · KW 19
                   </div>
                 </div>
                 <Icon name="settings" size={13} style={{ color: 'var(--ink-500)' }} />
