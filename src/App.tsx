@@ -42,7 +42,7 @@ const TWEAK_DEFAULTS: BTMTweaks = {
   boardLayout: 'kanban',
   showLiveTimerOnLoad: false,
   density: 'comfortable',
-  theme: 'default',
+  theme: 'glass',
 };
 
 export function App() {
@@ -130,7 +130,14 @@ export function App() {
   return (
     <>
       <div className={`app ${collapsed ? 'sidebar-collapsed' : ''} density-${tweaks.density || 'comfortable'}`}>
-        <Sidebar active={active} setActive={setActive} collapsed={collapsed} setCollapsed={setCollapsed} />
+        <Sidebar
+          active={active}
+          setActive={setActive}
+          collapsed={collapsed}
+          setCollapsed={setCollapsed}
+          theme={tweaks.theme}
+          setTheme={(v) => setTweak('theme', v)}
+        />
         <Topbar active={active} setActive={setActive} collapsed={collapsed} setCollapsed={setCollapsed} />
         <main className="app-main">
           <div style={{ height: '100%', overflow: 'auto' }}>

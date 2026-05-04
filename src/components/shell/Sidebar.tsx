@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useStore } from '../../store/store';
 import { PERSONAS } from '../../store/seed';
-import type { ScreenId } from '../../store/types';
+import type { ScreenId, ThemeMode } from '../../store/types';
 import { Icon } from '../shared/Icon';
 import { Avatar } from '../shared/Avatar';
 import { showToast } from '../shared/Toast';
@@ -11,6 +11,8 @@ export interface SidebarProps {
   setActive: (id: ScreenId) => void;
   collapsed: boolean;
   setCollapsed: (updater: boolean | ((v: boolean) => boolean)) => void;
+  theme: ThemeMode;
+  setTheme: (t: ThemeMode) => void;
 }
 
 interface Item {
@@ -20,7 +22,7 @@ interface Item {
   count?: number | null;
 }
 
-export function Sidebar({ active, setActive, collapsed, setCollapsed }: SidebarProps) {
+export function Sidebar({ active, setActive, collapsed, setCollapsed, theme, setTheme }: SidebarProps) {
   const tasks = useStore((s) => s.tasks);
   const currentUser = useStore((s) => s.currentUser);
   const projects = useStore((s) => s.projects);
@@ -35,6 +37,17 @@ export function Sidebar({ active, setActive, collapsed, setCollapsed }: SidebarP
   const running = !!timer;
 
   const [clicking, setClicking] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const profileRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!profileOpen) return;
+    const onDown = (e: MouseEvent) => {
+      if (profileRef.current && !profileRef.current.contains(e.target as Node)) setProfileOpen(false);
+    };
+    document.addEventListener('mousedown', onDown);
+    return () => document.removeEventListener('mousedown', onDown);
+  }, [profileOpen]);
   const onMarkClick = () => {
     setClicking(true);
     setTimeout(() => setClicking(false), 480);
@@ -127,19 +140,78 @@ export function Sidebar({ active, setActive, collapsed, setCollapsed }: SidebarP
         ))}
       </div>
 
-      <div
-        className="sb-foot"
-        onClick={() => {
-          resetDemo();
-          showToast('Demo-Daten zurückgesetzt');
-        }}
-      >
-        <Avatar id={me.id} size={28} />
-        <div className="who">
-          <div className="n">{me.name}</div>
-          <div className="r">Demo zurücksetzen</div>
+      <div className="sb-foot-wrap" ref={profileRef}>
+        <div
+          className={`sb-foot ${profileOpen ? 'is-open' : ''}`}
+          onClick={() => setProfileOpen((o) => !o)}
+          role="button"
+          tabIndex={0}
+        >
+          <Avatar id={me.id} size={28} />
+          <div className="who">
+            <div className="n">{me.name}</div>
+            <div className="r">{theme === 'glass' ? 'Glass-Modus' : 'Studio-Modus'}</div>
+          </div>
+          <Icon
+            name={profileOpen ? 'chevron-down' : 'chevron-up'}
+            size={14}
+            className="chev"
+            style={{ color: 'var(--ink-500)' }}
+          />
         </div>
-        <Icon name="rotate-ccw" size={14} className="chev" style={{ color: 'var(--ink-500)' }} />
+
+        {profileOpen && (
+          <div className="sb-profile-menu">
+            <div className="sb-profile-section-label">Aussehen</div>
+            <button
+              className={`sb-profile-item ${theme === 'glass' ? 'active' : ''}`}
+              onClick={() => {
+                setTheme('glass');
+                showToast('Glass-Modus aktiv');
+              }}
+            >
+              <span className="sb-profile-swatch glass" />
+              <div className="sb-profile-item-text">
+                <div className="sb-profile-item-title">Glass</div>
+                <div className="sb-profile-item-sub">Frosted, macOS-ähnlich</div>
+              </div>
+              {theme === 'glass' && <Icon name="check" size={14} style={{ color: 'var(--accent-500)' }} />}
+            </button>
+            <button
+              className={`sb-profile-item ${theme === 'default' ? 'active' : ''}`}
+              onClick={() => {
+                setTheme('default');
+                showToast('Studio-Modus aktiv');
+              }}
+            >
+              <span className="sb-profile-swatch studio" />
+              <div className="sb-profile-item-text">
+                <div className="sb-profile-item-title">Studio</div>
+                <div className="sb-profile-item-sub">Solid Cream, dichter</div>
+              </div>
+              {theme === 'default' && <Icon name="check" size={14} style={{ color: 'var(--accent-500)' }} />}
+            </button>
+
+            <div className="sb-profile-divider" />
+
+            <button
+              className="sb-profile-item"
+              onClick={() => {
+                resetDemo();
+                showToast('Demo-Daten zurückgesetzt');
+                setProfileOpen(false);
+              }}
+            >
+              <span className="sb-profile-icon">
+                <Icon name="rotate-ccw" size={14} style={{ color: 'var(--ink-500)' }} />
+              </span>
+              <div className="sb-profile-item-text">
+                <div className="sb-profile-item-title">Demo zurücksetzen</div>
+                <div className="sb-profile-item-sub">State auf Auslieferungs-Stand</div>
+              </div>
+            </button>
+          </div>
+        )}
       </div>
     </aside>
   );

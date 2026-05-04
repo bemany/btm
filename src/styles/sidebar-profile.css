@@ -1,0 +1,152 @@
+/* Sidebar profile-foot + theme/menu popover.
+   Lebt neben sb-foot in btm.css; dort liegt die ursprüngliche Foot-Definition. */
+
+.sb-foot-wrap {
+  margin-top: auto;
+  position: relative;
+  border-top: 1px solid var(--ink-100);
+}
+
+.sb-foot-wrap .sb-foot {
+  margin-top: 0;
+  border-top: 0;
+  transition: background 120ms ease;
+}
+
+.sb-foot.is-open {
+  background: var(--cream-200);
+}
+
+.sb-profile-menu {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 10px;
+  right: 10px;
+  background: var(--cream-50);
+  border: 1px solid var(--ink-200);
+  border-radius: 10px;
+  box-shadow: 0 12px 32px rgba(28, 26, 23, 0.18), 0 2px 6px rgba(28, 26, 23, 0.08);
+  padding: 8px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  animation: sb-profile-pop 120ms ease-out;
+}
+
+@keyframes sb-profile-pop {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.sb-profile-section-label {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-500);
+  padding: 6px 8px 4px;
+}
+
+.sb-profile-item {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: left;
+  color: var(--ink-900);
+  font-family: var(--font-body);
+  transition: background 100ms ease;
+}
+.sb-profile-item:hover {
+  background: var(--cream-100);
+}
+.sb-profile-item.active {
+  background: var(--cream-200);
+}
+
+.sb-profile-item-text {
+  flex: 1;
+  min-width: 0;
+}
+.sb-profile-item-title {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+.sb-profile-item-sub {
+  font-size: 11px;
+  color: var(--ink-500);
+  margin-top: 2px;
+}
+
+.sb-profile-swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  flex-shrink: 0;
+  border: 1px solid var(--ink-200);
+  position: relative;
+  overflow: hidden;
+}
+.sb-profile-swatch.studio {
+  background: linear-gradient(135deg, var(--cream-50) 0%, var(--cream-200) 100%);
+}
+.sb-profile-swatch.glass {
+  background:
+    linear-gradient(135deg, rgba(200, 90, 44, 0.18) 0%, rgba(85, 115, 160, 0.22) 100%),
+    rgba(255, 251, 245, 0.55);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+}
+
+.sb-profile-icon {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  background: var(--cream-100);
+  flex-shrink: 0;
+}
+
+.sb-profile-divider {
+  height: 1px;
+  background: var(--ink-100);
+  margin: 4px 0;
+}
+
+/* Eingeklappte Sidebar: nur Avatar im Foot, Menü kommt rechts daneben statt oben */
+.app.sidebar-collapsed .sb-foot-wrap .sb-foot .who,
+.app.sidebar-collapsed .sb-foot-wrap .sb-foot .chev {
+  display: none;
+}
+.app.sidebar-collapsed .sb-profile-menu {
+  left: calc(100% + 6px);
+  right: auto;
+  bottom: 0;
+  width: 240px;
+}
+
+/* Glass-Theme: Foot + Popover etwas frostiger anpassen */
+body[data-theme='glass'] .sb-profile-menu {
+  background: rgba(250, 247, 242, 0.86);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  backdrop-filter: blur(20px) saturate(160%);
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}

@@ -6,6 +6,7 @@ import './styles/globio-tokens.css';
 import './styles/btm.css';
 import './styles/btm-glass.css';
 import './styles/cmdk.css';
+import './styles/sidebar-profile.css';
 
 interface ErrorBoundaryState {
   error: Error | null;
