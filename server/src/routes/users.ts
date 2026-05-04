@@ -5,7 +5,7 @@ import { nanoid } from 'nanoid';
 import { db } from '../db/client.js';
 import { users, invitations } from '../db/schema.js';
 import { requireAuth, requireAdmin, type Variables } from '../lib/context.js';
-import { sendMail, inviteEmail } from '../lib/mailer.js';
+import { sendMail, inviteEmail, appIconAttachment } from '../lib/mailer.js';
 import { logActivity } from '../lib/activity.js';
 
 const inviteSchema = z.object({
@@ -146,7 +146,8 @@ export const invitationsRoute = new Hono<{ Variables: Variables }>()
       role: body.role,
       inviteeName: body.name?.trim() || null,
     });
-    await sendMail({ to: email, ...mail });
+    const icon = appIconAttachment();
+    await sendMail({ to: email, ...mail, attachments: icon ? [icon] : undefined });
 
     logActivity({ kind: 'invite_sent', actorId: inviter.id, target: email, meta: { role: body.role, teamId: body.teamId } });
     return c.json({ invitation: row }, 201);
@@ -169,8 +170,14 @@ export const invitationsRoute = new Hono<{ Variables: Variables }>()
 
     const baseUrl = process.env.BETTER_AUTH_URL ?? 'https://btm.bethesna.org';
     const url = `${baseUrl}/invite/${newToken}`;
-    const mail = inviteEmail({ url, inviterName: inviter.name, role: inv.role });
-    await sendMail({ to: inv.email, ...mail });
+    const mail = inviteEmail({
+      url,
+      inviterName: inviter.name,
+      role: inv.role,
+      inviteeName: inv.name,
+    });
+    const icon = appIconAttachment();
+    await sendMail({ to: inv.email, ...mail, attachments: icon ? [icon] : undefined });
 
     logActivity({ kind: 'invite_resent', actorId: inviter.id, target: inv.email });
     return c.json({ ok: true });

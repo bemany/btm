@@ -36,6 +36,16 @@ export function LandingPage({ onLogin }: LandingPageProps) {
   const [clock, setClock] = useState(24 * 60 + 18);
   const tickRef = useRef(0);
 
+  // body-Class die das App-CSS-`overflow: hidden`-lock auf body aufhebt
+  useEffect(() => {
+    document.body.classList.add('is-landing');
+    document.documentElement.classList.add('is-landing');
+    return () => {
+      document.body.classList.remove('is-landing');
+      document.documentElement.classList.remove('is-landing');
+    };
+  }, []);
+
   useEffect(() => {
     const id = setInterval(() => setClock((s) => s + 1), 1000);
     return () => clearInterval(id);

@@ -1,5 +1,12 @@
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; }
+  /* Override gegen das App-Layout (btm.css setzt body{overflow:hidden;height:100%}) */
+  html.is-landing, body.is-landing {
+    height: auto !important;
+    min-height: 100% !important;
+    overflow: auto !important;
+    overflow-x: hidden !important;
+  }
   body {
     font-family: var(--font-body);
     color: var(--ink-900);

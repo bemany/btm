@@ -21,22 +21,58 @@ function getTransport(): nodemailer.Transporter {
   return transporter;
 }
 
+export interface MailAttachment {
+  filename: string;
+  path: string;
+  cid: string;
+}
+
 export interface MailOpts {
   to: string;
   subject: string;
   text: string;
   html?: string;
+  attachments?: MailAttachment[];
 }
 
-export async function sendMail({ to, subject, text, html }: MailOpts): Promise<void> {
+export async function sendMail({ to, subject, text, html, attachments }: MailOpts): Promise<void> {
   try {
     const t = getTransport();
-    const info = await t.sendMail({ from, to, subject, text, html });
+    const info = await t.sendMail({ from, to, subject, text, html, attachments });
     console.log(`[mail] sent to=${to} subject="${subject}" id=${info.messageId}`);
   } catch (err) {
     console.warn(`[mail] FAILED to=${to} subject="${subject}":`, err);
     console.warn(`[mail] FALLBACK content:\n--- ${subject} ---\n${text}\n---`);
   }
+}
+
+// Pfad zur App-Icon-PNG fürs Mail-Embed.
+// Beim Production-Setup auf 139 liegt die hier (Frontend-Build-Output):
+//   /opt/apps/btm/dist/app-icon-192.png
+// In der Dev-Umgebung in <repo>/public/app-icon-192.png.
+import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
+
+function findAppIcon(): string | null {
+  const candidates = [
+    '/opt/apps/btm/dist/app-icon-192.png',
+    resolve(process.cwd(), 'dist/app-icon-192.png'),
+    resolve(process.cwd(), '../dist/app-icon-192.png'),
+    resolve(process.cwd(), '../public/app-icon-192.png'),
+    resolve(process.cwd(), 'public/app-icon-192.png'),
+  ];
+  for (const p of candidates) {
+    if (existsSync(p)) return p;
+  }
+  return null;
+}
+
+export const APP_ICON_CID = 'btm-app-icon';
+
+export function appIconAttachment(): MailAttachment | null {
+  const path = findAppIcon();
+  if (!path) return null;
+  return { filename: 'btm-icon.png', path, cid: APP_ICON_CID };
 }
 
 export function magicLinkEmail(opts: { url: string; email: string }): { subject: string; text: string; html: string } {
@@ -114,18 +150,8 @@ Bei Fragen: einfach an ${opts.inviterName} zurück antworten.
           <td style="padding:0 0 24px;">
             <table role="presentation" cellpadding="0" cellspacing="0">
               <tr>
-                <td style="padding-right:12px;">
-                  <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(180deg,#1C1A17,#2A2622);display:inline-block;text-align:center;line-height:40px;">
-                    <svg viewBox="0 0 32 32" width="22" height="22" xmlns="http://www.w3.org/2000/svg" style="vertical-align:middle;">
-                      <rect x="6" y="9" width="20" height="2" rx="1" fill="#fff" fill-opacity="0.2" />
-                      <rect x="6" y="15" width="20" height="2" rx="1" fill="#fff" fill-opacity="0.2" />
-                      <rect x="6" y="21" width="20" height="2" rx="1" fill="#fff" fill-opacity="0.2" />
-                      <rect x="6" y="9"  width="9"  height="2" rx="1" fill="#fff" fill-opacity="0.6" />
-                      <rect x="6" y="15" width="14" height="2" rx="1" fill="#fff" fill-opacity="0.6" />
-                      <rect x="6" y="21" width="6"  height="2" rx="1" fill="#fff" fill-opacity="0.6" />
-                      <rect x="20" y="14" width="4" height="4" rx="2" fill="#C85A2C" />
-                    </svg>
-                  </div>
+                <td style="padding-right:12px;vertical-align:middle;">
+                  <img src="cid:${APP_ICON_CID}" width="44" height="44" alt="BTM" style="display:block;width:44px;height:44px;border-radius:10px;border:0;" />
                 </td>
                 <td style="vertical-align:middle;">
                   <div style="font-family:'Archivo',-apple-system,sans-serif;font-weight:700;font-size:20px;letter-spacing:-0.01em;color:#1C1A17;">BTM</div>
