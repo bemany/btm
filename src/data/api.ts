@@ -347,3 +347,14 @@ export async function createSession(
 export async function deleteSession(sessionId: string): Promise<void> {
   await apiFetch(`/tasks/sessions/${sessionId}`, { method: 'DELETE' });
 }
+
+// Atomic Tag-Update für Stunden-Grid
+export async function setTaskHoursForDay(taskId: string, day: string, hours: number): Promise<{
+  delta: number;
+  removed: number;
+}> {
+  return apiFetch(`/tasks/${taskId}/sessions/day`, {
+    method: 'POST',
+    body: { day, hours },
+  });
+}

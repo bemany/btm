@@ -19,6 +19,7 @@ import './styles/auth.css';
 import './styles/api-tokens.css';
 import './styles/landing.css';
 import './styles/tv-route.css';
+import './styles/mobile.css';
 
 // Theme früh setzen — sonst hat der Login-Screen kein Glass.
 const VALID_THEMES = ['default', 'glass', 'default-dark', 'glass-dark'] as const;

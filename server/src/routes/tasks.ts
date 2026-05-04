@@ -207,6 +207,67 @@ export const tasksRoute = new Hono<{ Variables: Variables }>()
       .where(eq(tasks.id, taskId));
     return c.json({ session: row }, 201);
   })
+  // Atomic Tag-Replace: ersetzt alle Sessions eines Users für eine Task an einem Tag.
+  // Nützlich fürs Stunden-Grid (TimeCell): Cell-Edit überschreibt den Tageswert.
+  .post('/:id/sessions/day', async (c) => {
+    const user = c.get('user')!;
+    const taskId = c.req.param('id');
+    const body = z.object({ day: z.string(), hours: z.number().min(0).max(24) }).parse(await c.req.json());
+    const dayStart = new Date(body.day + 'T00:00:00.000Z');
+    const dayEnd = new Date(body.day + 'T23:59:59.999Z');
+
+    // Existing-Sessions des Tages für diese Task + diesen User wegputzen.
+    const existing = await db
+      .select()
+      .from(taskSessions)
+      .where(
+        and(
+          eq(taskSessions.taskId, taskId),
+          eq(taskSessions.userId, user.id),
+          sql`${taskSessions.fromAt} >= ${dayStart}`,
+          sql`${taskSessions.fromAt} <= ${dayEnd}`,
+        ),
+      );
+    const removedSum = existing.reduce((a, s) => a + Number(s.hours), 0);
+    if (existing.length > 0) {
+      await db
+        .delete(taskSessions)
+        .where(
+          and(
+            eq(taskSessions.taskId, taskId),
+            eq(taskSessions.userId, user.id),
+            sql`${taskSessions.fromAt} >= ${dayStart}`,
+            sql`${taskSessions.fromAt} <= ${dayEnd}`,
+          ),
+        );
+    }
+
+    let session = null;
+    if (body.hours > 0) {
+      const fromAt = new Date(body.day + 'T09:00:00.000Z');
+      const toAt = new Date(fromAt.getTime() + body.hours * 3_600_000);
+      [session] = await db
+        .insert(taskSessions)
+        .values({
+          id: `S${nanoid(8)}`,
+          taskId,
+          userId: user.id,
+          fromAt,
+          toAt,
+          hours: body.hours,
+          source: 'manual',
+        })
+        .returning();
+    }
+    const delta = body.hours - removedSum;
+    if (delta !== 0) {
+      await db
+        .update(tasks)
+        .set({ loggedH: sql`GREATEST(0, ${tasks.loggedH} + ${delta})` })
+        .where(eq(tasks.id, taskId));
+    }
+    return c.json({ session, removed: existing.length, delta: Number(delta.toFixed(4)) });
+  })
   .delete('/sessions/:sessionId', async (c) => {
     const user = c.get('user')!;
     const sessionId = c.req.param('sessionId');

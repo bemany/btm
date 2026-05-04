@@ -141,10 +141,23 @@ export function App() {
 
   return (
     <>
-      <div className={`app ${collapsed ? 'sidebar-collapsed' : ''} density-${tweaks.density || 'comfortable'}`}>
+      <div
+        className={`app ${collapsed ? 'sidebar-collapsed' : ''} density-${tweaks.density || 'comfortable'}`}
+        onClick={(e) => {
+          // Mobile: Klick auf den Backdrop (= außerhalb Sidebar) schließt das Off-Canvas-Menü
+          const target = e.target as HTMLElement;
+          if (target.classList.contains('app') && (e.currentTarget as HTMLElement).classList.contains('sidebar-open')) {
+            (e.currentTarget as HTMLElement).classList.remove('sidebar-open');
+          }
+        }}
+      >
         <Sidebar
           active={active}
-          setActive={setActive}
+          setActive={(id) => {
+            // Mobile: nach Navigation Sidebar schließen
+            document.querySelector('.app')?.classList.remove('sidebar-open');
+            setActive(id);
+          }}
           collapsed={collapsed}
           setCollapsed={setCollapsed}
           theme={tweaks.theme}

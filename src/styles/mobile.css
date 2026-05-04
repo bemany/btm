@@ -1,0 +1,232 @@
+/* Mobile-Responsive Layer.
+   Greift unter 768px breite. Strategie: Sidebar wird Off-Canvas-Drawer,
+   Topbar reduziert, Kanban scrollt horizontal, Grids auto-fit. */
+
+@media (max-width: 768px) {
+  /* App-Root: Body kann scrollen, App füllt den Viewport */
+  html, body {
+    height: auto !important;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .app {
+    grid-template-columns: 0 1fr !important;
+    grid-template-rows: 56px 1fr !important;
+  }
+
+  /* Sidebar wird Off-Canvas, slide-in von links */
+  .app-sidebar {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 260px;
+    z-index: 200;
+    transform: translateX(-100%);
+    transition: transform 220ms cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 8px 0 32px rgba(0, 0, 0, 0.25);
+  }
+  .app.sidebar-open .app-sidebar {
+    transform: translateX(0);
+  }
+  /* Backdrop */
+  .app.sidebar-open::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 199;
+    backdrop-filter: blur(2px);
+  }
+
+  /* Topbar */
+  .app-topbar {
+    padding: 0 12px !important;
+    gap: 8px !important;
+  }
+  .tb-crumb {
+    font-size: 14px !important;
+  }
+  .tb-meta,
+  .tb-spacer {
+    display: none !important;
+  }
+  .tb-search {
+    width: 32px !important;
+    padding: 0 !important;
+    justify-content: center;
+  }
+  .tb-search input,
+  .tb-search .kbd {
+    display: none !important;
+  }
+  .tb-btn span:not(.kbd),
+  .tb-btn {
+    font-size: 12px !important;
+    padding: 6px 10px !important;
+  }
+
+  /* Hauptbereich scrollt */
+  .app-main {
+    padding: 14px 14px 60px !important;
+    overflow-y: auto;
+  }
+  .page {
+    padding: 0 !important;
+  }
+
+  /* Page-Head: Title über Right-Bereich */
+  .page-head {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 14px !important;
+  }
+  .page-head .left h1 {
+    font-size: 22px !important;
+    line-height: 1.2 !important;
+  }
+  .page-head .right {
+    flex-wrap: wrap;
+  }
+
+  /* KPI-Grid 2x2 statt 4x1 */
+  .kpi-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+  }
+  .kpi {
+    padding: 12px !important;
+  }
+  .kpi .v {
+    font-size: 22px !important;
+  }
+
+  /* Kanban: horizontal scroll */
+  .kanban {
+    grid-template-columns: repeat(4, 84vw) !important;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    gap: 10px !important;
+    padding-bottom: 12px;
+  }
+  .k-col {
+    scroll-snap-align: start;
+  }
+
+  /* MyWeek-Layout 1-Spalte */
+  .page > div[style*='grid-template-columns: 2fr 1fr'] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Capacity-Tabelle: in einer Karte gestackt */
+  .cap-row {
+    grid-template-columns: 1fr !important;
+    gap: 6px !important;
+  }
+
+  /* Drawer: full-width */
+  .drawer,
+  .drawer.wide {
+    width: 100vw !important;
+    max-width: 100vw !important;
+  }
+
+  /* Modal */
+  .modal {
+    width: 92vw !important;
+    max-width: 92vw !important;
+  }
+
+  /* TaskCard etwas dichter */
+  .task-card {
+    padding: 8px 10px !important;
+  }
+
+  /* Project-Cards 1-Spalte */
+  .page > div[style*='grid-template-columns: repeat(2, 1fr)'] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Admin-Screen: Sidebar unter Main */
+  .admin-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .admin-side {
+    border-left: 0 !important;
+    border-top: 1px solid var(--ink-100) !important;
+  }
+  .admin-user-grid,
+  .admin-invite-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .admin-header {
+    flex-wrap: wrap;
+    gap: 8px !important;
+  }
+  .admin-stat {
+    flex: 1 1 calc(50% - 8px);
+    min-width: 0;
+  }
+  .admin-filterbar {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  /* TimeGrid horizontal scroll */
+  .tg-grid {
+    overflow-x: auto;
+    grid-template-columns: 200px repeat(5, 90px) 70px !important;
+  }
+
+  /* Login-Card */
+  .login-card {
+    padding: 28px 24px !important;
+  }
+  .login-form h1 {
+    font-size: 24px !important;
+  }
+
+  /* Landing-Page Mobile-Touch-ups */
+  .lp-top-inner {
+    padding: 12px 16px !important;
+  }
+  .lp-top-link {
+    display: none;
+  }
+  .lp-org-tag {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .kanban {
+    grid-template-columns: repeat(4, 92vw) !important;
+  }
+  .lp-hero h1 {
+    font-size: 32px !important;
+  }
+}
+
+/* Hamburger für Mobile (in Topbar — wird per CSS sichtbar gemacht) */
+.tb-mobile-menu {
+  display: none;
+  appearance: none;
+  border: 1px solid var(--ink-200);
+  background: var(--cream-50);
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--ink-700);
+}
+@media (max-width: 768px) {
+  .tb-mobile-menu {
+    display: inline-flex;
+  }
+  .tb-toggle {
+    display: none !important;
+  }
+}

@@ -42,6 +42,14 @@ export function Topbar({ active, setActive, collapsed, setCollapsed }: TopbarPro
       <button className="tb-toggle" onClick={() => setCollapsed((v) => !v)} title="Sidebar einklappen">
         <Icon name={collapsed ? 'panel-left-open' : 'panel-left-close'} size={18} />
       </button>
+      <button
+        className="tb-mobile-menu"
+        onClick={() => document.querySelector('.app')?.classList.toggle('sidebar-open')}
+        title="Menü"
+        aria-label="Menü"
+      >
+        <Icon name="menu" size={18} />
+      </button>
       <div>
         <div className="tb-crumb">{t.crumb}</div>
       </div>
