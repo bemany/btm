@@ -45,6 +45,23 @@
   }
 }
 
+.sb-profile-userhead {
+  padding: 8px 10px 4px;
+}
+.sb-profile-userhead-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-900);
+  line-height: 1.2;
+}
+.sb-profile-userhead-mail {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-500);
+  margin-top: 2px;
+  word-break: break-all;
+}
+
 .sb-profile-section-label {
   font-family: var(--font-mono);
   font-size: 9.5px;

@@ -1,9 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useStore } from '../../store/store';
-import { PERSONAS } from '../../store/seed';
 import type { ScreenId, ThemeMode } from '../../store/types';
+import { useAuth } from '../../auth/AuthContext';
 import { Icon } from '../shared/Icon';
-import { Avatar } from '../shared/Avatar';
 import { showToast } from '../shared/Toast';
 
 export interface SidebarProps {
@@ -28,8 +27,14 @@ export function Sidebar({ active, setActive, collapsed, setCollapsed, theme, set
   const projects = useStore((s) => s.projects);
   const timer = useStore((s) => s.timer);
   const resetDemo = useStore((s) => s.resetDemo);
+  const { user, signOut } = useAuth();
 
-  const me = PERSONAS.find((p) => p.id === currentUser) ?? PERSONAS[0];
+  // Anzeige im Foot priorisiert echten eingeloggten User; Initial = erste 2 Buchstaben des Namens
+  const displayName = user?.name ?? '—';
+  const displayEmail = user?.email ?? '';
+  const initials = (user?.name ?? '?').slice(0, 2).toUpperCase();
+  const avatarColor = user?.color ?? '#6B6359';
+  const isAdmin = user?.role === 'admin';
 
   const myTasks = tasks.filter((t) => t.who === currentUser);
   const doingCount = myTasks.filter((t) => t.col === 'doing').length;
@@ -147,9 +152,48 @@ export function Sidebar({ active, setActive, collapsed, setCollapsed, theme, set
           role="button"
           tabIndex={0}
         >
-          <Avatar id={me.id} size={28} />
+          <span
+            className="sb-foot-avatar"
+            style={{
+              width: 28,
+              height: 28,
+              borderRadius: '50%',
+              display: 'inline-grid',
+              placeItems: 'center',
+              background: avatarColor,
+              color: '#FAF7F2',
+              fontFamily: 'var(--font-mono)',
+              fontSize: 11,
+              fontWeight: 700,
+              flexShrink: 0,
+            }}
+          >
+            {initials}
+          </span>
           <div className="who">
-            <div className="n">{me.name}</div>
+            <div className="n">
+              {displayName}
+              {isAdmin && (
+                <span
+                  className="sb-foot-admin-badge"
+                  style={{
+                    marginLeft: 6,
+                    fontSize: 9,
+                    fontFamily: 'var(--font-mono)',
+                    fontWeight: 600,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.06em',
+                    background: 'var(--accent-500)',
+                    color: 'var(--cream-50)',
+                    padding: '1px 5px',
+                    borderRadius: 3,
+                    verticalAlign: 'middle',
+                  }}
+                >
+                  Admin
+                </span>
+              )}
+            </div>
             <div className="r">{theme === 'glass' ? 'Glass-Modus' : 'Studio-Modus'}</div>
           </div>
           <Icon
@@ -162,6 +206,16 @@ export function Sidebar({ active, setActive, collapsed, setCollapsed, theme, set
 
         {profileOpen && (
           <div className="sb-profile-menu">
+            {user && (
+              <>
+                <div className="sb-profile-userhead">
+                  <div className="sb-profile-userhead-name">{user.name}</div>
+                  <div className="sb-profile-userhead-mail">{user.email}</div>
+                </div>
+                <div className="sb-profile-divider" />
+              </>
+            )}
+
             <div className="sb-profile-section-label">Aussehen</div>
             <button
               className={`sb-profile-item ${theme === 'glass' ? 'active' : ''}`}
@@ -207,9 +261,30 @@ export function Sidebar({ active, setActive, collapsed, setCollapsed, theme, set
               </span>
               <div className="sb-profile-item-text">
                 <div className="sb-profile-item-title">Demo zurücksetzen</div>
-                <div className="sb-profile-item-sub">State auf Auslieferungs-Stand</div>
+                <div className="sb-profile-item-sub">Lokalen State leeren</div>
               </div>
             </button>
+
+            {user && (
+              <button
+                className="sb-profile-item"
+                onClick={async () => {
+                  setProfileOpen(false);
+                  await signOut();
+                  showToast('Abgemeldet');
+                }}
+              >
+                <span className="sb-profile-icon">
+                  <Icon name="log-out" size={14} style={{ color: 'var(--err-500)' }} />
+                </span>
+                <div className="sb-profile-item-text">
+                  <div className="sb-profile-item-title" style={{ color: 'var(--err-500)' }}>
+                    Abmelden
+                  </div>
+                  <div className="sb-profile-item-sub">{displayEmail}</div>
+                </div>
+              </button>
+            )}
           </div>
         )}
       </div>

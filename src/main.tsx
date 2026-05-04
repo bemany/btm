@@ -1,12 +1,26 @@
 import { Component, StrictMode, type ErrorInfo, type ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { App } from './App';
+import { AuthProvider } from './auth/AuthContext';
+import { AppGate } from './auth/AppGate';
 
 import './styles/globio-tokens.css';
 import './styles/btm.css';
 import './styles/btm-glass.css';
 import './styles/cmdk.css';
 import './styles/sidebar-profile.css';
+import './styles/auth.css';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      staleTime: 30_000,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 interface ErrorBoundaryState {
   error: Error | null;
@@ -65,7 +79,13 @@ if (!root) throw new Error('#root not found');
 createRoot(root).render(
   <StrictMode>
     <ErrorBoundary>
-      <App />
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <AppGate>
+            <App />
+          </AppGate>
+        </AuthProvider>
+      </QueryClientProvider>
     </ErrorBoundary>
   </StrictMode>,
 );

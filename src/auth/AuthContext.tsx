@@ -1,0 +1,82 @@
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { apiFetch, authFetch } from '../lib/api';
+import type { AuthMode, AuthStatus, AuthUser } from './types';
+
+interface MeResponse {
+  user: AuthUser | null;
+  authMode?: AuthMode;
+}
+
+interface AuthContextValue {
+  status: AuthStatus;
+  user: AuthUser | null;
+  authMode: AuthMode;
+  refresh: () => Promise<void>;
+  signIn: (email: string, callbackURL?: string) => Promise<void>;
+  signOut: () => Promise<void>;
+  error: string | null;
+}
+
+const AuthContext = createContext<AuthContextValue | null>(null);
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [authMode, setAuthMode] = useState<AuthMode>(null);
+  const [status, setStatus] = useState<AuthStatus>('loading');
+  const [error, setError] = useState<string | null>(null);
+
+  const refresh = useCallback(async () => {
+    try {
+      const data = await apiFetch<MeResponse>('/me');
+      if (data.user) {
+        setUser(data.user);
+        setAuthMode(data.authMode ?? null);
+        setStatus('authenticated');
+      } else {
+        setUser(null);
+        setAuthMode(null);
+        setStatus('anon');
+      }
+    } catch (e) {
+      console.warn('auth refresh failed', e);
+      setUser(null);
+      setStatus('anon');
+    }
+  }, []);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  const signIn = useCallback(async (email: string, callbackURL = '/') => {
+    setError(null);
+    await authFetch('/sign-in/magic-link', {
+      method: 'POST',
+      body: { email, callbackURL: new URL(callbackURL, window.location.origin).toString() },
+    });
+  }, []);
+
+  const signOut = useCallback(async () => {
+    try {
+      await authFetch('/sign-out', { method: 'POST' });
+    } catch (e) {
+      console.warn('sign-out failed', e);
+    }
+    setUser(null);
+    setAuthMode(null);
+    setStatus('anon');
+  }, []);
+
+  const value = useMemo<AuthContextValue>(
+    () => ({ status, user, authMode, refresh, signIn, signOut, error }),
+    [status, user, authMode, refresh, signIn, signOut, error],
+  );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
+
+export function useAuth(): AuthContextValue {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error('useAuth muss innerhalb von AuthProvider verwendet werden');
+  return ctx;
+}
