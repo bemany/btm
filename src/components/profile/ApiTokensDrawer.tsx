@@ -212,22 +212,60 @@ export function ApiTokensDrawer({ onClose }: ApiTokensDrawerProps) {
             </div>
             <p>
               BTM hat einen eingebauten MCP-Server. Damit kannst du in Claude Desktop oder Claude Web direkt
-              Aufgaben anlegen, planen und abhaken — per natürlicher Sprache, ohne BTM zu öffnen.
+              Aufgaben anlegen, planen und abhaken — per natürlicher Sprache.
             </p>
 
-            <div className="apit-mcp-step-label">1. Claude Desktop · ~/Library/Application Support/Claude/claude_desktop_config.json</div>
+            <div className="apit-mcp-step-label">A · Claude Web (claude.ai)</div>
+            <p style={{ fontSize: 12.5, lineHeight: 1.55, color: 'var(--ink-700)' }}>
+              In Claude → Settings → <b>Connectors</b> → <b>Add custom connector</b>. Trag ein:
+            </p>
+            <pre className="apit-mcp-code">{`Name              BTM
+Remote MCP URL    https://btm.bethesna.org/api/mcp?token=<dein-token-oben>`}</pre>
+            <p
+              style={{
+                fontSize: 11.5,
+                color: 'var(--ink-500)',
+                margin: '6px 0 14px',
+                lineHeight: 1.5,
+              }}
+            >
+              ⚠️ Claude.ai's Connector-Dialog hat keinen Header-Slot, deshalb gehört der Token in die URL.
+              Behandel die URL wie ein Passwort — kopier sie nicht in Chats / Repos.
+            </p>
+
+            <div className="apit-mcp-step-label">B · Claude Desktop · claude_desktop_config.json</div>
             <pre className="apit-mcp-code">{`{
   "mcpServers": {
     "btm": {
       "url": "https://btm.bethesna.org/api/mcp",
       "headers": {
-        "Authorization": "Bearer btm_<dein-token-oben>"
+        "Authorization": "Bearer <dein-token-oben>"
       }
     }
   }
 }`}</pre>
+            <p style={{ fontSize: 11.5, color: 'var(--ink-500)', margin: '6px 0 14px' }}>
+              Pfad auf macOS: <code>~/Library/Application Support/Claude/claude_desktop_config.json</code>.
+              Danach Claude Desktop neu starten.
+            </p>
 
-            <div className="apit-mcp-step-label">2. Verfügbare Tools (15+):</div>
+            <div className="apit-mcp-step-label">C · Beispiel-Prompts</div>
+            <ul
+              style={{
+                margin: '4px 0 14px 18px',
+                padding: 0,
+                fontSize: 12.5,
+                color: 'var(--ink-700)',
+                lineHeight: 1.6,
+              }}
+            >
+              <li>„Was hab ich diese Woche offen?"</li>
+              <li>„Leg eine Aufgabe an: Lighthouse-Audit fertigmachen, Projekt P1, 1.5h."</li>
+              <li>„Schieb meine erste In-Arbeit-Task auf Erledigt."</li>
+              <li>„Starte den Timer für die og:image-Task."</li>
+            </ul>
+
+            <div className="apit-mcp-step-label">D · Verfügbare Tools (14)</div>
             <p style={{ fontSize: 12, lineHeight: 1.55, color: 'var(--ink-700)' }}>
               <code>me</code> · <code>list_tasks</code> · <code>create_task</code> ·{' '}
               <code>update_task</code> · <code>move_task</code> · <code>delete_task</code> ·{' '}
@@ -236,9 +274,8 @@ export function ApiTokensDrawer({ onClose }: ApiTokensDrawerProps) {
               <code>list_week</code> · <code>list_activity</code>
             </p>
 
-            <div className="apit-mcp-step-label">3. Test:</div>
-            <pre className="apit-mcp-code">{`curl https://btm.bethesna.org/api/mcp \\
-  -H "Authorization: Bearer btm_<token>" \\
+            <div className="apit-mcp-step-label">E · Quick-Test</div>
+            <pre className="apit-mcp-code">{`curl "https://btm.bethesna.org/api/mcp?token=<dein-token>" \\
   -H "Content-Type: application/json" \\
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'`}</pre>
           </div>

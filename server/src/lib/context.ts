@@ -33,28 +33,35 @@ export const attachUser: MiddlewareHandler<{ Variables: Variables }> = async (c,
   c.set('session', null);
   c.set('authMode', null);
 
-  // 1) Bearer-API-Token?
+  // 1) Bearer-API-Token: aus Authorization-Header ODER ?token=… Query-Param
+  //    (Claude.ai's Connector-Dialog akzeptiert keine Custom-Header — daher
+  //    erlauben wir den Token in der URL für /api/mcp und ähnliche Routen.)
+  let token: string | null = null;
   const authHeader = c.req.header('authorization');
   if (authHeader?.startsWith('Bearer ')) {
-    const token = authHeader.slice(7).trim();
-    if (token.startsWith('btm_')) {
-      const hash = hashApiToken(token);
-      const [row] = await db
-        .select({ userId: apiTokens.userId, id: apiTokens.id })
-        .from(apiTokens)
-        .where(and(eq(apiTokens.tokenHash, hash), isNull(apiTokens.revokedAt)))
-        .limit(1);
-      if (row) {
-        const [u] = await db.select().from(users).where(eq(users.id, row.userId)).limit(1);
-        if (u) {
-          c.set('user', u);
-          c.set('authMode', 'apiToken');
-          // Async — last-used aktualisieren ohne den Request zu blocken
-          db.update(apiTokens)
-            .set({ lastUsedAt: new Date() })
-            .where(eq(apiTokens.id, row.id))
-            .catch(() => {});
-        }
+    token = authHeader.slice(7).trim();
+  } else {
+    const queryToken = c.req.query('token');
+    if (queryToken && queryToken.startsWith('btm_')) {
+      token = queryToken;
+    }
+  }
+  if (token && token.startsWith('btm_')) {
+    const hash = hashApiToken(token);
+    const [row] = await db
+      .select({ userId: apiTokens.userId, id: apiTokens.id })
+      .from(apiTokens)
+      .where(and(eq(apiTokens.tokenHash, hash), isNull(apiTokens.revokedAt)))
+      .limit(1);
+    if (row) {
+      const [u] = await db.select().from(users).where(eq(users.id, row.userId)).limit(1);
+      if (u) {
+        c.set('user', u);
+        c.set('authMode', 'apiToken');
+        db.update(apiTokens)
+          .set({ lastUsedAt: new Date() })
+          .where(eq(apiTokens.id, row.id))
+          .catch(() => {});
       }
     }
   }
