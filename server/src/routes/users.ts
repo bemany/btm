@@ -83,6 +83,51 @@ export const usersRoute = new Hono<{ Variables: Variables }>()
   });
 
 export const invitationsRoute = new Hono<{ Variables: Variables }>()
+  // Public: Token-Lookup + Accept-Mark (eingeladene User haben noch keine Session)
+  .get('/accept/:token', async (c) => {
+    const token = c.req.param('token');
+    const [inv] = await db
+      .select()
+      .from(invitations)
+      .where(and(eq(invitations.token, token)))
+      .limit(1);
+    if (!inv) return c.json({ error: 'invalid or used' }, 404);
+    if (inv.acceptedAt) return c.json({ error: 'already accepted', email: inv.email }, 410);
+    if (inv.cancelledAt) return c.json({ error: 'cancelled' }, 410);
+    if (inv.expiresAt < new Date()) return c.json({ error: 'expired' }, 410);
+    return c.json({
+      email: inv.email,
+      name: inv.name,
+      role: inv.role,
+      teamId: inv.teamId,
+      cap: inv.cap,
+      invitedAt: inv.createdAt,
+    });
+  })
+  .post('/accept/:token', async (c) => {
+    const token = c.req.param('token');
+    const [inv] = await db.select().from(invitations).where(eq(invitations.token, token)).limit(1);
+    if (!inv) return c.json({ error: 'invalid' }, 404);
+    if (inv.acceptedAt) return c.json({ ok: true });
+    await db.update(invitations).set({ acceptedAt: new Date() }).where(eq(invitations.id, inv.id));
+    const [u] = await db.select().from(users).where(eq(users.email, inv.email)).limit(1);
+    if (u) {
+      await db
+        .update(users)
+        .set({
+          role: inv.role,
+          teamId: inv.teamId,
+          cap: inv.cap,
+          name: inv.name?.trim() || u.name,
+          status: 'active',
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, u.id));
+      logActivity({ kind: 'invite_accepted', actorId: u.id, target: inv.email });
+    }
+    return c.json({ ok: true });
+  })
+  // Ab hier: Admin-only
   .use('*', requireAuth)
   .get('/', requireAdmin, async (c) => {
     // Nur "offene" Einladungen (nicht akzeptiert, nicht zurückgezogen, nicht abgelaufen)
@@ -192,52 +237,5 @@ export const invitationsRoute = new Hono<{ Variables: Variables }>()
       .set({ cancelledAt: new Date() })
       .where(eq(invitations.id, id));
     logActivity({ kind: 'invite_cancelled', actorId: inviter.id, target: inv.email });
-    return c.json({ ok: true });
-  })
-  // Token-basiertes Akzeptieren — Public-Route, kein Auth
-  .get('/accept/:token', async (c) => {
-    const token = c.req.param('token');
-    const [inv] = await db
-      .select()
-      .from(invitations)
-      .where(and(eq(invitations.token, token)))
-      .limit(1);
-    if (!inv) return c.json({ error: 'invalid or used' }, 404);
-    if (inv.acceptedAt) return c.json({ error: 'already accepted', email: inv.email }, 410);
-    if (inv.cancelledAt) return c.json({ error: 'cancelled' }, 410);
-    if (inv.expiresAt < new Date()) return c.json({ error: 'expired' }, 410);
-    return c.json({
-      email: inv.email,
-      name: inv.name,
-      role: inv.role,
-      teamId: inv.teamId,
-      cap: inv.cap,
-      invitedAt: inv.createdAt,
-    });
-  })
-  // Markiert Einladung als angenommen (wird vom Frontend nach erfolgreichem Magic-Link aufgerufen)
-  .post('/accept/:token', async (c) => {
-    const token = c.req.param('token');
-    const [inv] = await db.select().from(invitations).where(eq(invitations.token, token)).limit(1);
-    if (!inv) return c.json({ error: 'invalid' }, 404);
-    if (inv.acceptedAt) return c.json({ ok: true });
-
-    await db.update(invitations).set({ acceptedAt: new Date() }).where(eq(invitations.id, inv.id));
-    // User mit den Invite-Werten anreichern (falls schon angelegt durch Magic-Link)
-    const [u] = await db.select().from(users).where(eq(users.email, inv.email)).limit(1);
-    if (u) {
-      await db
-        .update(users)
-        .set({
-          role: inv.role,
-          teamId: inv.teamId,
-          cap: inv.cap,
-          name: inv.name?.trim() || u.name,
-          status: 'active',
-          updatedAt: new Date(),
-        })
-        .where(eq(users.id, u.id));
-      logActivity({ kind: 'invite_accepted', actorId: u.id, target: inv.email });
-    }
     return c.json({ ok: true });
   });
