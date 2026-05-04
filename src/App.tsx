@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { LayoutMode, ScreenId, ThemeMode } from './store/types';
 import { useStore } from './store/store';
-import { PERSONAS } from './store/seed';
+import { useAuth } from './auth/AuthContext';
 
 import { Sidebar } from './components/shell/Sidebar';
 import { Topbar } from './components/shell/Topbar';
@@ -23,7 +23,6 @@ import {
   TweakSection,
   TweakRadio,
   TweakToggle,
-  TweakSelect,
 } from './components/tweaks';
 import { showToast } from './components/shared/Toast';
 
@@ -58,12 +57,23 @@ export function App() {
   const startTimer = useStore((s) => s.startTimer);
   const resetDemo = useStore((s) => s.resetDemo);
 
+  const { user: authUser } = useAuth();
+
   const [active, setActive] = useState<ScreenId>('week');
   const [collapsed, setCollapsed] = useState(false);
   const [cmdkOpen, setCmdkOpen] = useState(false);
   const [tweaksOpen, setTweaksOpen] = useState(false);
 
   const [tweaks, setTweak] = useTweaks<BTMTweaks>(TWEAK_DEFAULTS);
+
+  // Eingeloggten User mit dem (lokalen) Store-State synchronisieren —
+  // Tasks-Filter (`who === currentUser`) läuft so weiterhin gegen den
+  // aktiven User, bis die Daten-Migration auf Server-State steht.
+  useEffect(() => {
+    if (authUser && authUser.id !== currentUser) {
+      setUser(authUser.id);
+    }
+  }, [authUser, currentUser, setUser]);
 
   // Tweaks → live state
   useEffect(() => {
@@ -210,14 +220,6 @@ export function App() {
           >
             Demo-Daten zurücksetzen
           </button>
-        </TweakSection>
-        <TweakSection label="Sicht">
-          <TweakSelect
-            label="Persona"
-            value={currentUser}
-            options={PERSONAS.map((p) => ({ value: p.id, label: `${p.full} · ${p.role}` }))}
-            onChange={(v) => setUser(v)}
-          />
         </TweakSection>
         <TweakSection label="Hauptflow">
           <div style={{ fontSize: 11.5, color: 'var(--ink-500)', lineHeight: 1.5 }}>

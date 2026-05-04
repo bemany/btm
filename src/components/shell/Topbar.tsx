@@ -3,7 +3,6 @@ import { useStore } from '../../store/store';
 import type { ScreenId } from '../../store/types';
 import { Icon } from '../shared/Icon';
 import { TimerChip } from './TimerChip';
-import { PersonaSwitcher } from './PersonaSwitcher';
 
 export interface TopbarProps {
   active: ScreenId;
@@ -70,8 +69,6 @@ export function Topbar({ active, setActive, collapsed, setCollapsed }: TopbarPro
         Planungs-KI
         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, opacity: 0.8, marginLeft: 4 }}>⌘K</span>
       </button>
-
-      <PersonaSwitcher />
     </header>
   );
 }
