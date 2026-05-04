@@ -4,11 +4,13 @@ import { LoginScreen } from './LoginScreen';
 import { LandingPage } from '../landing/LandingPage';
 import { InvitePage } from './InvitePage';
 import { useServerSync } from '../data/sync';
+import { useEventStream } from '../data/sse';
 import { isLoginPath, matchInvite, matchTVFullscreen, navigate, useLocation } from '../router';
 import { TVRoute } from '../landing/TVRoute';
 
 function AuthenticatedShell({ children }: { children: ReactNode }) {
   useServerSync();
+  useEventStream(true); // SSE — invalidiert TanStack-Queries live
   return <>{children}</>;
 }
 

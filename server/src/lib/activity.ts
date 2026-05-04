@@ -3,6 +3,32 @@
 import { nanoid } from 'nanoid';
 import { db } from '../db/client.js';
 import { activityLog } from '../db/schema.js';
+import { emit, type EventTopic } from './events.js';
+
+const TOPIC_BY_KIND: Record<string, EventTopic[]> = {
+  task_created: ['tasks', 'activity'],
+  task_updated: ['tasks', 'activity'],
+  task_moved: ['tasks', 'activity'],
+  task_done: ['tasks', 'activity'],
+  task_deleted: ['tasks', 'activity'],
+  project_created: ['projects', 'activity'],
+  project_updated: ['projects', 'activity'],
+  project_deleted: ['projects', 'activity'],
+  timer_started: ['timer', 'tasks', 'activity'],
+  timer_stopped: ['timer', 'tasks', 'activity'],
+  invite_sent: ['invitations', 'activity'],
+  invite_resent: ['invitations', 'activity'],
+  invite_cancelled: ['invitations', 'activity'],
+  invite_accepted: ['invitations', 'users', 'activity'],
+  user_added: ['users', 'activity'],
+  user_updated: ['users', 'activity'],
+  user_activated: ['users', 'activity'],
+  user_deactivated: ['users', 'activity'],
+  role_changed: ['users', 'activity'],
+  team_created: ['teams', 'activity'],
+  team_updated: ['teams', 'activity'],
+  team_deleted: ['teams', 'activity'],
+};
 
 export type ActivityKind =
   | 'task_created'
@@ -49,4 +75,10 @@ export function logActivity(args: LogActivityArgs): void {
     .catch((e) => {
       console.warn(`[activity] log failed (${args.kind}):`, e);
     });
+
+  // Realtime-Event an verbundene SSE-Clients
+  const topics = TOPIC_BY_KIND[args.kind] ?? ['activity'];
+  for (const topic of topics) {
+    emit(topic, { kind: args.kind, actorId: args.actorId, target: args.target });
+  }
 }
