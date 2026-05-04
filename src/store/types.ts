@@ -64,7 +64,7 @@ export interface Task {
   estH: number;
   loggedH: number;
   prio: Priority;
-  due?: string | 'today' | 'tomorrow';
+  due?: string | 'today' | 'tomorrow' | null;
   sessions: Session[];
   createdAt: number;
   attachments?: Array<{ name: string; size?: number }>;

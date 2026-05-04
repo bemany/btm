@@ -67,8 +67,7 @@ export function ChatPane({ setText, setTab, extract }: ChatPaneProps) {
     {
       role: 'assistant',
       text:
-        'Hi Arne 👋  Ich helfe beim Planen. Schick mir eine PM-Anleitung, eine E-Mail vom Anwalt oder beschreib einfach was ansteht — ich verteile auf Projekte, Personen und schätze Zeiten.',
-      suggestions: ['Etappe 2 planen (Legal & Impressum)', 'Was hat Arne diese Woche offen?', 'Push-Setup briefen'],
+        'Hi 👋 Ich helfe beim Planen. Schick mir eine PM-Anleitung, eine E-Mail oder beschreib einfach was ansteht — ich verteile auf Projekte, Personen und schätze Zeiten.',
     },
   ]);
   const [draft, setDraft] = useState('');

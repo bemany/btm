@@ -7,22 +7,6 @@ import { ProjTag } from '../shared/ProjTag';
 import { showToast } from '../shared/Toast';
 import { ChatPane } from './ChatPane';
 
-const SAMPLE_MD = `# FahrerApp — PM-Anleitung Etappe 1: Web-Tech, ASO-Listings & Schema
-
-Acht Aufgaben für KW 19. Quick-Wins zuerst, dann Code, dann Store-Listings.
-
-| # | Aufgabe                                       | Wer    | Zeit   |
-|---|-----------------------------------------------|--------|--------|
-| 1 | Web: index.html Meta-Tags                     | Arne   | 30 min |
-| 2 | Web: robots.txt + sitemap.xml                 | Arne   | 30 min |
-| 3 | Web: og:image korrigieren                     | Arne   | 1 h    |
-| 4 | Web: JSON-LD Schema einbinden                 | Arne   | 30 min |
-| 5 | Lighthouse-Audit + Fix Top-3 Findings         | Arne   | 1,5 h  |
-| 6 | App-Store: Screenshots iPhone 15 Pro Max      | Hakan  | 1,5 h  |
-| 7 | Play-Store: Feature-Graphic 1024×500          | Amon   | 1 h    |
-| 8 | Anwalt-Feedback DSGVO einarbeiten             | PM     | 2 h    |
-`;
-
 interface ExtractedTask {
   title: string;
   proj: string;
@@ -31,17 +15,6 @@ interface ExtractedTask {
   prio: Priority;
   notes: string;
 }
-
-const EXTRACTED: ExtractedTask[] = [
-  { title: 'Web: index.html Meta-Tags korrigieren', proj: 'P1', who: 'AR', estH: 0.5, prio: 'high', notes: 'Tabelle Zeile 1 · "Web: index.html Meta-Tags · Arne · 30 min" — Quick-Win, vor Lighthouse-Audit erledigen.' },
-  { title: 'Web: robots.txt + sitemap.xml anlegen', proj: 'P1', who: 'AR', estH: 0.5, prio: 'med', notes: 'Tabelle Zeile 2 · sitemap.xml mit Routen aus app/router.ts generieren.' },
-  { title: 'Web: og:image korrigieren', proj: 'P1', who: 'AR', estH: 1.0, prio: 'med', notes: 'Tabelle Zeile 3 · 1200×630 PNG, Asset von Hakan beziehen.' },
-  { title: 'Web: JSON-LD Schema einbinden', proj: 'P1', who: 'AR', estH: 0.5, prio: 'low', notes: 'Tabelle Zeile 4 · Organization + MobileApplication Schema.' },
-  { title: 'Lighthouse-Audit + Fix Top-3 Findings', proj: 'P1', who: 'AR', estH: 1.5, prio: 'high', notes: 'Tabelle Zeile 5 · Performance, A11y, SEO — Top-3 fixen, Rest Backlog.' },
-  { title: 'App-Store: Screenshots iPhone 15 Pro Max', proj: 'P3', who: 'HK', estH: 1.5, prio: 'med', notes: 'Tabelle Zeile 6 · 6 Screens, deutsch + englisch.' },
-  { title: 'Play-Store: Feature-Graphic 1024×500', proj: 'P3', who: 'AM', estH: 1.0, prio: 'low', notes: 'Tabelle Zeile 7 · Brand-Asset von Amon.' },
-  { title: 'Anwalt-Feedback DSGVO einarbeiten', proj: 'P2', who: 'PM', estH: 2.0, prio: 'high', notes: 'Tabelle Zeile 8 · Anwalts-Feedback eingegangen 02.05., zwei Punkte: Auftragsverarbeitung & Cookie-Banner.' },
-];
 
 type Tab = 'text' | 'file' | 'chat';
 type Phase = 'input' | 'thinking' | 'result';
@@ -58,12 +31,12 @@ export function AIDrawer({ setActive }: AIDrawerProps) {
   const setUI = useStore((s) => s.setUI);
 
   const [tab, setTab] = useState<Tab>('text');
-  const [text, setText] = useState(SAMPLE_MD);
+  const [text, setText] = useState('');
   const [phase, setPhase] = useState<Phase>('input');
-  const [picks, setPicks] = useState<boolean[]>(EXTRACTED.map(() => true));
+  const [picks, setPicks] = useState<boolean[]>([]);
   const [previewIdx, setPreviewIdx] = useState<number | null>(null);
   const [editIdx, setEditIdx] = useState<number | null>(null);
-  const [editedTasks, setEditedTasks] = useState<ExtractedTask[]>(EXTRACTED.map((t) => ({ ...t })));
+  const [editedTasks, setEditedTasks] = useState<ExtractedTask[]>([]);
 
   const close = () => setUI({ drawer: null });
 
@@ -202,11 +175,8 @@ export function AIDrawer({ setActive }: AIDrawerProps) {
                     }}
                   />
                   <div style={{ display: 'flex', gap: 8, marginTop: 12, alignItems: 'center' }}>
-                    <span className="pill todo">
-                      <Icon name="paperclip" size={9} /> 1 Anhang
-                    </span>
-                    <span className="mono" style={{ fontSize: 10, color: 'var(--ink-500)' }}>
-                      fahrerapp-etappe-1.md · 4,2 KB
+                    <span className="mono" style={{ fontSize: 11, color: 'var(--ink-500)' }}>
+                      Tipp: Markdown-Tabellen, E-Mail-Texte, Briefings — die KI strukturiert das.
                     </span>
                     <div style={{ flex: 1 }} />
                     <span className="mono" style={{ fontSize: 10, color: 'var(--ink-500)' }}>
@@ -234,7 +204,7 @@ export function AIDrawer({ setActive }: AIDrawerProps) {
                   <span />
                   <span />
                 </span>
-                <span>Lese Markdown-Tabelle…</span>
+                <span>KI liest den Text …</span>
               </div>
               <div className="ai-thinking">
                 <span className="dots">
@@ -242,7 +212,7 @@ export function AIDrawer({ setActive }: AIDrawerProps) {
                   <span />
                   <span />
                 </span>
-                <span>Erkenne 8 Aufgaben mit Zuweisung & Zeitschätzung</span>
+                <span>Erkennt Aufgaben &amp; Zeitschätzungen</span>
               </div>
               <div className="ai-thinking">
                 <span className="dots">
@@ -250,7 +220,7 @@ export function AIDrawer({ setActive }: AIDrawerProps) {
                   <span />
                   <span />
                 </span>
-                <span>Mappe Personen → AR, HK, AM, PM · Projekte → E1, E3, E2</span>
+                <span>Mappt auf bestehende Projekte und Personen</span>
               </div>
             </div>
           )}
@@ -260,9 +230,11 @@ export function AIDrawer({ setActive }: AIDrawerProps) {
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
                 <Icon name="check-circle-2" size={18} style={{ color: 'var(--ok-500)' }} />
                 <div>
-                  <div style={{ fontSize: 14, fontWeight: 600 }}>{EXTRACTED.length} Aufgaben extrahiert</div>
+                  <div style={{ fontSize: 14, fontWeight: 600 }}>
+                    {editedTasks.length} {editedTasks.length === 1 ? 'Aufgabe' : 'Aufgaben'} extrahiert
+                  </div>
                   <div className="mono" style={{ fontSize: 11, color: 'var(--ink-500)' }}>
-                    Editierbar · Quelle: fahrerapp-etappe-1.md
+                    Editierbar — du wählst aus, was angelegt wird
                   </div>
                 </div>
                 <div style={{ flex: 1 }} />
@@ -460,16 +432,6 @@ export function AIDrawer({ setActive }: AIDrawerProps) {
                       </div>
                     </div>
                     <div className="ai-edit-foot">
-                      <button
-                        className="tb-btn"
-                        onClick={() => {
-                          setEditedTasks(
-                            editedTasks.map((t, j) => (j === editIdx ? { ...EXTRACTED[editIdx] } : t)),
-                          );
-                        }}
-                      >
-                        Zurücksetzen
-                      </button>
                       <div style={{ flex: 1 }} />
                       <button className="tb-btn accent" onClick={() => setEditIdx(null)}>
                         <Icon name="check" size={13} /> Übernehmen

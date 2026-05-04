@@ -142,6 +142,57 @@ export function TaskDetailDrawer({ id }: TaskDetailDrawerProps) {
               <option value="med">Prio: mittel</option>
               <option value="high">Prio: hoch</option>
             </select>
+            <label
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                background: 'var(--cream-50)',
+                border: '1px solid var(--ink-200)',
+                borderRadius: 6,
+                padding: '4px 10px',
+                fontSize: 12,
+              }}
+            >
+              <Icon name="calendar" size={12} style={{ color: 'var(--ink-500)' }} />
+              <span className="mono" style={{ fontSize: 10, color: 'var(--ink-500)' }}>
+                fällig
+              </span>
+              <input
+                type="date"
+                value={
+                  t.due && t.due !== 'today' && t.due !== 'tomorrow'
+                    ? t.due
+                    : ''
+                }
+                onChange={(e) => updateTask(t.id, { due: e.target.value || null })}
+                style={{
+                  border: 0,
+                  background: 'transparent',
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: 12,
+                  color: 'var(--ink-700)',
+                  padding: 0,
+                  cursor: 'pointer',
+                }}
+              />
+              {t.due && (
+                <button
+                  onClick={() => updateTask(t.id, { due: null })}
+                  style={{
+                    border: 0,
+                    background: 'transparent',
+                    color: 'var(--ink-400)',
+                    cursor: 'pointer',
+                    padding: 0,
+                    display: 'inline-flex',
+                  }}
+                  title="Fälligkeit entfernen"
+                >
+                  <Icon name="x" size={11} />
+                </button>
+              )}
+            </label>
           </div>
 
           <div

@@ -10,6 +10,7 @@ import { SYNC_KEYS } from '../../data/sync';
 import { fmtRel, activityLine, WORK_KINDS } from './adminUtils';
 import { UserDrawer } from './UserDrawer';
 import { TeamsDrawer } from './TeamsDrawer';
+import { TVSetupDrawer } from './TVSetupDrawer';
 
 type FilterMode = 'all' | 'active' | 'admin' | 'inactive';
 
@@ -24,6 +25,7 @@ export function AdminScreen() {
   const [teamFilter, setTeamFilter] = useState<string>('all');
   const [userDrawerId, setUserDrawerId] = useState<string | null>(null);
   const [teamsDrawerOpen, setTeamsDrawerOpen] = useState(false);
+  const [tvDrawerOpen, setTvDrawerOpen] = useState(false);
 
   const counts = {
     all: users.length,
@@ -82,6 +84,9 @@ export function AdminScreen() {
               </div>
             </div>
             <div style={{ flex: 1 }} />
+            <button className="tb-btn" onClick={() => setTvDrawerOpen(true)}>
+              <Icon name="monitor" size={14} /> Office-Display
+            </button>
             <button className="tb-btn" onClick={() => setTeamsDrawerOpen(true)}>
               <Icon name="users" size={14} /> Teams
             </button>
@@ -181,6 +186,7 @@ export function AdminScreen() {
 
       {userDrawerId && <UserDrawer id={userDrawerId} onClose={() => setUserDrawerId(null)} />}
       {teamsDrawerOpen && <TeamsDrawer onClose={() => setTeamsDrawerOpen(false)} />}
+      {tvDrawerOpen && <TVSetupDrawer onClose={() => setTvDrawerOpen(false)} />}
     </div>
   );
 }
