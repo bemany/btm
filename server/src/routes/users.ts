@@ -140,7 +140,12 @@ export const invitationsRoute = new Hono<{ Variables: Variables }>()
 
     const baseUrl = process.env.BETTER_AUTH_URL ?? 'https://btm.bethesna.org';
     const url = `${baseUrl}/invite/${token}`;
-    const mail = inviteEmail({ url, inviterName: inviter.name, role: body.role });
+    const mail = inviteEmail({
+      url,
+      inviterName: inviter.name,
+      role: body.role,
+      inviteeName: body.name?.trim() || null,
+    });
     await sendMail({ to: email, ...mail });
 
     logActivity({ kind: 'invite_sent', actorId: inviter.id, target: email, meta: { role: body.role, teamId: body.teamId } });
