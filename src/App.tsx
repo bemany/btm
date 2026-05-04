@@ -16,6 +16,7 @@ import { MobileScreen } from './components/drawers/MobileScreen';
 import { ChromePluginScreen } from './components/drawers/ChromePluginScreen';
 import { TVDashboardScreen } from './components/drawers/TVDashboardScreen';
 import { CommandPalette } from './components/command-palette/CommandPalette';
+import { ApiTokensDrawer } from './components/profile/ApiTokensDrawer';
 
 import {
   TweaksPanel,
@@ -63,6 +64,7 @@ export function App() {
   const [collapsed, setCollapsed] = useState(false);
   const [cmdkOpen, setCmdkOpen] = useState(false);
   const [tweaksOpen, setTweaksOpen] = useState(false);
+  const [apiTokensOpen, setApiTokensOpen] = useState(false);
 
   const [tweaks, setTweak] = useTweaks<BTMTweaks>(TWEAK_DEFAULTS);
 
@@ -147,6 +149,7 @@ export function App() {
           setCollapsed={setCollapsed}
           theme={tweaks.theme}
           setTheme={(v) => setTweak('theme', v)}
+          onOpenApiTokens={() => setApiTokensOpen(true)}
         />
         <Topbar active={active} setActive={setActive} collapsed={collapsed} setCollapsed={setCollapsed} />
         <main className="app-main">
@@ -166,6 +169,7 @@ export function App() {
       {drawer === 'ai' && <AIDrawer setActive={setActive} />}
       {taskDetailId && <TaskDetailDrawer id={taskDetailId} />}
       {cmdkOpen && <CommandPalette onClose={() => setCmdkOpen(false)} setActive={setActive} />}
+      {apiTokensOpen && <ApiTokensDrawer onClose={() => setApiTokensOpen(false)} />}
 
       <TweaksPanel title="Tweaks · BTM" open={tweaksOpen} onOpenChange={setTweaksOpen}>
         <TweakSection label="Theme">

@@ -44,13 +44,19 @@ export const auth = betterAuth({
   databaseHooks: {
     user: {
       create: {
-        // Erste registrierte E-Mail = Initial-Admin (oder die explizit konfigurierte)
+        // - Name aus Email ableiten falls leer (Magic-Link liefert keinen Namen)
+        // - Initial-Admin-Promotion über INITIAL_ADMIN_EMAIL
         before: async (user) => {
           const email = (user.email ?? '').toLowerCase();
-          if (initialAdminEmail && email === initialAdminEmail) {
-            return { data: { ...user, role: 'admin' } };
-          }
-          return { data: user };
+          const fallbackName =
+            (user.name && user.name.trim()) ||
+            email
+              .split('@')[0]
+              .replace(/[._-]+/g, ' ')
+              .replace(/\b\w/g, (c) => c.toUpperCase());
+          const role: 'admin' | 'member' =
+            initialAdminEmail && email === initialAdminEmail ? 'admin' : 'member';
+          return { data: { ...user, name: fallbackName, role } };
         },
       },
     },

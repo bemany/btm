@@ -12,6 +12,7 @@ export interface SidebarProps {
   setCollapsed: (updater: boolean | ((v: boolean) => boolean)) => void;
   theme: ThemeMode;
   setTheme: (t: ThemeMode) => void;
+  onOpenApiTokens: () => void;
 }
 
 interface Item {
@@ -21,7 +22,15 @@ interface Item {
   count?: number | null;
 }
 
-export function Sidebar({ active, setActive, collapsed, setCollapsed, theme, setTheme }: SidebarProps) {
+export function Sidebar({
+  active,
+  setActive,
+  collapsed,
+  setCollapsed,
+  theme,
+  setTheme,
+  onOpenApiTokens,
+}: SidebarProps) {
   const tasks = useStore((s) => s.tasks);
   const currentUser = useStore((s) => s.currentUser);
   const projects = useStore((s) => s.projects);
@@ -251,8 +260,24 @@ export function Sidebar({ active, setActive, collapsed, setCollapsed, theme, set
             <button
               className="sb-profile-item"
               onClick={() => {
+                setProfileOpen(false);
+                onOpenApiTokens();
+              }}
+            >
+              <span className="sb-profile-icon">
+                <Icon name="key-round" size={14} style={{ color: 'var(--ink-500)' }} />
+              </span>
+              <div className="sb-profile-item-text">
+                <div className="sb-profile-item-title">API-Tokens</div>
+                <div className="sb-profile-item-sub">Für MCP, Claude Desktop, CLI</div>
+              </div>
+            </button>
+
+            <button
+              className="sb-profile-item"
+              onClick={() => {
                 resetDemo();
-                showToast('Demo-Daten zurückgesetzt');
+                showToast('Lokaler State zurückgesetzt');
                 setProfileOpen(false);
               }}
             >
@@ -260,8 +285,8 @@ export function Sidebar({ active, setActive, collapsed, setCollapsed, theme, set
                 <Icon name="rotate-ccw" size={14} style={{ color: 'var(--ink-500)' }} />
               </span>
               <div className="sb-profile-item-text">
-                <div className="sb-profile-item-title">Demo zurücksetzen</div>
-                <div className="sb-profile-item-sub">Lokalen State leeren</div>
+                <div className="sb-profile-item-title">Lokal zurücksetzen</div>
+                <div className="sb-profile-item-sub">UI-Settings &amp; Filter leeren</div>
               </div>
             </button>
 

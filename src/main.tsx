@@ -11,6 +11,16 @@ import './styles/btm-glass.css';
 import './styles/cmdk.css';
 import './styles/sidebar-profile.css';
 import './styles/auth.css';
+import './styles/api-tokens.css';
+
+// Theme früh setzen — sonst hat der Login-Screen kein Glass.
+try {
+  const raw = localStorage.getItem('btm.tweaks.v1');
+  const t = raw ? (JSON.parse(raw).theme as string | undefined) : undefined;
+  document.body.dataset.theme = t === 'default' ? 'default' : 'glass';
+} catch {
+  document.body.dataset.theme = 'glass';
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {

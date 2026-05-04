@@ -72,5 +72,16 @@ export default defineConfig({
     port: 5173,
     strictPort: false,
     open: false,
+    // /api/* lokal aufs produktive Backend proxien, damit Login + Daten
+    // im npm run dev gegen die echte API laufen.
+    proxy: {
+      '/api': {
+        target: 'https://btm.bethesna.org',
+        changeOrigin: true,
+        secure: true,
+        cookieDomainRewrite: 'localhost',
+        // SameSite-Cookies brauchen das.
+      },
+    },
   },
 });
