@@ -76,6 +76,7 @@ export function Sidebar({
     { id: 'times', label: 'Zeiten', icon: 'clock', count: null },
     { id: 'projects', label: 'Projekte', icon: 'folder', count: projects.length },
   ];
+  const adminItem: Item = { id: 'admin', label: 'Admin', icon: 'shield-check' };
   const itemsBottom: Item[] = [
     { id: 'mobile', label: 'Mobile-Vorschau', icon: 'smartphone' },
     { id: 'chrome', label: 'Chrome-Plugin', icon: 'puzzle' },
@@ -139,6 +140,21 @@ export function Sidebar({
           </button>
         ))}
       </div>
+
+      {isAdmin && (
+        <div className="sb-section" style={{ marginTop: 8 }}>
+          {!collapsed && <div className="sb-section-label">Verwaltung</div>}
+          <button
+            key={adminItem.id}
+            className={`sb-item ${active === adminItem.id ? 'active' : ''}`}
+            onClick={() => setActive(adminItem.id)}
+            title={adminItem.label}
+          >
+            <Icon name={adminItem.icon} size={18} className="sb-icon" />
+            <span className="sb-label">{adminItem.label}</span>
+          </button>
+        </div>
+      )}
 
       <div className="sb-section" style={{ marginTop: 8 }}>
         {!collapsed && <div className="sb-section-label">Ausblick</div>}

@@ -1,6 +1,7 @@
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useAuth } from './AuthContext';
 import { LoginScreen } from './LoginScreen';
+import { LandingPage } from '../landing/LandingPage';
 import { useServerSync } from '../data/sync';
 
 function AuthenticatedShell({ children }: { children: ReactNode }) {
@@ -11,19 +12,29 @@ function AuthenticatedShell({ children }: { children: ReactNode }) {
 
 export function AppGate({ children }: { children: ReactNode }) {
   const { status, refresh } = useAuth();
+  const [showLogin, setShowLogin] = useState(false);
 
   // Better-Auth schickt nach erfolgreichem Magic-Link-Verify auf callbackURL=/
   // mit Query-Param `?token=…` zurück. In dem Fall noch ein refresh, danach Cleanup.
   useEffect(() => {
     if (status === 'anon') {
       const url = new URL(window.location.href);
-      if (url.searchParams.has('token') || url.pathname.startsWith('/login-success')) {
+      const hasToken = url.searchParams.has('token');
+      const fromMagic = url.pathname.startsWith('/login-success');
+      if (hasToken || fromMagic) {
         url.searchParams.delete('token');
         history.replaceState({}, '', url.pathname + url.search);
         refresh();
+        // Wenn der User über einen Magic-Link kommt, soll er nicht erst die Landing sehen.
+        setShowLogin(true);
       }
     }
   }, [status, refresh]);
+
+  // Hash-basiert: #login öffnet direkt das Login-Formular (Deep-Link von extern).
+  useEffect(() => {
+    if (window.location.hash === '#login') setShowLogin(true);
+  }, []);
 
   if (status === 'loading') {
     return (
@@ -43,7 +54,8 @@ export function AppGate({ children }: { children: ReactNode }) {
   }
 
   if (status === 'anon') {
-    return <LoginScreen />;
+    if (showLogin) return <LoginScreen />;
+    return <LandingPage onLogin={() => setShowLogin(true)} />;
   }
 
   return <AuthenticatedShell>{children}</AuthenticatedShell>;

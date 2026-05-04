@@ -20,6 +20,7 @@ const TITLES: Record<ScreenId, { crumb: string; meta: string }> = {
   mobile: { crumb: 'Mobile-Vorschau', meta: 'PWA · Phase 2' },
   chrome: { crumb: 'Chrome-Plugin', meta: 'Browser-Erweiterung · Phase 3' },
   tv: { crumb: 'TV-Dashboard', meta: 'Großbildschirm · Live-Status' },
+  admin: { crumb: 'Admin', meta: 'Nutzer · Teams · Aktivität' },
 };
 
 export function Topbar({ active, setActive, collapsed, setCollapsed }: TopbarProps) {

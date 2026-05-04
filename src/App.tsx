@@ -17,6 +17,7 @@ import { ChromePluginScreen } from './components/drawers/ChromePluginScreen';
 import { TVDashboardScreen } from './components/drawers/TVDashboardScreen';
 import { CommandPalette } from './components/command-palette/CommandPalette';
 import { ApiTokensDrawer } from './components/profile/ApiTokensDrawer';
+import { AdminScreen } from './components/admin/AdminScreen';
 
 import {
   TweaksPanel,
@@ -154,6 +155,13 @@ export function App() {
             {active === 'mobile' && <MobileScreen />}
             {active === 'chrome' && <ChromePluginScreen />}
             {active === 'tv' && <TVDashboardScreen />}
+            {active === 'admin' && authUser?.role === 'admin' && <AdminScreen />}
+            {active === 'admin' && authUser?.role !== 'admin' && (
+              <div className="page">
+                <h1>Kein Zugriff</h1>
+                <p>Diese Seite ist nur für Admins.</p>
+              </div>
+            )}
           </div>
         </main>
       </div>

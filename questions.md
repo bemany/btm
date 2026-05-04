@@ -6,18 +6,14 @@ Punkte, an denen ich autonom eine Annahme getroffen habe oder noch warte. Geh si
 
 Aktuell ist nur **esref@bemany.de** in der DB (Initial-Admin). Damit das Tool für das Team nutzbar wird, brauche ich für die anderen mind. die E-Mail-Adressen.
 
-**Aus dem ursprünglichen Prototyp:**
-- AR – Arne Bethge — Web/Marketing — 40h
-- ES – Esref Yıldız — Backend — 40h *(✅ esref@bemany.de — bereits Admin)*
-- HK – Hakan Er — iOS — 32h *(✅ er@bethesna.de — wird mit eingeladen sobald Admin-UI steht)*
-- AM – Amon Schubert — Android — 32h
-- PM – Projektleitung — Lead — 40h
+**✅ Team komplett geklärt:**
+- Esref Yalcinkaya — esref@bemany.de — Admin (Initial-Admin, bereits in DB)
+- Hakan Er — er@bethesna.de — Member (iOS, 32h)
+- Amon Sapper — as@bethesna.de — Member (Android, 32h)
+- Arne Kabelitz — arne@saple.de — Member (Web/Marketing, 40h)
+- PM ist kein eigener User mehr.
 
-**Brauche von dir:**
-- E-Mail-Adressen für AR / AM / PM
-- Echte Avatar-Farben behalten (`#4a6f8a / #b86a3a / #6a8455 / #8a5a8a / #9a3838`)?
-
-**Annahme bis Antwort:** Sobald die Admin-UI steht, lädst du esref @ bemany.de und hakan @ bethesna.org als ersten Test ein — den Rest sobald du die Mails hast.
+**Action:** Nach Build & Deploy lade ich die drei Teamkollegen mit der finalen geilen Einladungs-Mail ein.
 
 ## 2. Initial-Teams
 

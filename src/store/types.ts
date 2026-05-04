@@ -1,7 +1,7 @@
 export type ColumnId = 'todo' | 'doing' | 'review' | 'done';
 export type Priority = 'high' | 'med' | 'low';
 export type LayoutMode = 'kanban' | 'list' | 'timeline';
-export type ScreenId = 'week' | 'board' | 'capacity' | 'times' | 'projects' | 'mobile' | 'chrome' | 'tv';
+export type ScreenId = 'week' | 'board' | 'capacity' | 'times' | 'projects' | 'mobile' | 'chrome' | 'tv' | 'admin';
 export type ThemeBase = 'default' | 'glass';
 export type ThemeBrightness = 'light' | 'dark';
 // CSS-data-theme-Werte: kombinieren Base + Dunkel-Variante.
