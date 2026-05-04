@@ -67,9 +67,45 @@ export function AIDrawer({ setActive }: AIDrawerProps) {
 
   const close = () => setUI({ drawer: null });
 
-  const extract = () => {
+  const extract = async () => {
     setPhase('thinking');
-    setTimeout(() => setPhase('result'), 1600);
+    try {
+      const res = await fetch('/api/ai/extract', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = (await res.json()) as {
+        result: { tasks: Array<{
+          title: string;
+          description?: string;
+          project_id?: string | null;
+          assignee_id?: string | null;
+          est_h?: number;
+          prio?: 'low' | 'med' | 'high';
+          notes?: string;
+        }> };
+      };
+      const extracted: ExtractedTask[] = (data.result?.tasks ?? []).map((t) => ({
+        title: t.title,
+        proj: t.project_id ?? '',
+        who: t.assignee_id ?? '',
+        estH: typeof t.est_h === 'number' ? t.est_h : 1,
+        prio: (t.prio ?? 'med') as Priority,
+        notes: t.notes ?? t.description ?? '',
+      }));
+      setEditedTasks(extracted);
+      setPicks(extracted.map(() => true));
+      setPhase('result');
+      if (extracted.length === 0) {
+        showToast('KI hat keine Aufgaben gefunden');
+      }
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : 'KI nicht erreichbar');
+      setPhase('input');
+    }
   };
 
   const create = async () => {

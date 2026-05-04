@@ -4,7 +4,8 @@ import { LoginScreen } from './LoginScreen';
 import { LandingPage } from '../landing/LandingPage';
 import { InvitePage } from './InvitePage';
 import { useServerSync } from '../data/sync';
-import { isLoginPath, matchInvite, navigate, useLocation } from '../router';
+import { isLoginPath, matchInvite, matchTVFullscreen, navigate, useLocation } from '../router';
+import { TVRoute } from '../landing/TVRoute';
 
 function AuthenticatedShell({ children }: { children: ReactNode }) {
   useServerSync();
@@ -59,6 +60,17 @@ export function AppGate({ children }: { children: ReactNode }) {
         </div>
       </div>
     );
+  }
+
+  // /tv?token=… → Fullscreen-Modus (Bearer-Auth, kein Login nötig).
+  // /tv ohne Token + nicht eingeloggt → Token-Hinweis.
+  // /tv ohne Token + eingeloggt → fällt durch zur normalen App (Sidebar + TV-Screen).
+  const tvToken = matchTVFullscreen(location.pathname, location.search);
+  if (tvToken) {
+    return <TVRoute token={tvToken} />;
+  }
+  if ((location.pathname === '/tv' || location.pathname === '/tv/') && status === 'anon') {
+    return <TVRoute token={null} />;
   }
 
   // /invite/:token funktioniert für anon UND auth (auch ein eingeloggter User

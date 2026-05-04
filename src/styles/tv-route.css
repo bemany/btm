@@ -1,0 +1,57 @@
+/* TV-Fullscreen-Modus — Sidebar/Topbar entfernt, 100vh, kein scroll */
+body.tv-fullscreen {
+  overflow: hidden !important;
+  height: 100vh !important;
+  background: #0F0E0C;
+}
+body.tv-fullscreen .tv-dashboard {
+  width: 100vw;
+  height: 100vh;
+}
+
+/* Token-Missing-Anzeige (TV ohne ?token=) */
+.tv-token-missing {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background: var(--bg-page);
+  padding: 32px;
+}
+.tv-token-card {
+  max-width: 440px;
+  background: var(--cream-50);
+  border: 1px solid var(--ink-200);
+  border-radius: 14px;
+  padding: 36px 36px 30px;
+  text-align: center;
+}
+.tv-token-card h1 {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin: 0 0 12px;
+  color: var(--ink-900);
+}
+.tv-token-card p {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink-700);
+  margin: 0 0 20px;
+}
+.tv-token-card code {
+  background: var(--cream-100);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+.tv-token-card .login-btn-secondary {
+  display: inline-block;
+  text-decoration: none;
+}
+
+body[data-theme='glass-dark'].tv-fullscreen .tv-dashboard,
+body[data-theme='default-dark'].tv-fullscreen .tv-dashboard {
+  background: #0F0E0C;
+}

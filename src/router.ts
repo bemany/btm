@@ -95,7 +95,15 @@ export function matchInvite(pathname: string): string | null {
   return m ? m[1] : null;
 }
 
-// /tv (mit optionalem ?token=…) — Fullscreen-Modus
+// /tv-Fullscreen mit Token via ?token=… (eigentliches Sidebar-/Topbar-loses Layout).
+// Wenn ein Token in der URL ist, läuft die TV-Page mit Bearer-Auth statt Cookie-Session
+// — so kann ein Office-Display ohne Login dauerhaft die Wand bespielen.
+export function matchTVFullscreen(pathname: string, search: string): string | null {
+  if (pathname !== '/tv' && pathname !== '/tv/') return null;
+  const params = new URLSearchParams(search);
+  return params.get('token');
+}
+
 export function isLoginPath(pathname: string): boolean {
   return pathname === '/login' || pathname === '/login/';
 }

@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { Icon } from '../shared/Icon';
 import { showToast } from '../shared/Toast';
-import { mockReply, type ChatMessage } from '../../lib/mockReply';
+import type { ChatMessage } from '../../lib/mockReply';
+import { apiFetch } from '../../lib/api';
 
 export interface ChatPaneProps {
   setText: (s: string) => void;
@@ -78,18 +79,31 @@ export function ChatPane({ setText, setTab, extract }: ChatPaneProps) {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages, busy]);
 
-  const send = (textOverride?: string) => {
+  const send = async (textOverride?: string) => {
     const userText = (textOverride ?? draft).trim();
     if (!userText) return;
     setDraft('');
-    setMessages((m) => [...m, { role: 'user', text: userText }]);
+    const newHistory: ChatMessage[] = [...messages, { role: 'user', text: userText }];
+    setMessages(newHistory);
     setBusy(true);
-
-    setTimeout(() => {
-      const reply = mockReply(userText);
-      setMessages((m) => [...m, reply]);
+    try {
+      const res = await apiFetch<{ reply: { content: string } }>('/ai/chat', {
+        method: 'POST',
+        body: {
+          messages: newHistory.map((m) => ({
+            role: m.role,
+            content: m.text,
+          })),
+        },
+      });
+      setMessages((m) => [...m, { role: 'assistant', text: res.reply.content }]);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'KI nicht erreichbar';
+      setMessages((m) => [...m, { role: 'assistant', text: `⚠️  ${msg}` }]);
+      showToast('KI nicht erreichbar');
+    } finally {
       setBusy(false);
-    }, 900 + Math.random() * 400);
+    }
   };
 
   return (

@@ -3,6 +3,13 @@
 
 const API_BASE = '/api';
 
+// Optionaler Bearer-Token (z.B. für TV-Fullscreen-Route mit ?token=…).
+// Wenn gesetzt, schicken wir Authorization-Header statt Cookie.
+let apiTokenOverride: string | null = null;
+export function setApiTokenOverride(token: string | null): void {
+  apiTokenOverride = token;
+}
+
 export class ApiError extends Error {
   status: number;
   payload: unknown;
@@ -29,10 +36,13 @@ export async function apiFetch<T = unknown>(path: string, opts: RequestOptions =
   if (opts.body !== undefined && !(opts.body instanceof FormData)) {
     headers['Content-Type'] = 'application/json';
   }
+  if (apiTokenOverride && !headers.Authorization) {
+    headers.Authorization = `Bearer ${apiTokenOverride}`;
+  }
 
   const res = await fetch(url, {
     method: opts.method ?? 'GET',
-    credentials: 'include',
+    credentials: apiTokenOverride ? 'omit' : 'include',
     headers,
     body:
       opts.body === undefined
@@ -50,7 +60,19 @@ export async function apiFetch<T = unknown>(path: string, opts: RequestOptions =
     const message =
       (typeof payload === 'object' && payload !== null && 'error' in payload && String((payload as { error: unknown }).error)) ||
       `HTTP ${res.status}`;
-    throw new ApiError(res.status, message, payload);
+    const err = new ApiError(res.status, message, payload);
+    // Eigenes window-Event damit ein zentraler Error-Toaster API-Fehler
+    // anzeigen kann, ohne dass jeder Caller einen try/catch braucht.
+    try {
+      window.dispatchEvent(
+        new CustomEvent('btm:api-error', {
+          detail: { status: res.status, message, path },
+        }),
+      );
+    } catch {
+      /* SSR / kein window */
+    }
+    throw err;
   }
   return payload as T;
 }

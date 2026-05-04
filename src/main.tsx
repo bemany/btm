@@ -4,6 +4,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { App } from './App';
 import { AuthProvider } from './auth/AuthContext';
 import { AppGate } from './auth/AppGate';
+import { installErrorToaster } from './lib/errorToaster';
+
+installErrorToaster();
 
 import './styles/globio-tokens.css';
 import './styles/btm.css';
@@ -15,6 +18,7 @@ import './styles/sidebar-profile.css';
 import './styles/auth.css';
 import './styles/api-tokens.css';
 import './styles/landing.css';
+import './styles/tv-route.css';
 
 // Theme früh setzen — sonst hat der Login-Screen kein Glass.
 const VALID_THEMES = ['default', 'glass', 'default-dark', 'glass-dark'] as const;
