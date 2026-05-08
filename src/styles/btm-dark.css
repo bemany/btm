@@ -490,3 +490,123 @@ body[data-theme="glass-dark"]   .timer-chip {
   --cream-50:  #fff;
   --cream-100: rgba(255, 255, 255, 0.7);
 }
+
+/* ============================================================
+   Dark-Mode Audit-Fixes (Mai 2026)
+   Ergebnisse aus systematischem Walkthrough durch alle Pages.
+   ============================================================ */
+
+/* --ink-500 (Sub-Text/Counter/Meta) ist im Dark-Mode #948A7C — bei
+   großem Hintergrund noch ok, aber als kleines Mono-Text vor
+   schwarzem Hintergrund schwer lesbar. Etwas anheben. */
+body[data-theme="default-dark"],
+body[data-theme="glass-dark"] {
+  --ink-500: #A8A092;   /* +14 Lightness gegenüber vorher */
+  --ink-400: #847B6D;
+}
+
+/* Page-Headings + Subtitles: explizit auf hellen Token, nicht auf
+   evtl. inheritetes dunkel. (Default-Browserfarbe ist schwarz.) */
+body[data-theme="default-dark"] .page-head h1,
+body[data-theme="glass-dark"]   .page-head h1 {
+  color: var(--ink-900);
+}
+body[data-theme="default-dark"] .page-head .subtitle,
+body[data-theme="glass-dark"]   .page-head .subtitle {
+  color: var(--ink-500);
+}
+
+/* Project-Card Title (proj-card h4) erbt Browser-Default ohne body-color.
+   Globales body{color} in btm.css ist gesetzt, aber sicherheitshalber
+   auch hier explizit. */
+body[data-theme="default-dark"] .proj-card h4,
+body[data-theme="glass-dark"]   .proj-card h4 {
+  color: var(--ink-900);
+}
+body[data-theme="default-dark"] .proj-card .meta,
+body[data-theme="glass-dark"]   .proj-card .meta {
+  color: var(--ink-500);
+}
+
+/* Times Σ-Spalte (.tg-cell.total) im Light: ink-900 BG + cream-50 Text =
+   schwarzes Highlight. Im Dark wäre das hellweißer BG mit dunklem
+   Text — invertiertes Highlight, hässlich. Stattdessen: dunklerer
+   Akzent-Highlight. */
+body[data-theme="default-dark"] .tg-cell.total,
+body[data-theme="glass-dark"]   .tg-cell.total {
+  background: rgba(224, 113, 64, 0.18);
+  color: var(--accent-500);
+  border-color: rgba(224, 113, 64, 0.3);
+}
+body[data-theme="default-dark"] .tg-cell.col-head,
+body[data-theme="glass-dark"]   .tg-cell.col-head {
+  background: var(--cream-100);
+  color: var(--ink-700);
+}
+/* Σ-Header speziell — hatte im Light einen schwarzen BG inline */
+body[data-theme="default-dark"] .tg-cell.col-head[style*="ink-900"],
+body[data-theme="glass-dark"]   .tg-cell.col-head[style*="ink-900"] {
+  background: rgba(224, 113, 64, 0.18) !important;
+  color: var(--accent-500) !important;
+}
+
+/* List-View Group-Header BG zu hell-cream im Light, braucht im Dark
+   subtle Akzent-Tint statt dunkel-cream */
+body[data-theme="default-dark"] .k-col-head .ct,
+body[data-theme="glass-dark"]   .k-col-head .ct {
+  color: var(--ink-700);
+}
+
+/* Filter-Chips (board) im Dark — Border verschwand fast */
+body[data-theme="default-dark"] .filter-chip,
+body[data-theme="glass-dark"]   .filter-chip {
+  border-color: rgba(255, 255, 255, 0.1);
+  color: var(--ink-700);
+}
+body[data-theme="default-dark"] .filter-chip:hover,
+body[data-theme="glass-dark"]   .filter-chip:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+  color: var(--ink-900);
+  background: rgba(255, 255, 255, 0.04);
+}
+body[data-theme="default-dark"] .filter-chip.active,
+body[data-theme="glass-dark"]   .filter-chip.active {
+  background: var(--ink-900);
+  color: var(--cream-50);
+  border-color: var(--ink-900);
+}
+
+/* Admin-Sektion: Stat-Labels, Activity-Timestamps, Section-Heads */
+body[data-theme="default-dark"] .admin-stat-label,
+body[data-theme="glass-dark"]   .admin-stat-label {
+  color: var(--ink-500);
+}
+body[data-theme="default-dark"] .admin-stat-val,
+body[data-theme="glass-dark"]   .admin-stat-val {
+  color: var(--ink-900);
+}
+body[data-theme="default-dark"] .admin-activity-time,
+body[data-theme="glass-dark"]   .admin-activity-time {
+  color: var(--ink-500);
+}
+body[data-theme="default-dark"] .admin-activity-text,
+body[data-theme="glass-dark"]   .admin-activity-text {
+  color: var(--ink-800);
+}
+
+/* AI-Drawer Heading (h3 im drawer-head) — kein global color, erbt
+   inzwischen über body{color} aber sicher ist sicher */
+body[data-theme="default-dark"] .drawer-head h3,
+body[data-theme="glass-dark"]   .drawer-head h3 {
+  color: var(--ink-900);
+}
+
+/* Eyebrow-Text generell sichtbarer */
+body[data-theme="default-dark"] .eyebrow,
+body[data-theme="glass-dark"]   .eyebrow {
+  color: var(--ink-500);
+}
+
+/* Inline-styled .mono Texte (font-size 11/10 + color ink-500/400) sind
+   überall verstreut — globaler Bump per --ink-500 ist oben gesetzt,
+   damit reicht's. */

@@ -6,6 +6,10 @@
 /* Reset + base ---------------------------------------------- */
 *, *::before, *::after { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; overflow: hidden; }
+/* Default text color so elements ohne explizites color den Theme-Wert
+   erben — sonst nehmen sie Browser-Default (schwarz) und sind im
+   Dark-Mode unsichtbar. Wirkt auf alle inline-styled Cards/Pages. */
+body { color: var(--ink-900); }
 button { font-family: inherit; cursor: pointer; }
 input, textarea, select { font-family: inherit; color: inherit; }
 input:focus, textarea:focus, select:focus, button:focus { outline: none; }
