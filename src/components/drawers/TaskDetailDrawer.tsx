@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import type { ColumnId, Priority } from '../../store/types';
 import { useStore } from '../../store/store';
 import { COLUMNS } from '../../store/seed';
@@ -5,6 +6,7 @@ import { useTick } from '../shared/hooks';
 import { Icon } from '../shared/Icon';
 import { ProjTag } from '../shared/ProjTag';
 import { showToast } from '../shared/Toast';
+import { useT, useLocale } from '../../i18n';
 
 export interface TaskDetailDrawerProps {
   id: string;
@@ -20,11 +22,74 @@ export function TaskDetailDrawer({ id }: TaskDetailDrawerProps) {
   const deleteTask = useStore((s) => s.deleteTask);
   const startTimer = useStore((s) => s.startTimer);
   const stopTimer = useStore((s) => s.stopTimer);
+  const tr = useT();
+  const [locale] = useLocale();
+  const fmtNum = (h: number) => h.toFixed(1).replace('.', locale === 'en' ? '.' : ',');
 
   const isLive = timer?.taskId === id;
   useTick(isLive);
 
   const t = tasks.find((x) => x.id === id);
+
+  // Lokale Text-Drafts für Title + Description: KEIN Auto-Save während des
+  // Tippens (sonst ruckelt's Buchstabe-für-Buchstabe weil jeder PATCH +
+  // Sync einen Re-Render auslöst). Erst onBlur und beim Schließen wird
+  // zum Server geschrieben.
+  const [titleDraft, setTitleDraft] = useState(t?.title ?? '');
+  const [descDraft, setDescDraft] = useState(t?.desc ?? '');
+
+  // Beim Wechsel der Task (anderer Drawer-Aufruf) Draft initial füllen.
+  // Gegen Server-Updates DURING typing schützen wir uns mit einem ref:
+  // wenn der lokale Draft != Server-Wert, lassen wir ihn in Ruhe.
+  const lastSyncedTitle = useRef(t?.title ?? '');
+  const lastSyncedDesc = useRef(t?.desc ?? '');
+  useEffect(() => {
+    // Anderer Task → Drafts neu setzen
+    setTitleDraft(t?.title ?? '');
+    setDescDraft(t?.desc ?? '');
+    lastSyncedTitle.current = t?.title ?? '';
+    lastSyncedDesc.current = t?.desc ?? '';
+  }, [id]);
+
+  // Server-State-Updates (z. B. anderer User editiert dieselbe Task) nur
+  // dann übernehmen, wenn der lokale Draft noch dem zuletzt gesyncten Wert
+  // entspricht — sonst überschreiben wir gerade getipptes nicht.
+  useEffect(() => {
+    if (t && titleDraft === lastSyncedTitle.current && t.title !== titleDraft) {
+      setTitleDraft(t.title);
+      lastSyncedTitle.current = t.title;
+    }
+    if (t && descDraft === lastSyncedDesc.current && (t.desc ?? '') !== descDraft) {
+      setDescDraft(t.desc ?? '');
+      lastSyncedDesc.current = t.desc ?? '';
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [t?.title, t?.desc]);
+
+  const flushTitle = () => {
+    if (!t) return;
+    if (titleDraft !== t.title) {
+      updateTask(t.id, { title: titleDraft });
+      lastSyncedTitle.current = titleDraft;
+    }
+  };
+  const flushDesc = () => {
+    if (!t) return;
+    if (descDraft !== (t.desc ?? '')) {
+      updateTask(t.id, { desc: descDraft });
+      lastSyncedDesc.current = descDraft;
+    }
+  };
+
+  // Auf Unmount evtl. ausstehende Drafts noch persistieren
+  useEffect(() => {
+    return () => {
+      flushTitle();
+      flushDesc();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   if (!t) return null;
   const close = () => setUI({ taskDetailId: null });
   const liveLog = isLive && timer ? t.loggedH + (Date.now() - timer.startedAt) / 3600000 : t.loggedH;
@@ -44,10 +109,10 @@ export function TaskDetailDrawer({ id }: TaskDetailDrawerProps) {
             className="x"
             onClick={() => {
               deleteTask(t.id);
-              showToast('Gelöscht');
+              showToast(tr('toast.deleted'));
               close();
             }}
-            title="Löschen"
+            title={tr('common.delete')}
           >
             <Icon name="trash-2" size={14} />
           </button>
@@ -58,8 +123,9 @@ export function TaskDetailDrawer({ id }: TaskDetailDrawerProps) {
         <div className="drawer-body">
           <input
             type="text"
-            value={t.title}
-            onChange={(e) => updateTask(t.id, { title: e.target.value })}
+            value={titleDraft}
+            onChange={(e) => setTitleDraft(e.target.value)}
+            onBlur={flushTitle}
             style={{
               width: '100%',
               background: 'transparent',
@@ -88,7 +154,7 @@ export function TaskDetailDrawer({ id }: TaskDetailDrawerProps) {
             >
               {COLUMNS.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.label}
+                  {tr(`column.${c.id}` as 'column.todo')}
                 </option>
               ))}
             </select>
@@ -103,12 +169,15 @@ export function TaskDetailDrawer({ id }: TaskDetailDrawerProps) {
                 fontSize: 12,
               }}
             >
-              <option value="">— niemand —</option>
-              {users.filter((u) => u.status === 'active').map((u) => (
-                <option key={u.id} value={u.id}>
-                  {u.name}
-                </option>
-              ))}
+              <option value="">{tr('common.none')}</option>
+              {users
+                .filter((u) => u.status === 'active' || u.status === 'invited')
+                .map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.name}
+                    {u.status === 'invited' ? tr('task_detail.user_invited_suffix') : ''}
+                  </option>
+                ))}
             </select>
             <select
               value={t.proj ?? ''}
@@ -138,9 +207,9 @@ export function TaskDetailDrawer({ id }: TaskDetailDrawerProps) {
                 fontSize: 12,
               }}
             >
-              <option value="low">Prio: niedrig</option>
-              <option value="med">Prio: mittel</option>
-              <option value="high">Prio: hoch</option>
+              <option value="low">{tr('task_detail.prio_low')}</option>
+              <option value="med">{tr('task_detail.prio_med')}</option>
+              <option value="high">{tr('task_detail.prio_high')}</option>
             </select>
             <label
               style={{
@@ -156,7 +225,7 @@ export function TaskDetailDrawer({ id }: TaskDetailDrawerProps) {
             >
               <Icon name="calendar" size={12} style={{ color: 'var(--ink-500)' }} />
               <span className="mono" style={{ fontSize: 10, color: 'var(--ink-500)' }}>
-                fällig
+                {tr('task_detail.due')}
               </span>
               <input
                 type="date"
@@ -187,7 +256,7 @@ export function TaskDetailDrawer({ id }: TaskDetailDrawerProps) {
                     padding: 0,
                     display: 'inline-flex',
                   }}
-                  title="Fälligkeit entfernen"
+                  title={tr('task_detail.due_clear_title')}
                 >
                   <Icon name="x" size={11} />
                 </button>
@@ -212,26 +281,26 @@ export function TaskDetailDrawer({ id }: TaskDetailDrawerProps) {
                 marginBottom: 8,
               }}
             >
-              <div className="eyebrow">Stunden</div>
+              <div className="eyebrow">{tr('task_detail.hours')}</div>
               {!isLive ? (
                 <button
                   className="tb-btn accent"
                   onClick={() => {
                     startTimer(t.id, true);
-                    showToast('Timer + Pomodoro gestartet');
+                    showToast(tr('week.timer_pomo_started'));
                   }}
                 >
-                  <Icon name="play" size={12} /> Timer starten
+                  <Icon name="play" size={12} /> {tr('task_detail.timer_start')}
                 </button>
               ) : (
                 <button
                   className="tb-btn primary"
                   onClick={() => {
                     stopTimer();
-                    showToast('Timer gestoppt');
+                    showToast(tr('toast.timer_stopped'));
                   }}
                 >
-                  <Icon name="square" size={12} /> Stoppen
+                  <Icon name="square" size={12} /> {tr('task_detail.timer_stop')}
                 </button>
               )}
             </div>
@@ -244,10 +313,10 @@ export function TaskDetailDrawer({ id }: TaskDetailDrawerProps) {
                   fontVariantNumeric: 'tabular-nums',
                 }}
               >
-                {liveLog.toFixed(1).replace('.', ',')}
+                {fmtNum(liveLog)}
               </span>
               <span style={{ fontSize: 14, color: 'var(--ink-500)' }}>
-                / {t.estH.toFixed(1).replace('.', ',')}h geplant
+                {tr('task_detail.estimate_planned_suffix', { h: fmtNum(t.estH) })}
               </span>
             </div>
             <div className="mini-bar" style={{ marginTop: 10 }}>
@@ -256,21 +325,22 @@ export function TaskDetailDrawer({ id }: TaskDetailDrawerProps) {
           </div>
 
           <div className="field">
-            <label>Beschreibung</label>
+            <label>{tr('task_detail.description')}</label>
             <textarea
-              value={t.desc || ''}
-              onChange={(e) => updateTask(t.id, { desc: e.target.value })}
-              placeholder="Notizen, Akzeptanzkriterien, Links…"
+              value={descDraft}
+              onChange={(e) => setDescDraft(e.target.value)}
+              onBlur={flushDesc}
+              placeholder={tr('task_detail.description_placeholder')}
               style={{ minHeight: 100, fontFamily: 'var(--font-body)', fontSize: 13, lineHeight: 1.55 }}
             />
           </div>
 
           <div className="eyebrow" style={{ marginTop: 18, marginBottom: 8 }}>
-            Sessions ({(t.sessions || []).length})
+            {tr('task_detail.sessions', { count: (t.sessions || []).length })}
           </div>
           {(!t.sessions || t.sessions.length === 0) && (
             <div style={{ fontSize: 12, color: 'var(--ink-500)', fontStyle: 'italic' }}>
-              Noch keine Zeit erfasst.
+              {tr('task_detail.sessions_empty')}
             </div>
           )}
           {(t.sessions || []).map((sess, i) => (
@@ -291,7 +361,7 @@ export function TaskDetailDrawer({ id }: TaskDetailDrawerProps) {
                 style={{ color: 'var(--ink-500)' }}
               />
               <span className="mono" style={{ color: 'var(--ink-700)' }}>
-                {new Date(sess.from).toLocaleString('de-DE', {
+                {new Date(sess.from).toLocaleString(locale === 'en' ? 'en-US' : 'de-DE', {
                   weekday: 'short',
                   day: '2-digit',
                   month: '2-digit',
@@ -301,13 +371,13 @@ export function TaskDetailDrawer({ id }: TaskDetailDrawerProps) {
               </span>
               <div style={{ flex: 1 }} />
               <span className="mono" style={{ fontWeight: 600 }}>
-                {sess.h.toFixed(2).replace('.', ',')}h
+                {sess.h.toFixed(2).replace('.', locale === 'en' ? '.' : ',')}h
               </span>
             </div>
           ))}
 
           <div className="eyebrow" style={{ marginTop: 18, marginBottom: 8 }}>
-            Anhänge
+            {tr('task_detail.attachments')}
           </div>
           <div
             style={{
@@ -320,7 +390,7 @@ export function TaskDetailDrawer({ id }: TaskDetailDrawerProps) {
             }}
           >
             <Icon name="paperclip" size={16} style={{ color: 'var(--ink-400)', marginRight: 6 }} />
-            Dateien hier ablegen (Demo)
+            {tr('task_detail.attachments_dropzone')}
           </div>
         </div>
       </div>

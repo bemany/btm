@@ -7,6 +7,7 @@ import { Avatar } from '../shared/Avatar';
 import { ProjTag } from '../shared/ProjTag';
 import { PrioDot } from '../shared/PrioDot';
 import { showToast } from '../shared/Toast';
+import { useT, useLocale } from '../../i18n';
 
 export interface TaskCardProps {
   task: Task;
@@ -20,6 +21,9 @@ export function TaskCard({ task, dragging, onDragStart, onDragEnd, onClick }: Ta
   const timer = useStore((s) => s.timer);
   const startTimer = useStore((s) => s.startTimer);
   const stopTimer = useStore((s) => s.stopTimer);
+  const t = useT();
+  const [locale] = useLocale();
+  const fmtNum = (h: number) => h.toFixed(1).replace('.', locale === 'en' ? '.' : ',');
 
   const isLive = timer?.taskId === task.id;
   useTick(isLive);
@@ -52,7 +56,7 @@ export function TaskCard({ task, dragging, onDragStart, onDragEnd, onClick }: Ta
                 animation: 'pulse 1.4s var(--ease-out) infinite',
               }}
             />{' '}
-            Live
+            {t('board.card_live_pill')}
           </span>
         )}
       </div>
@@ -60,7 +64,7 @@ export function TaskCard({ task, dragging, onDragStart, onDragEnd, onClick }: Ta
       <div className="right-row">
         <span className={`hours ${over ? 'over' : ''}`}>
           <Icon name="timer" size={11} />
-          {liveLogged.toFixed(1).replace('.', ',')} / {task.estH.toFixed(1).replace('.', ',')}h
+          {fmtNum(liveLogged)} / {fmtNum(task.estH)}h
         </span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           {!isLive ? (
@@ -69,11 +73,11 @@ export function TaskCard({ task, dragging, onDragStart, onDragEnd, onClick }: Ta
               onClick={(e: MouseEvent) => {
                 e.stopPropagation();
                 startTimer(task.id, true);
-                showToast('Timer gestartet · Pomodoro Fokus');
+                showToast(t('board.timer_started_pomo_toast'));
               }}
-              title="Timer starten (mit Pomodoro)"
+              title={t('board.card_timer_start_title')}
             >
-              <Icon name="play" size={9} /> Start
+              <Icon name="play" size={9} /> {t('board.card_start')}
             </button>
           ) : (
             <button
@@ -81,11 +85,11 @@ export function TaskCard({ task, dragging, onDragStart, onDragEnd, onClick }: Ta
               onClick={(e: MouseEvent) => {
                 e.stopPropagation();
                 stopTimer();
-                showToast('Timer gestoppt');
+                showToast(t('toast.timer_stopped'));
               }}
-              title="Stoppen"
+              title={t('board.card_timer_stop_title')}
             >
-              <Icon name="square" size={9} /> Stop
+              <Icon name="square" size={9} /> {t('board.card_stop')}
             </button>
           )}
           <Avatar id={task.who} size={20} />

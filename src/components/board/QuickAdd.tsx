@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { ColumnId } from '../../store/types';
 import { useStore } from '../../store/store';
 import { showToast } from '../shared/Toast';
+import { useT } from '../../i18n';
 
 export interface QuickAddProps {
   col: ColumnId;
@@ -12,6 +13,7 @@ export function QuickAdd({ col, onClose }: QuickAddProps) {
   const projects = useStore((s) => s.projects);
   const currentUser = useStore((s) => s.currentUser);
   const addTask = useStore((s) => s.addTask);
+  const t = useT();
 
   const [title, setTitle] = useState('');
   const [proj, setProj] = useState(projects[0]?.id ?? '');
@@ -25,7 +27,7 @@ export function QuickAdd({ col, onClose }: QuickAddProps) {
     if (!title.trim()) return onClose();
     addTask({ title: title.trim(), proj, col, estH: estH || 1, who: currentUser });
     setTitle('');
-    showToast('Aufgabe angelegt');
+    showToast(t('toast.task_created'));
     inputRef.current?.focus();
   };
 
@@ -33,7 +35,7 @@ export function QuickAdd({ col, onClose }: QuickAddProps) {
     <div className="k-quick-add" onClick={(e) => e.stopPropagation()}>
       <input
         ref={inputRef}
-        placeholder="Aufgabe…"
+        placeholder={t('board.quickadd_title_placeholder')}
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         onKeyDown={(e) => {
@@ -64,7 +66,7 @@ export function QuickAdd({ col, onClose }: QuickAddProps) {
             padding: '2px 4px',
             textAlign: 'center',
           }}
-          title="Geschätzte Stunden"
+          title={t('board.quickadd_estimate_title')}
         />
         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-500)' }}>h</span>
         <div style={{ flex: 1 }} />
@@ -72,7 +74,7 @@ export function QuickAdd({ col, onClose }: QuickAddProps) {
           onClick={onClose}
           style={{ background: 'transparent', border: 0, color: 'var(--ink-500)', fontSize: 11 }}
         >
-          Abbr.
+          {t('board.quickadd_cancel_short')}
         </button>
         <button
           onClick={submit}
@@ -86,7 +88,7 @@ export function QuickAdd({ col, onClose }: QuickAddProps) {
             fontWeight: 600,
           }}
         >
-          Anlegen
+          {t('board.quickadd_create')}
         </button>
       </div>
     </div>

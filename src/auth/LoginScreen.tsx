@@ -1,14 +1,19 @@
 import { useState, type FormEvent } from 'react';
 import { Icon } from '../components/shared/Icon';
+import { showToast } from '../components/shared/Toast';
 import { useAuth } from './AuthContext';
+import { useT } from '../i18n';
 
 type Phase = 'idle' | 'sending' | 'sent' | 'error';
 
 export function LoginScreen() {
   const { signIn } = useAuth();
+  const t = useT();
   const [email, setEmail] = useState('');
   const [phase, setPhase] = useState<Phase>('idle');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [code, setCode] = useState('');
+  const [verifying, setVerifying] = useState(false);
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -20,7 +25,33 @@ export function LoginScreen() {
       setPhase('sent');
     } catch (e) {
       setPhase('error');
-      setErrorMsg(e instanceof Error ? e.message : 'Login fehlgeschlagen.');
+      setErrorMsg(e instanceof Error ? e.message : t('toast.save_failed'));
+    }
+  };
+
+  const verifyCode = async (e: FormEvent) => {
+    e.preventDefault();
+    const trimmed = code.trim();
+    if (!/^\d{6}$/.test(trimmed)) return;
+    setVerifying(true);
+    setErrorMsg(null);
+    try {
+      const r = await fetch('/api/login-code', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, code: trimmed, callbackURL: '/' }),
+      });
+      if (!r.ok) {
+        const j = await r.json().catch(() => ({}));
+        throw new Error(j.error ?? t('login.code_invalid'));
+      }
+      const { verifyUrl } = (await r.json()) as { verifyUrl: string };
+      window.location.href = verifyUrl;
+    } catch (e) {
+      setErrorMsg(e instanceof Error ? e.message : t('login.code_invalid'));
+      showToast(e instanceof Error ? e.message : t('login.code_invalid'));
+      setVerifying(false);
     }
   };
 
@@ -46,7 +77,7 @@ export function LoginScreen() {
           </svg>
           <div>
             <div className="login-brand-name">BTM</div>
-            <div className="login-brand-sub">Bethesna Task Management</div>
+            <div className="login-brand-sub">{t('login.brand_sub')}</div>
           </div>
         </div>
 
@@ -55,34 +86,66 @@ export function LoginScreen() {
             <div className="login-sent-icon">
               <Icon name="mail-check" size={36} />
             </div>
-            <h2>Mail unterwegs.</h2>
-            <p>
-              Wir haben dir einen Login-Link an <b>{email}</b> geschickt. Klick auf den Knopf in der Mail, dann
-              bist du drin.
-            </p>
-            <p className="login-sent-hint">
-              Link ist 15 Minuten gültig. Falls nichts ankommt: Spam-Ordner prüfen oder es nochmal versuchen.
-            </p>
+            <h2>{t('login.sent_title')}</h2>
+            <p>{t('login.sent_body', { email })}</p>
+
+            <form onSubmit={verifyCode} className="login-code-form">
+              <label className="login-label" htmlFor="login-code">
+                {t('login.code_label')}
+              </label>
+              <input
+                id="login-code"
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]{6}"
+                autoComplete="one-time-code"
+                placeholder="123456"
+                maxLength={6}
+                value={code}
+                onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                disabled={verifying}
+                className="login-input login-code-input"
+                autoFocus
+              />
+              {errorMsg && <div className="login-error">{errorMsg}</div>}
+              <button
+                type="submit"
+                disabled={verifying || code.length !== 6}
+                className="login-btn-primary"
+              >
+                {verifying ? (
+                  <>
+                    <Icon name="loader-2" size={14} className="login-spin" /> {t('login.code_verifying')}
+                  </>
+                ) : (
+                  <>
+                    <Icon name="key" size={14} /> {t('login.code_submit')}
+                  </>
+                )}
+              </button>
+            </form>
+
+            <p className="login-sent-hint">{t('login.sent_hint')}</p>
             <button
               type="button"
               className="login-btn-secondary"
               onClick={() => {
                 setPhase('idle');
                 setEmail('');
+                setCode('');
+                setErrorMsg(null);
               }}
             >
-              Andere Mail verwenden
+              {t('login.other_email')}
             </button>
           </div>
         ) : (
           <form onSubmit={submit} className="login-form">
-            <h1>Einloggen</h1>
-            <p className="login-lead">
-              Gib deine E-Mail-Adresse ein. Wir schicken dir einen Login-Link — kein Passwort, keine Registrierung.
-            </p>
+            <h1>{t('login.title')}</h1>
+            <p className="login-lead">{t('login.lead')}</p>
 
             <label className="login-label" htmlFor="login-email">
-              E-Mail
+              {t('login.email_label')}
             </label>
             <input
               id="login-email"
@@ -90,7 +153,7 @@ export function LoginScreen() {
               autoComplete="email"
               autoFocus
               required
-              placeholder="dein.name@bethesna.org"
+              placeholder={t('login.email_placeholder')}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={phase === 'sending'}
@@ -99,21 +162,23 @@ export function LoginScreen() {
 
             {phase === 'error' && errorMsg && <div className="login-error">{errorMsg}</div>}
 
-            <button type="submit" disabled={phase === 'sending' || !email.includes('@')} className="login-btn-primary">
+            <button
+              type="submit"
+              disabled={phase === 'sending' || !email.includes('@')}
+              className="login-btn-primary"
+            >
               {phase === 'sending' ? (
                 <>
-                  <Icon name="loader-2" size={14} className="login-spin" /> Wird geschickt …
+                  <Icon name="loader-2" size={14} className="login-spin" /> {t('login.submitting')}
                 </>
               ) : (
                 <>
-                  <Icon name="sparkles" size={14} /> Login-Link schicken
+                  <Icon name="sparkles" size={14} /> {t('login.submit')}
                 </>
               )}
             </button>
 
-            <p className="login-foot">
-              Noch keinen Zugang? Frag deinen Admin nach einer Einladung — BTM ist einladungs-basiert.
-            </p>
+            <p className="login-foot">{t('login.foot')}</p>
           </form>
         )}
       </div>

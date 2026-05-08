@@ -1,12 +1,16 @@
 import { Fragment, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useStore } from '../../store/store';
 import { useTick } from '../shared/hooks';
 import { Icon } from '../shared/Icon';
 import { ProjTag } from '../shared/ProjTag';
 import { showToast } from '../shared/Toast';
-import { fmtHMS, fmtMS, DEMO_DAYS } from '../../lib/format';
+import { fmtHMS, fmtMS, DEMO_TODAY } from '../../lib/format';
 import { computePomo } from '../../lib/pomodoro';
 import { TimeCell } from './TimeCell';
+import { listWeekSessions } from '../../data/api';
+import { SYNC_KEYS } from '../../data/sync';
+import { useT, useLocale } from '../../i18n';
 
 export function TimesScreen() {
   const tasks = useStore((s) => s.tasks);
@@ -15,32 +19,53 @@ export function TimesScreen() {
   const setUI = useStore((s) => s.setUI);
   const stopTimer = useStore((s) => s.stopTimer);
   const togglePomodoro = useStore((s) => s.togglePomodoro);
+  const t = useT();
+  const [locale] = useLocale();
+  const fmtNum = (h: number) => h.toFixed(1).replace('.', locale === 'en' ? '.' : ',');
 
   const users = useStore((s) => s.users);
   useTick(!!timer);
   const meUser = users.find((u) => u.id === currentUser);
   const me = { name: meUser ? meUser.name.split(' ')[0] || meUser.name : '—' };
-  const myTasks = tasks.filter((t) => t.who === currentUser);
-  const days = DEMO_DAYS;
-  const todayIdx = 0;
+  const myTasks = tasks.filter((tk) => tk.who === currentUser);
+  const days = [
+    t('board.timeline_day_mo'),
+    t('board.timeline_day_di'),
+    t('board.timeline_day_mi'),
+    t('board.timeline_day_do'),
+    t('board.timeline_day_fr'),
+  ];
+
+  const weekStart = useMemo(() => {
+    const d = new Date(DEMO_TODAY);
+    return d.toISOString().slice(0, 10);
+  }, []);
+
+  const sessionsQ = useQuery({
+    queryKey: [...SYNC_KEYS.WEEK_SESSIONS, weekStart],
+    queryFn: () => listWeekSessions(weekStart),
+    staleTime: 30_000,
+    refetchOnWindowFocus: true,
+  });
 
   const grid = useMemo(() => {
     const m: Record<string, number[]> = {};
-    myTasks.forEach((t) => {
-      m[t.id] = days.map(() => 0);
-      if (t.sessions && t.sessions.length) {
-        t.sessions.forEach((sess) => {
-          const di = new Date(sess.from).getDay() - 1;
-          if (di >= 0 && di < 5) m[t.id][di] += sess.h;
-        });
-      } else if (t.loggedH > 0) {
-        m[t.id][todayIdx] = t.loggedH;
-      }
+    myTasks.forEach((tk) => {
+      m[tk.id] = days.map(() => 0);
     });
+    const sessions = sessionsQ.data ?? [];
+    for (const s of sessions) {
+      const dayDate = new Date(s.day + 'T00:00:00Z');
+      const monday = new Date(weekStart + 'T00:00:00Z');
+      const di = Math.floor((dayDate.getTime() - monday.getTime()) / 86400000);
+      if (di < 0 || di >= 5) continue;
+      if (!m[s.taskId]) m[s.taskId] = days.map(() => 0);
+      m[s.taskId][di] += s.hours;
+    }
     return m;
-  }, [tasks, currentUser]);
+  }, [myTasks, sessionsQ.data, weekStart, days]);
 
-  const liveTask = timer ? tasks.find((t) => t.id === timer.taskId) : null;
+  const liveTask = timer ? tasks.find((tk) => tk.id === timer.taskId) : null;
   const pomo = timer ? computePomo(timer.pomodoro, Date.now()) : null;
   const elapsed = timer ? Date.now() - timer.startedAt : 0;
 
@@ -48,13 +73,13 @@ export function TimesScreen() {
     <div className="page">
       <div className="page-head">
         <div className="left">
-          <div className="eyebrow">04 · Zeiten</div>
-          <h1>Live-Timer + Batch-Eintrag</h1>
-          <div className="subtitle">Beides gleichberechtigt · Wochen-Grid: Zelle klicken → Stunden eintragen</div>
+          <div className="eyebrow">{t('times.eyebrow')}</div>
+          <h1>{t('times.title_alt')}</h1>
+          <div className="subtitle">{t('times.sub_alt')}</div>
         </div>
         <div className="right">
           <button className="tb-btn">
-            <Icon name="download" size={14} /> Export CSV
+            <Icon name="download" size={14} /> {t('times.export_csv')}
           </button>
         </div>
       </div>
@@ -78,19 +103,29 @@ export function TimesScreen() {
                 />
               </svg>
               <div className="lbl">
-                <div>{pomo.mode === 'focus' ? 'FOKUS' : pomo.mode === 'short' ? 'PAUSE' : 'L. PAUSE'}</div>
+                <div>
+                  {pomo.mode === 'focus'
+                    ? t('week.pomo_caps_focus')
+                    : pomo.mode === 'short'
+                    ? t('week.pomo_caps_short')
+                    : t('week.pomo_caps_long')}
+                </div>
                 <div className="big">{fmtMS(pomo.remaining)}</div>
               </div>
             </div>
           )}
           <div className="info">
             <div className="ey eyebrow">
-              Live · läuft seit{' '}
-              {new Date(timer.startedAt).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
+              {t('week.live_eyebrow', {
+                time: new Date(timer.startedAt).toLocaleTimeString(locale === 'en' ? 'en-US' : 'de-DE', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                }),
+              })}
             </div>
             <div className="t">{liveTask.title}</div>
             <div className="m">
-              <ProjTag id={liveTask.proj} /> · geplant {liveTask.estH.toFixed(1).replace('.', ',')}h
+              <ProjTag id={liveTask.proj} /> · {t('week.planned_short', { h: fmtNum(liveTask.estH) })}
             </div>
             {pomo && (
               <div style={{ marginTop: 8 }}>
@@ -111,16 +146,16 @@ export function TimesScreen() {
           <div className="actions">
             <button className="btn" onClick={togglePomodoro}>
               <Icon name="sparkles" size={12} />
-              {timer.pomodoro ? 'Pomo aus' : 'Pomo an'}
+              {timer.pomodoro ? t('times.pomo_short_off') : t('times.pomo_short_on')}
             </button>
             <button
               className="btn danger"
               onClick={() => {
                 stopTimer();
-                showToast('Timer gestoppt');
+                showToast(t('toast.timer_stopped'));
               }}
             >
-              <Icon name="square" size={12} /> Stoppen
+              <Icon name="square" size={12} /> {t('week.stop')}
             </button>
           </div>
         </div>
@@ -139,20 +174,20 @@ export function TimesScreen() {
         >
           <Icon name="timer" size={28} style={{ color: 'var(--ink-400)' }} />
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 13.5, fontWeight: 500 }}>Kein Timer läuft.</div>
+            <div style={{ fontSize: 13.5, fontWeight: 500 }}>{t('times.no_timer_running')}</div>
             <div className="mono" style={{ fontSize: 11, color: 'var(--ink-500)' }}>
-              Klick „Start" auf einer Aufgabe (Wochenboard) · oder Stunden direkt unten ins Grid eintragen
+              {t('times.no_timer_hint')}
             </div>
           </div>
         </div>
       )}
 
       <div className="eyebrow" style={{ marginBottom: 10 }}>
-        Stunden-Grid · {me.name} · KW 19
+        {t('times.grid_eyebrow', { name: me.name, kw: 19 })}
       </div>
       <div className="tg-grid" style={{ gridTemplateColumns: '2fr repeat(5, 1fr) 80px' }}>
         <div className="tg-cell col-head" style={{ justifyContent: 'flex-start' }}>
-          Aufgabe
+          {t('times.grid_task')}
         </div>
         {days.map((d) => (
           <div key={d} className="tg-cell col-head">
@@ -163,15 +198,15 @@ export function TimesScreen() {
           Σ
         </div>
         {myTasks
-          .filter((t) => t.col !== 'done' || t.loggedH > 0)
-          .map((t) => {
-            const row = grid[t.id] || [0, 0, 0, 0, 0];
+          .filter((tk) => tk.col !== 'done' || tk.loggedH > 0)
+          .map((tk) => {
+            const row = grid[tk.id] || [0, 0, 0, 0, 0];
             const total = row.reduce((a, b) => a + b, 0);
             return (
-              <Fragment key={t.id}>
+              <Fragment key={tk.id}>
                 <div
                   className="tg-cell row-head"
-                  onClick={() => setUI({ taskDetailId: t.id })}
+                  onClick={() => setUI({ taskDetailId: tk.id })}
                   style={{ cursor: 'pointer' }}
                 >
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -183,17 +218,17 @@ export function TimesScreen() {
                         fontWeight: 500,
                       }}
                     >
-                      {t.title}
+                      {tk.title}
                     </div>
                     <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                      <ProjTag id={t.proj} />
+                      <ProjTag id={tk.proj} />
                     </div>
                   </div>
                 </div>
                 {row.map((v, i) => (
-                  <TimeCell key={i} task={t} dayIdx={i} value={v} />
+                  <TimeCell key={i} task={tk} dayIdx={i} value={v} />
                 ))}
-                <div className="tg-cell total">{total > 0 ? total.toFixed(1).replace('.', ',') : '—'}</div>
+                <div className="tg-cell total">{total > 0 ? fmtNum(total) : '—'}</div>
               </Fragment>
             );
           })}

@@ -5,7 +5,7 @@ import { Icon } from '../shared/Icon';
 import { Avatar } from '../shared/Avatar';
 import { ProjTag } from '../shared/ProjTag';
 import { showToast } from '../shared/Toast';
-import { ChatPane } from './ChatPane';
+import { useT, useLocale } from '../../i18n';
 
 interface ExtractedTask {
   title: string;
@@ -16,7 +16,7 @@ interface ExtractedTask {
   notes: string;
 }
 
-type Tab = 'text' | 'file' | 'chat';
+type Tab = 'text' | 'file';
 type Phase = 'input' | 'thinking' | 'result';
 
 export interface AIDrawerProps {
@@ -29,6 +29,9 @@ export function AIDrawer({ setActive }: AIDrawerProps) {
   const users = useStore((s) => s.users);
   const addTask = useStore((s) => s.addTask);
   const setUI = useStore((s) => s.setUI);
+  const t = useT();
+  const [locale] = useLocale();
+  const fmtNum = (h: number) => h.toFixed(1).replace('.', locale === 'en' ? '.' : ',');
 
   const [tab, setTab] = useState<Tab>('text');
   const [text, setText] = useState('');
@@ -61,22 +64,22 @@ export function AIDrawer({ setActive }: AIDrawerProps) {
           notes?: string;
         }> };
       };
-      const extracted: ExtractedTask[] = (data.result?.tasks ?? []).map((t) => ({
-        title: t.title,
-        proj: t.project_id ?? '',
-        who: t.assignee_id ?? '',
-        estH: typeof t.est_h === 'number' ? t.est_h : 1,
-        prio: (t.prio ?? 'med') as Priority,
-        notes: t.notes ?? t.description ?? '',
+      const extracted: ExtractedTask[] = (data.result?.tasks ?? []).map((tk) => ({
+        title: tk.title,
+        proj: tk.project_id ?? '',
+        who: tk.assignee_id ?? '',
+        estH: typeof tk.est_h === 'number' ? tk.est_h : 1,
+        prio: (tk.prio ?? 'med') as Priority,
+        notes: tk.notes ?? tk.description ?? '',
       }));
       setEditedTasks(extracted);
       setPicks(extracted.map(() => true));
       setPhase('result');
       if (extracted.length === 0) {
-        showToast('KI hat keine Aufgaben gefunden');
+        showToast(t('ai_drawer.no_tasks'));
       }
     } catch (e) {
-      showToast(e instanceof Error ? e.message : 'KI nicht erreichbar');
+      showToast(e instanceof Error ? e.message : t('toast.api_unreachable'));
       setPhase('input');
     }
   };
@@ -86,7 +89,7 @@ export function AIDrawer({ setActive }: AIDrawerProps) {
     for (let i = 0; i < editedTasks.length; i++) {
       if (!picks[i]) continue;
       const e = editedTasks[i];
-      const exists = tasks.find((t) => t.title === e.title);
+      const exists = tasks.find((tk) => tk.title === e.title);
       if (exists) continue;
       // Demo-Persona-IDs (AR/HK/AM/PM) sind keine gültigen User-IDs am Server.
       // Fallback: nur durchreichen wenn die ID auch in der User-Liste existiert.
@@ -101,7 +104,9 @@ export function AIDrawer({ setActive }: AIDrawerProps) {
       });
       added++;
     }
-    showToast(`${added} Aufgabe${added === 1 ? '' : 'n'} angelegt → Wochenboard`);
+    showToast(
+      added === 1 ? t('ai_drawer.create_toast_one', { count: added }) : t('ai_drawer.create_toast_many', { count: added }),
+    );
     close();
     setActive('board');
   };
@@ -125,9 +130,9 @@ export function AIDrawer({ setActive }: AIDrawerProps) {
             <Icon name="sparkles" size={16} />
           </div>
           <div style={{ flex: 1 }}>
-            <h3>Planungsassistent</h3>
+            <h3>{t('ai_drawer.title')}</h3>
             <div className="mono" style={{ fontSize: 10, color: 'var(--ink-500)' }}>
-              PM-Anleitungen → Tasks · ⌘K zum Öffnen / Schließen
+              {t('ai_drawer.sub')}
             </div>
           </div>
           <button className="x" onClick={close}>
@@ -138,9 +143,8 @@ export function AIDrawer({ setActive }: AIDrawerProps) {
         <div className="ai-tabs">
           {(
             [
-              ['text', 'Freitext / E-Mail'],
-              ['file', 'Datei hochladen'],
-              ['chat', 'Chat'],
+              ['text', t('ai_drawer.tab_text')],
+              ['file', t('ai_drawer.tab_file')],
             ] as Array<[Tab, string]>
           ).map(([id, lbl]) => (
             <button key={id} className={`ai-tab ${tab === id ? 'active' : ''}`} onClick={() => setTab(id)}>
@@ -155,7 +159,7 @@ export function AIDrawer({ setActive }: AIDrawerProps) {
               {tab === 'text' && (
                 <>
                   <div className="eyebrow" style={{ marginBottom: 8 }}>
-                    PM-Anleitung Etappe 1 · aus Claude-Skill
+                    {t('ai_drawer.text_eyebrow')}
                   </div>
                   <textarea
                     value={text}
@@ -176,11 +180,11 @@ export function AIDrawer({ setActive }: AIDrawerProps) {
                   />
                   <div style={{ display: 'flex', gap: 8, marginTop: 12, alignItems: 'center' }}>
                     <span className="mono" style={{ fontSize: 11, color: 'var(--ink-500)' }}>
-                      Tipp: Markdown-Tabellen, E-Mail-Texte, Briefings — die KI strukturiert das.
+                      {t('ai_drawer.text_hint')}
                     </span>
                     <div style={{ flex: 1 }} />
                     <span className="mono" style={{ fontSize: 10, color: 'var(--ink-500)' }}>
-                      {text.length} Zeichen
+                      {t('ai_drawer.text_chars', { count: text.length })}
                     </span>
                   </div>
                 </>
@@ -188,11 +192,10 @@ export function AIDrawer({ setActive }: AIDrawerProps) {
               {tab === 'file' && (
                 <div style={{ border: '2px dashed var(--ink-300)', borderRadius: 8, padding: 60, textAlign: 'center' }}>
                   <Icon name="upload-cloud" size={36} style={{ color: 'var(--ink-400)' }} />
-                  <div style={{ fontSize: 14, fontWeight: 500, marginTop: 10 }}>PDF, DOCX, MD, TXT hier ablegen</div>
-                  <div style={{ fontSize: 12, color: 'var(--ink-500)', marginTop: 4 }}>oder klicken zum Auswählen</div>
+                  <div style={{ fontSize: 14, fontWeight: 500, marginTop: 10 }}>{t('ai_drawer.file_dropzone')}</div>
+                  <div style={{ fontSize: 12, color: 'var(--ink-500)', marginTop: 4 }}>{t('ai_drawer.file_dropzone_sub')}</div>
                 </div>
               )}
-              {tab === 'chat' && <ChatPane setText={setText} setTab={setTab} extract={extract} />}
             </>
           )}
 
@@ -204,7 +207,7 @@ export function AIDrawer({ setActive }: AIDrawerProps) {
                   <span />
                   <span />
                 </span>
-                <span>KI liest den Text …</span>
+                <span>{t('ai_drawer.thinking_step1')}</span>
               </div>
               <div className="ai-thinking">
                 <span className="dots">
@@ -212,7 +215,7 @@ export function AIDrawer({ setActive }: AIDrawerProps) {
                   <span />
                   <span />
                 </span>
-                <span>Erkennt Aufgaben &amp; Zeitschätzungen</span>
+                <span>{t('ai_drawer.thinking_step2')}</span>
               </div>
               <div className="ai-thinking">
                 <span className="dots">
@@ -220,7 +223,7 @@ export function AIDrawer({ setActive }: AIDrawerProps) {
                   <span />
                   <span />
                 </span>
-                <span>Mappt auf bestehende Projekte und Personen</span>
+                <span>{t('ai_drawer.thinking_step3')}</span>
               </div>
             </div>
           )}
@@ -231,18 +234,20 @@ export function AIDrawer({ setActive }: AIDrawerProps) {
                 <Icon name="check-circle-2" size={18} style={{ color: 'var(--ok-500)' }} />
                 <div>
                   <div style={{ fontSize: 14, fontWeight: 600 }}>
-                    {editedTasks.length} {editedTasks.length === 1 ? 'Aufgabe' : 'Aufgaben'} extrahiert
+                    {editedTasks.length === 1
+                      ? t('ai_drawer.extracted_one', { count: editedTasks.length })
+                      : t('ai_drawer.extracted_many', { count: editedTasks.length })}
                   </div>
                   <div className="mono" style={{ fontSize: 11, color: 'var(--ink-500)' }}>
-                    Editierbar — du wählst aus, was angelegt wird
+                    {t('ai_drawer.extracted_sub')}
                   </div>
                 </div>
                 <div style={{ flex: 1 }} />
                 <button className="filter-chip" onClick={() => setPicks(picks.map(() => true))}>
-                  Alle
+                  {t('ai_drawer.select_all')}
                 </button>
                 <button className="filter-chip" onClick={() => setPicks(picks.map(() => false))}>
-                  Keine
+                  {t('ai_drawer.select_none')}
                 </button>
               </div>
               {editedTasks.map((e, i) => (
@@ -259,7 +264,7 @@ export function AIDrawer({ setActive }: AIDrawerProps) {
                         <ProjTag id={e.proj} />
                         <Avatar id={e.who} size={16} />
                         <span className="mono" style={{ fontSize: 10, color: 'var(--ink-500)' }}>
-                          {e.estH.toFixed(1).replace('.', ',')}h
+                          {fmtNum(e.estH)}h
                         </span>
                       </div>
                     </div>
@@ -267,42 +272,42 @@ export function AIDrawer({ setActive }: AIDrawerProps) {
                       <button
                         className="ai-row-icon"
                         onClick={() => setPreviewIdx(previewIdx === i ? null : i)}
-                        title="Vorschau"
+                        title={t('ai_drawer.preview_label')}
                       >
                         <Icon name={previewIdx === i ? 'eye-off' : 'eye'} size={14} />
                       </button>
-                      <button className="ai-row-icon" onClick={() => setEditIdx(i)} title="Bearbeiten">
+                      <button className="ai-row-icon" onClick={() => setEditIdx(i)} title={t('ai_drawer.edit_label')}>
                         <Icon name="pencil" size={14} />
                       </button>
-                      <span className="src">Z. {i + 1}</span>
+                      <span className="src">{t('ai_drawer.line_label', { n: i + 1 })}</span>
                     </div>
                   </div>
                   {previewIdx === i && (
                     <div className="ai-row-preview">
                       <div className="ai-prev-grid">
                         <div className="ai-prev-cell">
-                          <div className="eyebrow">Projekt</div>
+                          <div className="eyebrow">{t('ai_drawer.field_project')}</div>
                           <div>
                             <ProjTag id={e.proj} />
                           </div>
                         </div>
                         <div className="ai-prev-cell">
-                          <div className="eyebrow">Zugewiesen</div>
+                          <div className="eyebrow">{t('ai_drawer.field_assignee')}</div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
                             <Avatar id={e.who} size={18} />
                             {users.find((u) => u.id === e.who)?.name ?? e.who}
                           </div>
                         </div>
                         <div className="ai-prev-cell">
-                          <div className="eyebrow">Schätzung</div>
+                          <div className="eyebrow">{t('ai_drawer.field_estimate')}</div>
                           <div style={{ fontSize: 14, fontWeight: 600 }}>
-                            {e.estH.toFixed(1).replace('.', ',')}h
+                            {fmtNum(e.estH)}h
                           </div>
                         </div>
                         <div className="ai-prev-cell">
-                          <div className="eyebrow">Priorität</div>
+                          <div className="eyebrow">{t('ai_drawer.field_priority')}</div>
                           <div style={{ fontSize: 12, textTransform: 'capitalize' }}>
-                            {e.prio === 'high' ? 'hoch' : e.prio === 'med' ? 'mittel' : 'niedrig'}
+                            {e.prio === 'high' ? t('prio.high') : e.prio === 'med' ? t('prio.med') : t('prio.low')}
                           </div>
                         </div>
                       </div>
@@ -319,7 +324,7 @@ export function AIDrawer({ setActive }: AIDrawerProps) {
                           }}
                         >
                           <div className="eyebrow" style={{ marginBottom: 4 }}>
-                            Quelle
+                            {t('ai_drawer.field_source')}
                           </div>
                           {e.notes}
                         </div>
@@ -334,7 +339,7 @@ export function AIDrawer({ setActive }: AIDrawerProps) {
                   <div className="ai-edit-modal" onClick={(e) => e.stopPropagation()}>
                     <div className="ai-edit-head">
                       <Icon name="pencil" size={14} />
-                      <h4>Aufgabe bearbeiten</h4>
+                      <h4>{t('ai_drawer.edit_modal_title')}</h4>
                       <div style={{ flex: 1 }} />
                       <button className="x" onClick={() => setEditIdx(null)}>
                         <Icon name="x" size={14} />
@@ -342,14 +347,14 @@ export function AIDrawer({ setActive }: AIDrawerProps) {
                     </div>
                     <div className="ai-edit-body">
                       <label>
-                        <div className="eyebrow">Titel</div>
+                        <div className="eyebrow">{t('ai_drawer.field_title')}</div>
                         <input
                           type="text"
                           value={editedTasks[editIdx].title}
                           onChange={(ev) =>
                             setEditedTasks(
-                              editedTasks.map((t, j) =>
-                                j === editIdx ? { ...t, title: ev.target.value } : t,
+                              editedTasks.map((tk, j) =>
+                                j === editIdx ? { ...tk, title: ev.target.value } : tk,
                               ),
                             )
                           }
@@ -357,13 +362,13 @@ export function AIDrawer({ setActive }: AIDrawerProps) {
                       </label>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                         <label>
-                          <div className="eyebrow">Projekt</div>
+                          <div className="eyebrow">{t('ai_drawer.field_project')}</div>
                           <select
                             value={editedTasks[editIdx].proj}
                             onChange={(ev) =>
                               setEditedTasks(
-                                editedTasks.map((t, j) =>
-                                  j === editIdx ? { ...t, proj: ev.target.value } : t,
+                                editedTasks.map((tk, j) =>
+                                  j === editIdx ? { ...tk, proj: ev.target.value } : tk,
                                 ),
                               )
                             }
@@ -376,28 +381,29 @@ export function AIDrawer({ setActive }: AIDrawerProps) {
                           </select>
                         </label>
                         <label>
-                          <div className="eyebrow">Zugewiesen</div>
+                          <div className="eyebrow">{t('ai_drawer.field_assignee')}</div>
                           <select
                             value={editedTasks[editIdx].who}
                             onChange={(ev) =>
                               setEditedTasks(
-                                editedTasks.map((t, j) =>
-                                  j === editIdx ? { ...t, who: ev.target.value } : t,
+                                editedTasks.map((tk, j) =>
+                                  j === editIdx ? { ...tk, who: ev.target.value } : tk,
                                 ),
                               )
                             }
                           >
                             {users
-                              .filter((u) => u.status === 'active')
+                              .filter((u) => u.status === 'active' || u.status === 'invited')
                               .map((u) => (
                                 <option key={u.id} value={u.id}>
                                   {u.name}
+                                  {u.status === 'invited' ? t('task_detail.user_invited_suffix') : ''}
                                 </option>
                               ))}
                           </select>
                         </label>
                         <label>
-                          <div className="eyebrow">Schätzung (h)</div>
+                          <div className="eyebrow">{t('ai_drawer.field_estimate_h')}</div>
                           <input
                             type="number"
                             step="0.5"
@@ -405,28 +411,28 @@ export function AIDrawer({ setActive }: AIDrawerProps) {
                             value={editedTasks[editIdx].estH}
                             onChange={(ev) =>
                               setEditedTasks(
-                                editedTasks.map((t, j) =>
-                                  j === editIdx ? { ...t, estH: parseFloat(ev.target.value) || 0 } : t,
+                                editedTasks.map((tk, j) =>
+                                  j === editIdx ? { ...tk, estH: parseFloat(ev.target.value) || 0 } : tk,
                                 ),
                               )
                             }
                           />
                         </label>
                         <label>
-                          <div className="eyebrow">Priorität</div>
+                          <div className="eyebrow">{t('ai_drawer.field_priority')}</div>
                           <select
                             value={editedTasks[editIdx].prio}
                             onChange={(ev) =>
                               setEditedTasks(
-                                editedTasks.map((t, j) =>
-                                  j === editIdx ? { ...t, prio: ev.target.value as Priority } : t,
+                                editedTasks.map((tk, j) =>
+                                  j === editIdx ? { ...tk, prio: ev.target.value as Priority } : tk,
                                 ),
                               )
                             }
                           >
-                            <option value="low">niedrig</option>
-                            <option value="med">mittel</option>
-                            <option value="high">hoch</option>
+                            <option value="low">{t('prio.low')}</option>
+                            <option value="med">{t('prio.med')}</option>
+                            <option value="high">{t('prio.high')}</option>
                           </select>
                         </label>
                       </div>
@@ -434,7 +440,7 @@ export function AIDrawer({ setActive }: AIDrawerProps) {
                     <div className="ai-edit-foot">
                       <div style={{ flex: 1 }} />
                       <button className="tb-btn accent" onClick={() => setEditIdx(null)}>
-                        <Icon name="check" size={13} /> Übernehmen
+                        <Icon name="check" size={13} /> {t('ai_drawer.edit_apply')}
                       </button>
                     </div>
                   </div>
@@ -448,28 +454,28 @@ export function AIDrawer({ setActive }: AIDrawerProps) {
           {phase === 'input' && (
             <>
               <span className="mono" style={{ fontSize: 11, color: 'var(--ink-500)' }}>
-                KI extrahiert Aufgaben + Zeitschätzungen + Zuweisungen
+                {t('ai_drawer.result_sub')}
               </span>
               <div style={{ flex: 1 }} />
               <button className="tb-btn" onClick={close}>
-                Abbrechen
+                {t('ai_drawer.cancel')}
               </button>
               <button className="tb-btn accent" onClick={extract}>
-                <Icon name="sparkles" size={13} /> Aufgaben extrahieren
+                <Icon name="sparkles" size={13} /> {t('ai_drawer.extract')}
               </button>
             </>
           )}
           {phase === 'result' && (
             <>
               <span className="mono" style={{ fontSize: 11, color: 'var(--ink-500)' }}>
-                {picks.filter(Boolean).length} ausgewählt · landen im Backlog
+                {t('ai_drawer.landing', { count: picks.filter(Boolean).length })}
               </span>
               <div style={{ flex: 1 }} />
               <button className="tb-btn" onClick={() => setPhase('input')}>
-                Zurück
+                {t('common.back')}
               </button>
               <button className="tb-btn accent" onClick={create} disabled={!picks.some(Boolean)}>
-                <Icon name="check" size={13} /> {picks.filter(Boolean).length} Aufgaben anlegen
+                <Icon name="check" size={13} /> {t('ai_drawer.apply', { count: picks.filter(Boolean).length })}
               </button>
             </>
           )}

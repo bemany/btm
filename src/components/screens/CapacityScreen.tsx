@@ -1,16 +1,20 @@
 import type { CSSProperties } from 'react';
 import { useStore } from '../../store/store';
 import { Avatar } from '../shared/Avatar';
+import { useT, useLocale } from '../../i18n';
 
 export function CapacityScreen() {
   const tasks = useStore((s) => s.tasks);
   const users = useStore((s) => s.users);
+  const t = useT();
+  const [locale] = useLocale();
+  const fmtNum = (h: number) => h.toFixed(1).replace('.', locale === 'en' ? '.' : ',');
 
   const activeUsers = users.filter((u) => u.status === 'active');
   const rows = activeUsers.map((u) => {
-    const myTasks = tasks.filter((t) => t.who === u.id && t.col !== 'done');
+    const myTasks = tasks.filter((tk) => tk.who === u.id && tk.col !== 'done');
     const planned = myTasks.reduce((a, b) => a + b.estH, 0);
-    const logged = tasks.filter((t) => t.who === u.id).reduce((a, b) => a + b.loggedH, 0);
+    const logged = tasks.filter((tk) => tk.who === u.id).reduce((a, b) => a + b.loggedH, 0);
     return { ...u, full: u.name, role: u.jobTitle ?? '—', planned, logged };
   });
   const totalCap = rows.reduce((a, r) => a + r.cap, 0) || 1;
@@ -21,41 +25,43 @@ export function CapacityScreen() {
     <div className="page">
       <div className="page-head">
         <div className="left">
-          <div className="eyebrow">03 · Kapazität</div>
-          <h1>Team-Auslastung KW 19</h1>
+          <div className="eyebrow">{t('capacity.eyebrow')}</div>
+          <h1>{t('capacity.title', { kw: 19 })}</h1>
           <div className="subtitle">
-            {rows.length} Mitarbeiter · {totalCap}h Gesamtkapazität · Stundenbasiert
+            {t('capacity.sub', { count: rows.length, totalCap })}
           </div>
         </div>
       </div>
 
       <div className="kpi-grid">
         <div className="kpi">
-          <div className="k">Team-Kapazität</div>
+          <div className="k">{t('capacity.kpi_capacity')}</div>
           <div className="v">
             {totalCap}
             <span className="u">h</span>
           </div>
-          <div className="d">{rows.length} Mitarb.</div>
+          <div className="d">{t('capacity.kpi_capacity_sub', { count: rows.length })}</div>
         </div>
         <div className="kpi">
-          <div className="k">Geplant</div>
+          <div className="k">{t('capacity.kpi_planned')}</div>
           <div className="v">
             {totalPlan.toFixed(0)}
             <span className="u">h</span>
           </div>
-          <div className="d">{Math.round((totalPlan / totalCap) * 100)}% belegt</div>
+          <div className="d">{t('capacity.kpi_planned_sub', { pct: Math.round((totalPlan / totalCap) * 100) })}</div>
         </div>
         <div className="kpi">
-          <div className="k">Erfasst</div>
+          <div className="k">{t('capacity.kpi_logged')}</div>
           <div className="v">
-            {totalLog.toFixed(1).replace('.', ',')}
+            {fmtNum(totalLog)}
             <span className="u">h</span>
           </div>
-          <div className="d">{Math.round((totalLog / Math.max(totalPlan, 1)) * 100)}% vom Plan</div>
+          <div className="d">
+            {t('capacity.kpi_logged_sub', { pct: Math.round((totalLog / Math.max(totalPlan, 1)) * 100) })}
+          </div>
         </div>
         <div className="kpi">
-          <div className="k">Über Kapazität</div>
+          <div className="k">{t('capacity.kpi_overload')}</div>
           <div className="v">{rows.filter((r) => r.planned > r.cap).length}</div>
           <div className="d warn">
             {rows
@@ -90,10 +96,10 @@ export function CapacityScreen() {
             fontWeight: 600,
           }}
         >
-          <span>Mitarbeiter</span>
-          <span>Auslastung (geplant ggü. Kapazität · erfasst)</span>
-          <span style={{ textAlign: 'right' }}>Stunden</span>
-          <span style={{ textAlign: 'right' }}>%</span>
+          <span>{t('capacity.employee')}</span>
+          <span>{t('capacity.utilization')}</span>
+          <span style={{ textAlign: 'right' }}>{t('capacity.hours')}</span>
+          <span style={{ textAlign: 'right' }}>{t('capacity.pct')}</span>
         </div>
         {rows.map((r) => {
           const pct = (r.planned / r.cap) * 100;
@@ -106,7 +112,7 @@ export function CapacityScreen() {
                 <div>
                   <div style={{ fontSize: 13.5, fontWeight: 600 }}>{r.full}</div>
                   <div className="mono" style={{ fontSize: 11, color: 'var(--ink-500)' }}>
-                    {r.role} · {r.cap}h/Wo
+                    {r.role} · {t('capacity.cap_per_week', { cap: r.cap })}
                   </div>
                 </div>
               </div>
@@ -122,10 +128,10 @@ export function CapacityScreen() {
               </div>
               <div style={{ textAlign: 'right' }}>
                 <div className="mono" style={{ fontSize: 13, fontWeight: 600 }}>
-                  {r.planned.toFixed(1).replace('.', ',')} / {r.cap}h
+                  {fmtNum(r.planned)} / {r.cap}h
                 </div>
                 <div className="mono" style={{ fontSize: 10, color: 'var(--ink-500)' }}>
-                  erfasst {r.logged.toFixed(1).replace('.', ',')}h
+                  {t('capacity.captured', { h: fmtNum(r.logged) })}
                 </div>
               </div>
               <div
@@ -158,16 +164,16 @@ export function CapacityScreen() {
         }}
       >
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ width: 12, height: 8, background: 'var(--accent-500)', borderRadius: 2 }} /> Geplant
+          <span style={{ width: 12, height: 8, background: 'var(--accent-500)', borderRadius: 2 }} /> {t('capacity.legend_planned')}
         </span>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ width: 12, height: 8, background: 'rgba(0,0,0,0.18)', borderRadius: 2 }} /> Bereits erfasst
+          <span style={{ width: 12, height: 8, background: 'rgba(0,0,0,0.18)', borderRadius: 2 }} /> {t('capacity.legend_logged')}
         </span>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ width: 12, height: 8, background: 'var(--err-500)', borderRadius: 2 }} /> Überlast
+          <span style={{ width: 12, height: 8, background: 'var(--err-500)', borderRadius: 2 }} /> {t('capacity.legend_overload')}
         </span>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ width: 12, height: 8, background: 'var(--ok-500)', borderRadius: 2 }} /> Unterlast (&lt; 75%)
+          <span style={{ width: 12, height: 8, background: 'var(--ok-500)', borderRadius: 2 }} /> {t('capacity.legend_underload')}
         </span>
       </div>
     </div>

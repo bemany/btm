@@ -11,14 +11,16 @@ import { fmtRel, activityLine, WORK_KINDS } from './adminUtils';
 import { UserDrawer } from './UserDrawer';
 import { TeamsDrawer } from './TeamsDrawer';
 import { TVSetupDrawer } from './TVSetupDrawer';
+import { useT, useLocale } from '../../i18n';
 
-type FilterMode = 'all' | 'active' | 'admin' | 'inactive';
+type FilterMode = 'all' | 'active' | 'admin' | 'invited' | 'inactive';
 
 export function AdminScreen() {
   const users = useStore((s) => s.users);
   const teams = useStore((s) => s.teams);
   const invitations = useStore((s) => s.invitations);
   const tasks = useStore((s) => s.tasks);
+  const t = useT();
 
   const [filter, setFilter] = useState<FilterMode>('all');
   const [q, setQ] = useState('');
@@ -38,6 +40,7 @@ export function AdminScreen() {
   const filtered = useMemo(() => {
     return users.filter((u) => {
       if (filter === 'active' && u.status !== 'active') return false;
+      if (filter === 'invited' && u.status !== 'invited') return false;
       if (filter === 'inactive' && u.status !== 'inactive') return false;
       if (filter === 'admin' && u.role !== 'admin') return false;
       if (teamFilter !== 'all' && u.teamId !== teamFilter) return false;
@@ -55,18 +58,18 @@ export function AdminScreen() {
         <div className="admin-main">
           <div className="admin-header">
             <div className="admin-stat">
-              <div className="admin-stat-label">Aktive Nutzer</div>
+              <div className="admin-stat-label">{t('admin.stat_active')}</div>
               <div className="admin-stat-val">
                 {counts.active}
                 <span className="admin-stat-suffix">/ {counts.all}</span>
               </div>
             </div>
             <div className="admin-stat">
-              <div className="admin-stat-label">Admins</div>
+              <div className="admin-stat-label">{t('admin.stat_admins')}</div>
               <div className="admin-stat-val">{counts.admin}</div>
             </div>
             <div className="admin-stat">
-              <div className="admin-stat-label">Offene Einladungen</div>
+              <div className="admin-stat-label">{t('admin.stat_pending')}</div>
               <div
                 className="admin-stat-val"
                 style={{ color: counts.pending > 0 ? 'var(--accent-600)' : 'inherit' }}
@@ -75,23 +78,23 @@ export function AdminScreen() {
               </div>
             </div>
             <div className="admin-stat admin-stat-clickable" onClick={() => setTeamsDrawerOpen(true)}>
-              <div className="admin-stat-label">Teams</div>
+              <div className="admin-stat-label">{t('admin.teams')}</div>
               <div className="admin-stat-val">
                 {teams.length}
                 <span className="admin-stat-suffix" style={{ fontSize: 11, color: 'var(--accent-600)' }}>
-                  verwalten →
+                  {t('admin.teams_manage')}
                 </span>
               </div>
             </div>
             <div style={{ flex: 1 }} />
             <button className="tb-btn" onClick={() => setTvDrawerOpen(true)}>
-              <Icon name="monitor" size={14} /> Office-Display
+              <Icon name="monitor" size={14} /> {t('admin.tv_setup')}
             </button>
             <button className="tb-btn" onClick={() => setTeamsDrawerOpen(true)}>
-              <Icon name="users" size={14} /> Teams
+              <Icon name="users" size={14} /> {t('admin.teams')}
             </button>
             <button className="tb-btn accent" onClick={() => setUserDrawerId('__new__')}>
-              <Icon name="user-plus" size={14} /> Nutzer einladen
+              <Icon name="user-plus" size={14} /> {t('admin.invite_user')}
             </button>
           </div>
 
@@ -99,7 +102,7 @@ export function AdminScreen() {
             <div className="admin-search">
               <Icon name="search" size={14} />
               <input
-                placeholder="Nutzer durchsuchen…"
+                placeholder={t('admin.search_placeholder')}
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
               />
@@ -107,10 +110,10 @@ export function AdminScreen() {
             <div className="admin-chips">
               {(
                 [
-                  { id: 'all', label: 'Alle', n: counts.all },
-                  { id: 'active', label: 'Aktiv', n: counts.active },
-                  { id: 'admin', label: 'Admins', n: counts.admin },
-                  { id: 'inactive', label: 'Deaktiviert', n: counts.inactive },
+                  { id: 'all', label: t('admin.filter_all'), n: counts.all },
+                  { id: 'active', label: t('admin.filter_active'), n: counts.active },
+                  { id: 'admin', label: t('admin.stat_admins'), n: counts.admin },
+                  { id: 'inactive', label: t('admin.filter_inactive'), n: counts.inactive },
                 ] as const
               ).map((f) => (
                 <button
@@ -128,10 +131,10 @@ export function AdminScreen() {
               value={teamFilter}
               onChange={(e) => setTeamFilter(e.target.value)}
             >
-              <option value="all">Alle Teams</option>
-              {teams.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name}
+              <option value="all">{t('admin.teams_filter_all')}</option>
+              {teams.map((tm) => (
+                <option key={tm.id} value={tm.id}>
+                  {tm.name}
                 </option>
               ))}
             </select>
@@ -141,12 +144,12 @@ export function AdminScreen() {
             <div className="admin-section">
               <div className="admin-section-head">
                 <Icon name="mail" size={14} />
-                <h3>Ausstehende Einladungen</h3>
+                <h3>{t('admin.invitations_section')}</h3>
                 <span className="admin-section-count">{invitations.length}</span>
               </div>
               <div className="admin-invite-grid">
                 {invitations.map((inv) => (
-                  <InviteCard key={inv.id} inv={inv} teamName={teams.find((t) => t.id === inv.teamId)?.name} />
+                  <InviteCard key={inv.id} inv={inv} teamName={teams.find((tm) => tm.id === inv.teamId)?.name} />
                 ))}
               </div>
             </div>
@@ -155,19 +158,19 @@ export function AdminScreen() {
           <div className="admin-section">
             <div className="admin-section-head">
               <Icon name="users" size={14} />
-              <h3>Nutzer</h3>
+              <h3>{t('admin.users_section')}</h3>
               <span className="admin-section-count">{filtered.length}</span>
             </div>
             {filtered.length === 0 && (
-              <div className="admin-empty">Keine Nutzer mit diesen Filtern.</div>
+              <div className="admin-empty">{t('admin.empty_filtered')}</div>
             )}
             <div className="admin-user-grid">
               {filtered.map((u) => (
                 <UserCard
                   key={u.id}
                   u={u}
-                  doingCount={tasks.filter((t) => t.who === u.id && t.col === 'doing').length}
-                  teamName={teams.find((t) => t.id === u.teamId)?.name ?? '—'}
+                  doingCount={tasks.filter((tk) => tk.who === u.id && tk.col === 'doing').length}
+                  teamName={teams.find((tm) => tm.id === u.teamId)?.name ?? '—'}
                   onClick={() => setUserDrawerId(u.id)}
                 />
               ))}
@@ -178,7 +181,7 @@ export function AdminScreen() {
         <aside className="admin-side">
           <div className="admin-side-head">
             <Icon name="activity" size={14} />
-            <h3>Aktivität</h3>
+            <h3>{t('admin.activity')}</h3>
           </div>
           <ActivitySidebar users={users} />
         </aside>
@@ -191,8 +194,6 @@ export function AdminScreen() {
   );
 }
 
-// ── UserCard ────────────────────────────────────────────────────────────
-
 function UserCard({
   u,
   doingCount,
@@ -204,9 +205,11 @@ function UserCard({
   teamName: string;
   onClick: () => void;
 }) {
+  const t = useT();
+  const [locale] = useLocale();
   return (
     <div
-      className={`admin-user-card ${u.status === 'inactive' ? 'is-inactive' : ''}`}
+      className={`admin-user-card ${u.status === 'inactive' ? 'is-inactive' : ''} ${u.status === 'invited' ? 'is-invited' : ''}`}
       onClick={onClick}
     >
       <div className="admin-user-card-head">
@@ -217,10 +220,11 @@ function UserCard({
         </div>
         {u.role === 'admin' && (
           <div className="admin-user-badge admin">
-            <Icon name="shield-check" size={10} /> Admin
+            <Icon name="shield-check" size={10} /> {t('admin.badge_admin')}
           </div>
         )}
-        {u.status === 'inactive' && <div className="admin-user-badge inactive">Deaktiviert</div>}
+        {u.status === 'invited' && <div className="admin-user-badge invited">{t('admin.badge_invited')}</div>}
+        {u.status === 'inactive' && <div className="admin-user-badge inactive">{t('admin.badge_inactive')}</div>}
       </div>
 
       <div className="admin-user-contacts">
@@ -238,41 +242,44 @@ function UserCard({
 
       <div className="admin-user-stats">
         <div className="admin-user-stat">
-          <div className="k">Team</div>
+          <div className="k">{t('admin.user_card_team')}</div>
           <div className="v">{teamName}</div>
         </div>
         <div className="admin-user-stat">
-          <div className="k">Kapazität</div>
+          <div className="k">{t('admin.user_card_capacity')}</div>
           <div className="v">
-            {u.cap}h<span className="dim">/Wo</span>
+            {u.cap}h<span className="dim">{t('admin.user_card_cap_per_week')}</span>
           </div>
         </div>
         <div className="admin-user-stat">
-          <div className="k">Aktiv</div>
+          <div className="k">{t('admin.user_card_active')}</div>
           <div className="v">
             {doingCount}
-            <span className="dim"> Tasks</span>
+            <span className="dim">{t('admin.user_card_active_unit')}</span>
           </div>
         </div>
       </div>
 
       <div className="admin-user-foot">
         <span className="dim">
-          Seit{' '}
-          {new Date(u.createdAt).toLocaleDateString('de-DE', { month: 'short', year: 'numeric' })}
+          {t('admin.user_card_since', {
+            date: new Date(u.createdAt).toLocaleDateString(locale === 'en' ? 'en-US' : 'de-DE', {
+              month: 'short',
+              year: 'numeric',
+            }),
+          })}
         </span>
         <span className="admin-user-edit">
-          <Icon name="edit-3" size={11} /> Bearbeiten
+          <Icon name="edit-3" size={11} /> {t('admin.user_card_edit')}
         </span>
       </div>
     </div>
   );
 }
 
-// ── InviteCard ──────────────────────────────────────────────────────────
-
 function InviteCard({ inv, teamName }: { inv: AppInvitation; teamName?: string }) {
   const queryClient = useQueryClient();
+  const t = useT();
   const display = inv.name || inv.email.split('@')[0];
   const initials = display
     .split(/\s+/)
@@ -295,16 +302,18 @@ function InviteCard({ inv, teamName }: { inv: AppInvitation; teamName?: string }
         </div>
         <div className={`admin-invite-status ${old ? 'old' : ''}`}>
           <span className="dot" />
-          {old ? 'Wartet >2 Tage' : 'Eingeladen'}
+          {old ? t('admin.invite_status_old') : t('admin.invite_status_new')}
         </div>
       </div>
       <div className="admin-invite-body">
         <div className="admin-invite-tags">
-          {teamName && <span className="admin-invite-tag">Team {teamName}</span>}
-          <span className="admin-invite-tag">{inv.role === 'admin' ? 'Admin' : 'Mitglied'}</span>
-          <span className="admin-invite-tag">{inv.cap}h/Wo</span>
+          {teamName && <span className="admin-invite-tag">{t('admin.invite_team_label', { name: teamName })}</span>}
+          <span className="admin-invite-tag">
+            {inv.role === 'admin' ? t('admin.invite_role_admin') : t('admin.invite_role_member')}
+          </span>
+          <span className="admin-invite-tag">{t('admin.invite_cap', { cap: inv.cap })}</span>
         </div>
-        <div className="admin-invite-aging">{fmtRel(inv.createdAt)} gesendet</div>
+        <div className="admin-invite-aging">{t('admin.invite_sent_ago', { when: fmtRel(inv.createdAt) })}</div>
       </div>
       <div className="admin-invite-foot">
         <button
@@ -312,29 +321,28 @@ function InviteCard({ inv, teamName }: { inv: AppInvitation; teamName?: string }
           onClick={async () => {
             await api.cancelInvitation(inv.id);
             await refresh();
-            showToast('Einladung zurückgezogen');
+            showToast(t('admin.invite_revoke_toast'));
           }}
         >
-          <Icon name="x" size={11} /> Zurückziehen
+          <Icon name="x" size={11} /> {t('admin.invite_revoke')}
         </button>
         <button
           className="admin-btn ghost"
           onClick={async () => {
             await api.resendInvitation(inv.id);
             await refresh();
-            showToast('Einladung erneut gesendet');
+            showToast(t('admin.invite_resend_toast'));
           }}
         >
-          <Icon name="send" size={11} /> Erneut senden
+          <Icon name="send" size={11} /> {t('admin.invite_resend')}
         </button>
       </div>
     </div>
   );
 }
 
-// ── ActivitySidebar ─────────────────────────────────────────────────────
-
 function ActivitySidebar({ users }: { users: AppUser[] }) {
+  const t = useT();
   const [tab, setTab] = useState<'all' | 'work' | 'admin'>('all');
   const { data: activity = [] } = useQuery({
     queryKey: ['btm', 'activity'],
@@ -360,22 +368,22 @@ function ActivitySidebar({ users }: { users: AppUser[] }) {
       <div className="admin-side-tabs">
         {(
           [
-            { id: 'all', label: 'Alle' },
-            { id: 'work', label: 'Arbeit' },
-            { id: 'admin', label: 'Admin' },
+            { id: 'all', label: t('admin.activity_tab_all') },
+            { id: 'work', label: t('admin.activity_tab_work') },
+            { id: 'admin', label: t('admin.activity_tab_admin') },
           ] as const
-        ).map((t) => (
+        ).map((tb) => (
           <button
-            key={t.id}
-            className={`admin-side-tab ${tab === t.id ? 'active' : ''}`}
-            onClick={() => setTab(t.id)}
+            key={tb.id}
+            className={`admin-side-tab ${tab === tb.id ? 'active' : ''}`}
+            onClick={() => setTab(tb.id)}
           >
-            {t.label}
+            {tb.label}
           </button>
         ))}
       </div>
       <div className="admin-side-list">
-        {filtered.length === 0 && <div className="admin-empty">Noch keine Aktivität.</div>}
+        {filtered.length === 0 && <div className="admin-empty">{t('admin.activity_empty')}</div>}
         {filtered.map((a) => {
           const v = activityLine(a, nameById);
           return (

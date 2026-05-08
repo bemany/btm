@@ -7,12 +7,15 @@ import {
   revokeApiToken,
   type ApiTokenRow,
 } from '../../data/apiTokens';
+import { useT, useLocale } from '../../i18n';
 
 interface ApiTokensDrawerProps {
   onClose: () => void;
 }
 
 export function ApiTokensDrawer({ onClose }: ApiTokensDrawerProps) {
+  const t = useT();
+  const [locale] = useLocale();
   const [tokens, setTokens] = useState<ApiTokenRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState('Claude (Desktop)');
@@ -42,27 +45,26 @@ export function ApiTokensDrawer({ onClose }: ApiTokensDrawerProps) {
       setName('Claude (Desktop)');
       await refresh();
     } catch (err) {
-      showToast(err instanceof Error ? err.message : 'Token konnte nicht erstellt werden');
+      showToast(err instanceof Error ? err.message : t('api_tokens.create_failed'));
     } finally {
       setCreating(false);
     }
   };
 
   const onRevoke = async (id: string) => {
-    if (!window.confirm('Token wirklich widerrufen? MCP-Clients mit diesem Token können sich nicht mehr verbinden.'))
-      return;
+    if (!window.confirm(t('api_tokens.revoke_confirm'))) return;
     await revokeApiToken(id);
     if (freshlyCreated?.row.id === id) setFreshlyCreated(null);
     await refresh();
-    showToast('Token widerrufen');
+    showToast(t('api_tokens.revoke_toast'));
   };
 
   const copy = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      showToast('In Zwischenablage kopiert');
+      showToast(t('api_tokens.copied_toast'));
     } catch {
-      showToast('Kopieren fehlgeschlagen — manuell auswählen');
+      showToast(t('api_tokens.copy_failed_toast'));
     }
   };
 
@@ -85,9 +87,9 @@ export function ApiTokensDrawer({ onClose }: ApiTokensDrawerProps) {
             <Icon name="key-round" size={16} />
           </div>
           <div style={{ flex: 1 }}>
-            <h3>API-Tokens</h3>
+            <h3>{t('api_tokens.drawer_title')}</h3>
             <div className="mono" style={{ fontSize: 10, color: 'var(--ink-500)' }}>
-              Personal Access Tokens · für MCP, CLI &amp; programmatic Access
+              {t('api_tokens.drawer_sub')}
             </div>
           </div>
           <button className="x" onClick={onClose}>
@@ -101,32 +103,28 @@ export function ApiTokensDrawer({ onClose }: ApiTokensDrawerProps) {
             <div className="apit-fresh">
               <div className="apit-fresh-head">
                 <Icon name="check-circle-2" size={14} style={{ color: 'var(--ok-500)' }} />
-                <span>
-                  „{freshlyCreated.row.name}" angelegt — kopier&#39;s dir jetzt, der Token wird nie wieder angezeigt:
-                </span>
+                <span>{t('api_tokens.fresh_lead', { name: freshlyCreated.row.name })}</span>
               </div>
               <div className="apit-fresh-row">
                 <code className="apit-fresh-code">{freshlyCreated.plain}</code>
                 <button className="tb-btn" onClick={() => copy(freshlyCreated.plain)}>
-                  <Icon name="copy" size={12} /> Kopieren
+                  <Icon name="copy" size={12} /> {t('api_tokens.copy')}
                 </button>
               </div>
-              <div className="apit-fresh-foot">
-                Schick&#39;s niemandem, leg ihn nicht in Repos ab. Bei Verlust einfach widerrufen + neu erstellen.
-              </div>
+              <div className="apit-fresh-foot">{t('api_tokens.fresh_foot')}</div>
             </div>
           )}
 
           {/* Erstellen */}
           <form onSubmit={onCreate} className="apit-form">
             <label>
-              <div className="eyebrow">Neuer Token</div>
+              <div className="eyebrow">{t('api_tokens.new_token')}</div>
               <div style={{ display: 'flex', gap: 8 }}>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="z. B. Claude (Desktop), CLI, MacBook"
+                  placeholder={t('api_tokens.token_name_placeholder')}
                   className="apit-input"
                   disabled={creating}
                   required
@@ -134,70 +132,71 @@ export function ApiTokensDrawer({ onClose }: ApiTokensDrawerProps) {
                 <button type="submit" className="tb-btn accent" disabled={creating || !name.trim()}>
                   {creating ? (
                     <>
-                      <Icon name="loader-2" size={12} className="login-spin" /> Erstelle …
+                      <Icon name="loader-2" size={12} className="login-spin" /> {t('api_tokens.creating')}
                     </>
                   ) : (
                     <>
-                      <Icon name="plus" size={12} /> Token erstellen
+                      <Icon name="plus" size={12} /> {t('api_tokens.create')}
                     </>
                   )}
                 </button>
               </div>
-              <div className="hint">Tokens haben volle Lese- und Schreib-Rechte deines Accounts (Scope = read+write).</div>
+              <div className="hint">{t('api_tokens.create_hint')}</div>
             </label>
           </form>
 
           {/* Liste */}
           <div className="eyebrow" style={{ marginTop: 22, marginBottom: 8 }}>
-            Aktive Tokens · {tokens.length}
+            {t('api_tokens.active_count', { count: tokens.length })}
           </div>
 
           {loading ? (
             <div style={{ padding: '24px 0', textAlign: 'center', color: 'var(--ink-500)', fontSize: 12 }}>
-              Lade …
+              {t('api_tokens.loading')}
             </div>
           ) : tokens.length === 0 ? (
             <div className="apit-empty">
               <Icon name="key-round" size={24} style={{ color: 'var(--ink-300)' }} />
-              <div>Noch keine Tokens.</div>
+              <div>{t('api_tokens.empty')}</div>
             </div>
           ) : (
             <div className="apit-list">
-              {tokens.map((t) => (
-                <div key={t.id} className="apit-row">
+              {tokens.map((tok) => (
+                <div key={tok.id} className="apit-row">
                   <div className="apit-row-main">
-                    <div className="apit-row-name">{t.name}</div>
+                    <div className="apit-row-name">{tok.name}</div>
                     <div className="apit-row-meta">
-                      <code>{t.prefix}…</code>
+                      <code>{tok.prefix}…</code>
                       <span>·</span>
-                      <span>angelegt {new Date(t.createdAt).toLocaleDateString('de-DE')}</span>
-                      {t.lastUsedAt ? (
+                      <span>
+                        {t('api_tokens.created_label', {
+                          date: new Date(tok.createdAt).toLocaleDateString(locale === 'en' ? 'en-US' : 'de-DE'),
+                        })}
+                      </span>
+                      {tok.lastUsedAt ? (
                         <>
                           <span>·</span>
                           <span>
-                            zuletzt benutzt{' '}
-                            {new Date(t.lastUsedAt).toLocaleString('de-DE', {
-                              day: '2-digit',
-                              month: '2-digit',
-                              hour: '2-digit',
-                              minute: '2-digit',
+                            {t('api_tokens.last_used_label', {
+                              when: new Date(tok.lastUsedAt).toLocaleString(locale === 'en' ? 'en-US' : 'de-DE', {
+                                day: '2-digit',
+                                month: '2-digit',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              }),
                             })}
                           </span>
                         </>
                       ) : (
                         <>
                           <span>·</span>
-                          <span style={{ color: 'var(--ink-400)' }}>nie benutzt</span>
+                          <span style={{ color: 'var(--ink-400)' }}>{t('api_tokens.never_used')}</span>
                         </>
                       )}
                     </div>
                   </div>
-                  <button
-                    className="apit-revoke"
-                    onClick={() => onRevoke(t.id)}
-                    title="Widerrufen"
-                  >
-                    <Icon name="trash-2" size={13} /> Widerrufen
+                  <button className="apit-revoke" onClick={() => onRevoke(tok.id)} title={t('api_tokens.revoke')}>
+                    <Icon name="trash-2" size={13} /> {t('api_tokens.revoke')}
                   </button>
                 </div>
               ))}
@@ -215,25 +214,10 @@ export function ApiTokensDrawer({ onClose }: ApiTokensDrawerProps) {
               Aufgaben anlegen, planen und abhaken — per natürlicher Sprache.
             </p>
 
-            <div className="apit-mcp-step-label">A · Claude Web (claude.ai)</div>
+            <div className="apit-mcp-step-label">A · Claude Desktop (empfohlen)</div>
             <p style={{ fontSize: 12.5, lineHeight: 1.55, color: 'var(--ink-700)' }}>
-              In Claude → Settings → <b>Connectors</b> → <b>Add custom connector</b>. Trag ein:
+              Verlässlichster Weg. Datei <code>claude_desktop_config.json</code> ergänzen:
             </p>
-            <pre className="apit-mcp-code">{`Name              BTM
-Remote MCP URL    https://btm.bethesna.org/api/mcp?token=<dein-token-oben>`}</pre>
-            <p
-              style={{
-                fontSize: 11.5,
-                color: 'var(--ink-500)',
-                margin: '6px 0 14px',
-                lineHeight: 1.5,
-              }}
-            >
-              ⚠️ Claude.ai's Connector-Dialog hat keinen Header-Slot, deshalb gehört der Token in die URL.
-              Behandel die URL wie ein Passwort — kopier sie nicht in Chats / Repos.
-            </p>
-
-            <div className="apit-mcp-step-label">B · Claude Desktop · claude_desktop_config.json</div>
             <pre className="apit-mcp-code">{`{
   "mcpServers": {
     "btm": {
@@ -245,8 +229,30 @@ Remote MCP URL    https://btm.bethesna.org/api/mcp?token=<dein-token-oben>`}</pr
   }
 }`}</pre>
             <p style={{ fontSize: 11.5, color: 'var(--ink-500)', margin: '6px 0 14px' }}>
-              Pfad auf macOS: <code>~/Library/Application Support/Claude/claude_desktop_config.json</code>.
-              Danach Claude Desktop neu starten.
+              Pfad auf macOS: <code>~/Library/Application Support/Claude/claude_desktop_config.json</code> ·{' '}
+              Windows: <code>%APPDATA%\Claude\claude_desktop_config.json</code>. Danach Claude Desktop neu starten.
+            </p>
+
+            <div className="apit-mcp-step-label">B · Claude Web (claude.ai) — eingeschränkt</div>
+            <p style={{ fontSize: 12.5, lineHeight: 1.55, color: 'var(--ink-700)' }}>
+              In Claude → Settings → <b>Connectors</b> → <b>Add custom connector</b>:
+            </p>
+            <pre className="apit-mcp-code">{`Name              BTM
+Remote MCP URL    https://btm.bethesna.org/api/mcp?token=<dein-token-oben>`}</pre>
+            <p
+              style={{
+                fontSize: 11.5,
+                color: 'var(--ink-500)',
+                margin: '6px 0 14px',
+                lineHeight: 1.5,
+              }}
+            >
+              ⚠️ Claude.ai-Connectors haben aktuell einen bekannten Anthropic-Broker-Bug
+              (Issues <a href="https://github.com/anthropics/claude-ai-mcp/issues/143" target="_blank" rel="noopener noreferrer">#143</a>,{' '}
+              <a href="https://github.com/anthropics/claude-ai-mcp/issues/214" target="_blank" rel="noopener noreferrer">#214</a>):{' '}
+              auch spec-konforme Server zeigen oft „Couldn't reach the MCP server". Falls's bei dir
+              passt — super; sonst nimm Desktop. Der Token gehört in die URL, weil Claude.ai keinen
+              Header-Slot bietet — behandel die URL wie ein Passwort.
             </p>
 
             <div className="apit-mcp-step-label">C · Beispiel-Prompts</div>

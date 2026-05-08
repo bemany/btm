@@ -6,6 +6,8 @@ import { useAuth } from '../../auth/AuthContext';
 import { navigate } from '../../router';
 import { Icon } from '../shared/Icon';
 import { showToast } from '../shared/Toast';
+import { getLastSeenRelease, unseenReleases } from '../../data/releases';
+import { useT, useLocale } from '../../i18n';
 
 export interface SidebarProps {
   active: ScreenId;
@@ -15,6 +17,7 @@ export interface SidebarProps {
   theme: ThemeMode;
   setTheme: (t: ThemeMode) => void;
   onOpenApiTokens: () => void;
+  onReplayTour?: () => void;
 }
 
 interface Item {
@@ -32,6 +35,7 @@ export function Sidebar({
   theme,
   setTheme,
   onOpenApiTokens,
+  onReplayTour,
 }: SidebarProps) {
   const tasks = useStore((s) => s.tasks);
   const currentUser = useStore((s) => s.currentUser);
@@ -39,6 +43,8 @@ export function Sidebar({
   const timer = useStore((s) => s.timer);
   const resetDemo = useStore((s) => s.resetDemo);
   const { user, signOut } = useAuth();
+  const t = useT();
+  const [locale, setLocale] = useLocale();
 
   // Anzeige im Foot priorisiert echten eingeloggten User; Initial = erste 2 Buchstaben des Namens
   const displayName = user?.name ?? '—';
@@ -56,6 +62,20 @@ export function Sidebar({
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
 
+  // NEU-Badge auf Updates-Eintrag, wenn ungesehene Releases existieren
+  const [unseenCount, setUnseenCount] = useState<number>(
+    () => unseenReleases(getLastSeenRelease()).length,
+  );
+  useEffect(() => {
+    const onSeen = () => setUnseenCount(unseenReleases(getLastSeenRelease()).length);
+    window.addEventListener('btm:release-seen', onSeen);
+    window.addEventListener('storage', onSeen);
+    return () => {
+      window.removeEventListener('btm:release-seen', onSeen);
+      window.removeEventListener('storage', onSeen);
+    };
+  }, []);
+
   useEffect(() => {
     if (!profileOpen) return;
     const onDown = (e: MouseEvent) => {
@@ -71,17 +91,18 @@ export function Sidebar({
   };
 
   const items: Item[] = [
-    { id: 'week', label: 'Meine Woche', icon: 'calendar-days', count: doingCount },
-    { id: 'board', label: 'Wochenboard', icon: 'kanban-square', count: null },
-    { id: 'capacity', label: 'Kapazität', icon: 'gauge', count: null },
-    { id: 'times', label: 'Zeiten', icon: 'clock', count: null },
-    { id: 'projects', label: 'Projekte', icon: 'folder', count: projects.length },
+    { id: 'week', label: t('sidebar.week'), icon: 'calendar-days', count: doingCount },
+    { id: 'board', label: t('sidebar.board'), icon: 'kanban-square', count: null },
+    { id: 'capacity', label: t('sidebar.capacity'), icon: 'gauge', count: null },
+    { id: 'times', label: t('sidebar.times'), icon: 'clock', count: null },
+    { id: 'projects', label: t('sidebar.projects'), icon: 'folder', count: projects.length },
   ];
-  const adminItem: Item = { id: 'admin', label: 'Admin', icon: 'shield-check' };
+  const adminItem: Item = { id: 'admin', label: t('sidebar.admin'), icon: 'shield-check' };
   const itemsBottom: Item[] = [
-    { id: 'mobile', label: 'Mobile-Vorschau', icon: 'smartphone' },
-    { id: 'chrome', label: 'Chrome-Plugin', icon: 'puzzle' },
-    { id: 'tv', label: 'TV-Dashboard', icon: 'monitor' },
+    { id: 'mobile', label: t('sidebar.mobile_preview'), icon: 'smartphone' },
+    { id: 'chrome', label: t('sidebar.chrome_plugin'), icon: 'puzzle' },
+    { id: 'tv', label: t('sidebar.tv_dashboard'), icon: 'monitor' },
+    { id: 'releases', label: t('sidebar.updates'), icon: 'sparkles' },
   ];
 
   return (
@@ -89,7 +110,7 @@ export function Sidebar({
       <div className="sb-brand">
         <div
           className={`sb-brand-mark ${running ? 'is-running' : ''} ${clicking ? 'is-clicking' : ''}`}
-          aria-label={collapsed ? 'Sidebar ausklappen' : 'Sidebar einklappen'}
+          aria-label={collapsed ? t('sidebar.expand') : t('sidebar.collapse')}
           role="button"
           tabIndex={0}
           onClick={onMarkClick}
@@ -99,7 +120,7 @@ export function Sidebar({
               onMarkClick();
             }
           }}
-          title={collapsed ? 'Sidebar ausklappen' : 'Sidebar einklappen'}
+          title={collapsed ? t('sidebar.expand') : t('sidebar.collapse')}
         >
           <svg viewBox="0 0 32 32" width="28" height="28" fill="none" xmlns="http://www.w3.org/2000/svg">
             <rect x="0" y="0" width="32" height="32" rx="8" fill="url(#bm-bg)" />
@@ -127,7 +148,7 @@ export function Sidebar({
       </div>
 
       <div className="sb-section">
-        {!collapsed && <div className="sb-section-label">Arbeit</div>}
+        {!collapsed && <div className="sb-section-label">{t('sidebar.section_work')}</div>}
         {items.map((it) => (
           <button
             key={it.id}
@@ -144,7 +165,7 @@ export function Sidebar({
 
       {isAdmin && (
         <div className="sb-section" style={{ marginTop: 8 }}>
-          {!collapsed && <div className="sb-section-label">Verwaltung</div>}
+          {!collapsed && <div className="sb-section-label">{t('sidebar.section_management')}</div>}
           <button
             key={adminItem.id}
             className={`sb-item ${active === adminItem.id ? 'active' : ''}`}
@@ -158,7 +179,7 @@ export function Sidebar({
       )}
 
       <div className="sb-section" style={{ marginTop: 8 }}>
-        {!collapsed && <div className="sb-section-label">Ausblick</div>}
+        {!collapsed && <div className="sb-section-label">{t('sidebar.section_outlook')}</div>}
         {itemsBottom.map((it) => (
           <button
             key={it.id}
@@ -168,6 +189,9 @@ export function Sidebar({
           >
             <Icon name={it.icon} size={18} className="sb-icon" />
             <span className="sb-label">{it.label}</span>
+            {it.id === 'releases' && unseenCount > 0 && (
+              <span className="sb-new-pill">{t('release.sidebar_new_pill')}</span>
+            )}
           </button>
         ))}
       </div>
@@ -217,15 +241,15 @@ export function Sidebar({
                     verticalAlign: 'middle',
                   }}
                 >
-                  Admin
+                  {t('sidebar.admin_badge')}
                 </span>
               )}
             </div>
             <div className="r">
               {(() => {
                 const { base, brightness } = decomposeTheme(theme);
-                return `${base === 'glass' ? 'Glass' : 'Studio'} · ${
-                  brightness === 'dark' ? 'Dunkel' : 'Hell'
+                return `${base === 'glass' ? t('sidebar.profile_glass') : t('sidebar.profile_studio')} · ${
+                  brightness === 'dark' ? t('sidebar.profile_dark') : t('sidebar.profile_light')
                 }`;
               })()}
             </div>
@@ -258,15 +282,15 @@ export function Sidebar({
                 setTheme(composeTheme(curBase, br));
               return (
                 <>
-                  <div className="sb-profile-section-label">Aussehen</div>
+                  <div className="sb-profile-section-label">{t('sidebar.profile_appearance')}</div>
                   <button
                     className={`sb-profile-item ${curBase === 'glass' ? 'active' : ''}`}
                     onClick={() => setBase('glass')}
                   >
                     <span className="sb-profile-swatch glass" />
                     <div className="sb-profile-item-text">
-                      <div className="sb-profile-item-title">Glass</div>
-                      <div className="sb-profile-item-sub">Frosted, macOS-ähnlich</div>
+                      <div className="sb-profile-item-title">{t('sidebar.profile_glass')}</div>
+                      <div className="sb-profile-item-sub">{t('sidebar.profile_glass_sub')}</div>
                     </div>
                     {curBase === 'glass' && <Icon name="check" size={14} style={{ color: 'var(--accent-500)' }} />}
                   </button>
@@ -276,14 +300,14 @@ export function Sidebar({
                   >
                     <span className="sb-profile-swatch studio" />
                     <div className="sb-profile-item-text">
-                      <div className="sb-profile-item-title">Studio</div>
-                      <div className="sb-profile-item-sub">Solid Cream, dichter</div>
+                      <div className="sb-profile-item-title">{t('sidebar.profile_studio')}</div>
+                      <div className="sb-profile-item-sub">{t('sidebar.profile_studio_sub')}</div>
                     </div>
                     {curBase === 'default' && <Icon name="check" size={14} style={{ color: 'var(--accent-500)' }} />}
                   </button>
 
                   <div className="sb-profile-section-label" style={{ marginTop: 6 }}>
-                    Helligkeit
+                    {t('sidebar.profile_brightness')}
                   </div>
                   <button
                     className={`sb-profile-item ${curBright === 'light' ? 'active' : ''}`}
@@ -293,8 +317,8 @@ export function Sidebar({
                       <Icon name="sun" size={14} style={{ color: 'var(--ink-700)' }} />
                     </span>
                     <div className="sb-profile-item-text">
-                      <div className="sb-profile-item-title">Hell</div>
-                      <div className="sb-profile-item-sub">Cream-Hintergründe</div>
+                      <div className="sb-profile-item-title">{t('sidebar.profile_light')}</div>
+                      <div className="sb-profile-item-sub">{t('sidebar.profile_light_sub')}</div>
                     </div>
                     {curBright === 'light' && <Icon name="check" size={14} style={{ color: 'var(--accent-500)' }} />}
                   </button>
@@ -306,10 +330,34 @@ export function Sidebar({
                       <Icon name="moon" size={14} style={{ color: 'var(--ink-700)' }} />
                     </span>
                     <div className="sb-profile-item-text">
-                      <div className="sb-profile-item-title">Dunkel</div>
-                      <div className="sb-profile-item-sub">Augenfreundlich, abends</div>
+                      <div className="sb-profile-item-title">{t('sidebar.profile_dark')}</div>
+                      <div className="sb-profile-item-sub">{t('sidebar.profile_dark_sub')}</div>
                     </div>
                     {curBright === 'dark' && <Icon name="check" size={14} style={{ color: 'var(--accent-500)' }} />}
+                  </button>
+
+                  <div className="sb-profile-section-label" style={{ marginTop: 6 }}>
+                    {t('sidebar.profile_language')}
+                  </div>
+                  <button
+                    className={`sb-profile-item ${locale === 'de' ? 'active' : ''}`}
+                    onClick={() => setLocale('de')}
+                  >
+                    <span className="sb-profile-icon" aria-hidden="true">DE</span>
+                    <div className="sb-profile-item-text">
+                      <div className="sb-profile-item-title">{t('sidebar.profile_language_de')}</div>
+                    </div>
+                    {locale === 'de' && <Icon name="check" size={14} style={{ color: 'var(--accent-500)' }} />}
+                  </button>
+                  <button
+                    className={`sb-profile-item ${locale === 'en' ? 'active' : ''}`}
+                    onClick={() => setLocale('en')}
+                  >
+                    <span className="sb-profile-icon" aria-hidden="true">EN</span>
+                    <div className="sb-profile-item-text">
+                      <div className="sb-profile-item-title">{t('sidebar.profile_language_en')}</div>
+                    </div>
+                    {locale === 'en' && <Icon name="check" size={14} style={{ color: 'var(--accent-500)' }} />}
                   </button>
                 </>
               );
@@ -328,16 +376,34 @@ export function Sidebar({
                 <Icon name="key-round" size={14} style={{ color: 'var(--ink-500)' }} />
               </span>
               <div className="sb-profile-item-text">
-                <div className="sb-profile-item-title">API-Tokens</div>
-                <div className="sb-profile-item-sub">Für MCP, Claude Desktop, CLI</div>
+                <div className="sb-profile-item-title">{t('sidebar.profile_api_tokens')}</div>
+                <div className="sb-profile-item-sub">{t('sidebar.profile_api_tokens_sub')}</div>
               </div>
             </button>
+
+            {onReplayTour && (
+              <button
+                className="sb-profile-item"
+                onClick={() => {
+                  setProfileOpen(false);
+                  onReplayTour();
+                }}
+              >
+                <span className="sb-profile-icon">
+                  <Icon name="compass" size={14} style={{ color: 'var(--ink-500)' }} />
+                </span>
+                <div className="sb-profile-item-text">
+                  <div className="sb-profile-item-title">{t('sidebar.profile_replay_tour')}</div>
+                  <div className="sb-profile-item-sub">{t('sidebar.profile_replay_tour_sub')}</div>
+                </div>
+              </button>
+            )}
 
             <button
               className="sb-profile-item"
               onClick={() => {
                 resetDemo();
-                showToast('Lokaler State zurückgesetzt');
+                showToast(t('toast.state_reset'));
                 setProfileOpen(false);
               }}
             >
@@ -345,8 +411,8 @@ export function Sidebar({
                 <Icon name="rotate-ccw" size={14} style={{ color: 'var(--ink-500)' }} />
               </span>
               <div className="sb-profile-item-text">
-                <div className="sb-profile-item-title">Lokal zurücksetzen</div>
-                <div className="sb-profile-item-sub">UI-Settings &amp; Filter leeren</div>
+                <div className="sb-profile-item-title">{t('sidebar.profile_reset_local')}</div>
+                <div className="sb-profile-item-sub">{t('sidebar.profile_reset_local_sub')}</div>
               </div>
             </button>
 
@@ -357,7 +423,7 @@ export function Sidebar({
                   setProfileOpen(false);
                   await signOut();
                   navigate('/', { replace: true });
-                  showToast('Abgemeldet');
+                  showToast(t('toast.logged_out'));
                 }}
               >
                 <span className="sb-profile-icon">
@@ -365,7 +431,7 @@ export function Sidebar({
                 </span>
                 <div className="sb-profile-item-text">
                   <div className="sb-profile-item-title" style={{ color: 'var(--err-500)' }}>
-                    Abmelden
+                    {t('sidebar.profile_logout')}
                   </div>
                   <div className="sb-profile-item-sub">{displayEmail}</div>
                 </div>

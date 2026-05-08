@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { App } from './App';
 import { AuthProvider } from './auth/AuthContext';
 import { AppGate } from './auth/AppGate';
+import { I18nProvider } from './i18n';
 import { installErrorToaster } from './lib/errorToaster';
 
 installErrorToaster();
@@ -20,6 +21,10 @@ import './styles/api-tokens.css';
 import './styles/landing.css';
 import './styles/tv-route.css';
 import './styles/mobile.css';
+import './styles/onboarding.css';
+import './styles/releases.css';
+import './styles/chat-bubble.css';
+import './styles/mobile-app.css';
 
 // Theme früh setzen — sonst hat der Login-Screen kein Glass.
 const VALID_THEMES = ['default', 'glass', 'default-dark', 'glass-dark'] as const;
@@ -101,13 +106,15 @@ if (!root) throw new Error('#root not found');
 createRoot(root).render(
   <StrictMode>
     <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <AppGate>
-            <App />
-          </AppGate>
-        </AuthProvider>
-      </QueryClientProvider>
+      <I18nProvider>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <AppGate>
+              <App />
+            </AppGate>
+          </AuthProvider>
+        </QueryClientProvider>
+      </I18nProvider>
     </ErrorBoundary>
   </StrictMode>,
 );

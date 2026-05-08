@@ -4,6 +4,7 @@ import { showToast } from '../components/shared/Toast';
 import { useAuth } from './AuthContext';
 import { navigate } from '../router';
 import * as api from '../data/api';
+import { useT } from '../i18n';
 
 type Phase = 'loading' | 'invalid' | 'expired' | 'ready' | 'sending' | 'sent';
 
@@ -16,6 +17,7 @@ interface InviteData {
 
 export function InvitePage({ token }: { token: string }) {
   const { user, signIn } = useAuth();
+  const t = useT();
   const [phase, setPhase] = useState<Phase>('loading');
   const [data, setData] = useState<InviteData | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -47,7 +49,7 @@ export function InvitePage({ token }: { token: string }) {
   useEffect(() => {
     if (phase === 'ready' && user && data && user.email.toLowerCase() === data.email.toLowerCase()) {
       void api.acceptInvitation(token).finally(() => {
-        showToast('Willkommen!');
+        showToast(t('invite.welcome_toast'));
         navigate('/', { replace: true });
       });
     }
@@ -57,16 +59,15 @@ export function InvitePage({ token }: { token: string }) {
     if (!data) return;
     setPhase('sending');
     try {
-      // Magic-Link an die Invite-Email schicken; Mail enthält Link der nach Verify
-      // auf btm.bethesna.org/?token=... redirected. AppGate ruft beim Login
-      // dann acceptInvitation(token) auf — siehe useEffect oben.
+      // Magic-Link an die Invite-Email schicken. Den Accept-Mark setzen wir
+      // *nicht* hier — sonst sieht der GET-Lookup nach Klick auf den Link
+      // bereits `accepted_at != null` und liefert 410 „already accepted".
+      // Tatsächliches Annehmen passiert nach erfolgreichem Magic-Verify im
+      // useEffect oben (siehe `phase === 'ready' && user && data`-Branch).
       await signIn(data.email, `/invite/${token}`);
-      // Mark invitation as accepted (so list of pending shrinks); Login-Step kann
-      // nochmal POST machen, ist idempotent.
-      await api.acceptInvitation(token);
       setPhase('sent');
     } catch (e) {
-      showToast(e instanceof Error ? e.message : 'Magic-Link konnte nicht geschickt werden');
+      showToast(e instanceof Error ? e.message : t('invite.magic_link_failed'));
       setPhase('ready');
     }
   };
@@ -93,65 +94,67 @@ export function InvitePage({ token }: { token: string }) {
           </svg>
           <div>
             <div className="login-brand-name">BTM</div>
-            <div className="login-brand-sub">Einladung annehmen</div>
+            <div className="login-brand-sub">{t('invite.title')}</div>
           </div>
         </div>
 
         {phase === 'loading' && (
           <div style={{ padding: '32px 0', textAlign: 'center', color: 'var(--ink-500)' }}>
             <Icon name="loader-2" size={20} className="login-spin" />
-            <div style={{ marginTop: 10, fontSize: 13 }}>Einladung wird geprüft …</div>
+            <div style={{ marginTop: 10, fontSize: 13 }}>{t('invite.checking')}</div>
           </div>
         )}
 
         {phase === 'invalid' && (
           <div style={{ padding: '20px 0' }}>
-            <h1>Diese Einladung ist nicht mehr gültig</h1>
+            <h1>{t('invite.invalid_title')}</h1>
             <p className="login-lead">
-              Der Einladungs-Link ist ungültig oder wurde bereits eingelöst.
+              {t('invite.invalid_body')}
               {errorMsg && (
                 <>
                   <br />
-                  <span style={{ color: 'var(--ink-500)', fontSize: 12 }}>({errorMsg})</span>
+                  <span style={{ color: 'var(--ink-500)', fontSize: 12 }}>
+                    {t('invite.error_msg_inline', { msg: errorMsg })}
+                  </span>
                 </>
               )}
             </p>
             <button className="login-btn-secondary" onClick={() => navigate('/')}>
-              Zur Startseite
+              {t('invite.home')}
             </button>
           </div>
         )}
 
         {phase === 'expired' && (
           <div style={{ padding: '20px 0' }}>
-            <h1>Einladung abgelaufen</h1>
-            <p className="login-lead">
-              Der Link war 7 Tage gültig. Bitte frag den Admin nach einer neuen Einladung.
-            </p>
+            <h1>{t('invite.expired_title')}</h1>
+            <p className="login-lead">{t('invite.expired_body')}</p>
             <button className="login-btn-secondary" onClick={() => navigate('/')}>
-              Zur Startseite
+              {t('invite.home')}
             </button>
           </div>
         )}
 
         {phase === 'ready' && data && (
           <div>
-            <h1>Hey{data.name ? ` ${data.name.split(' ')[0]}` : ''}!</h1>
+            <h1>{t('invite.ready_greeting', { name: data.name ? ` ${data.name.split(' ')[0]}` : '' })}</h1>
             <p className="login-lead">
-              Du wurdest als <b>{data.role === 'admin' ? 'Admin' : 'Mitglied'}</b> bei BTM eingeladen.
-              Wir schicken dir einen Login-Link an <b>{data.email}</b> — kein Passwort nötig.
+              {t('invite.ready_body', {
+                role: data.role === 'admin' ? t('invite.role_admin') : t('invite.role_member'),
+                email: data.email,
+              })}
             </p>
             <button onClick={accept} className="login-btn-primary">
-              <Icon name="mail" size={14} /> Login-Link anfordern
+              <Icon name="mail" size={14} /> {t('invite.request_link')}
             </button>
-            <p className="login-foot">Falls die Mail-Adresse nicht stimmt, sag dem Admin Bescheid.</p>
+            <p className="login-foot">{t('invite.foot_wrong_email')}</p>
           </div>
         )}
 
         {phase === 'sending' && (
           <div style={{ padding: '20px 0', textAlign: 'center' }}>
             <Icon name="loader-2" size={20} className="login-spin" />
-            <div style={{ marginTop: 10, fontSize: 13 }}>Login-Link wird verschickt …</div>
+            <div style={{ marginTop: 10, fontSize: 13 }}>{t('invite.sending')}</div>
           </div>
         )}
 
@@ -160,12 +163,9 @@ export function InvitePage({ token }: { token: string }) {
             <div className="login-sent-icon">
               <Icon name="mail-check" size={36} />
             </div>
-            <h2>Mail unterwegs.</h2>
-            <p>
-              Wir haben dir einen Login-Link an <b>{data.email}</b> geschickt. Der bringt dich beim ersten
-              Klick direkt rein.
-            </p>
-            <p className="login-sent-hint">Link ist 15 Minuten gültig.</p>
+            <h2>{t('invite.sent_title')}</h2>
+            <p>{t('invite.sent_body', { email: data.email })}</p>
+            <p className="login-sent-hint">{t('invite.sent_hint')}</p>
           </div>
         )}
       </div>

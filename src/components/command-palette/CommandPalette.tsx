@@ -4,6 +4,7 @@ import type { ScreenId } from '../../store/types';
 import { useStore } from '../../store/store';
 import { Icon } from '../shared/Icon';
 import { showToast } from '../shared/Toast';
+import { useT, useLocale } from '../../i18n';
 
 type ItemKind = 'action' | 'nav' | 'task' | 'project';
 
@@ -31,6 +32,9 @@ export function CommandPalette({ onClose, setActive }: CommandPaletteProps) {
   const setUI = useStore((s) => s.setUI);
   const setFilter = useStore((s) => s.setFilter);
   const resetDemo = useStore((s) => s.resetDemo);
+  const t = useT();
+  const [locale] = useLocale();
+  const fmtNum = (h: number) => h.toFixed(1).replace('.', locale === 'en' ? '.' : ',');
 
   const [q, setQ] = useState('');
   const [active, setActiveIdx] = useState(0);
@@ -47,10 +51,10 @@ export function CommandPalette({ onClose, setActive }: CommandPaletteProps) {
     const actions: CmdItem[] = [
       {
         kind: 'action',
-        group: 'Aktionen',
+        group: t('cmdk.group_actions'),
         id: 'planungsassistent',
-        title: 'Planungsassistent öffnen',
-        subtitle: 'KI extrahiert Aufgaben aus PM-Anleitungen',
+        title: t('cmdk.action_open_ai'),
+        subtitle: t('cmdk.action_open_ai_sub'),
         icon: 'sparkles',
         accent: true,
         kbd: '⌘P',
@@ -58,10 +62,10 @@ export function CommandPalette({ onClose, setActive }: CommandPaletteProps) {
       },
       {
         kind: 'action',
-        group: 'Aktionen',
+        group: t('cmdk.group_actions'),
         id: 'new-project',
-        title: 'Neues Projekt anlegen',
-        subtitle: 'Code, Name, Farbe, Fälligkeit',
+        title: t('cmdk.action_new_project_long'),
+        subtitle: t('cmdk.action_new_project_sub'),
         icon: 'folder-plus',
         run: () => {
           setActive('projects');
@@ -70,14 +74,14 @@ export function CommandPalette({ onClose, setActive }: CommandPaletteProps) {
       },
       {
         kind: 'action',
-        group: 'Aktionen',
+        group: t('cmdk.group_actions'),
         id: 'reset-demo',
-        title: 'Demo-Daten zurücksetzen',
-        subtitle: 'Setzt Tasks, Timer und Projekte auf den Stand "KW 19"',
+        title: t('cmdk.action_reset_demo_long'),
+        subtitle: t('cmdk.action_reset_demo_sub'),
         icon: 'refresh-ccw',
         run: () => {
           resetDemo();
-          showToast('Demo-Daten zurückgesetzt');
+          showToast(t('cmdk.action_reset_demo_done'));
         },
       },
     ];
@@ -88,18 +92,18 @@ export function CommandPalette({ onClose, setActive }: CommandPaletteProps) {
     });
 
     const screens: Array<{ id: ScreenId; label: string; icon: string; desc: string }> = [
-      { id: 'week', label: 'Meine Woche', icon: 'calendar-days', desc: 'Hallo-Screen, KPIs, jetzt aktiv' },
-      { id: 'board', label: 'Wochenboard', icon: 'kanban-square', desc: 'Kanban / Liste / Timeline' },
-      { id: 'capacity', label: 'Kapazität', icon: 'gauge', desc: 'Team-Auslastung pro Person' },
-      { id: 'times', label: 'Zeiten', icon: 'clock', desc: 'Live-Timer + Batch-Erfassung' },
-      { id: 'projects', label: 'Projekte', icon: 'folder', desc: `${projects.length} aktive Projekte` },
-      { id: 'mobile', label: 'Mobile-Vorschau', icon: 'smartphone', desc: 'PWA-Set für unterwegs' },
+      { id: 'week', label: t('sidebar.week'), icon: 'calendar-days', desc: t('cmdk.nav_week_desc') },
+      { id: 'board', label: t('sidebar.board'), icon: 'kanban-square', desc: t('cmdk.nav_board_desc') },
+      { id: 'capacity', label: t('sidebar.capacity'), icon: 'gauge', desc: t('cmdk.nav_capacity_desc') },
+      { id: 'times', label: t('sidebar.times'), icon: 'clock', desc: t('cmdk.nav_times_desc') },
+      { id: 'projects', label: t('sidebar.projects'), icon: 'folder', desc: t('cmdk.nav_projects_desc', { count: projects.length }) },
+      { id: 'mobile', label: t('sidebar.mobile_preview'), icon: 'smartphone', desc: t('cmdk.nav_mobile_desc') },
     ];
     screens.forEach((sc) => {
       if (!lc || sc.label.toLowerCase().includes(lc) || sc.desc.toLowerCase().includes(lc)) {
         out.push({
           kind: 'nav',
-          group: 'Navigation',
+          group: t('cmdk.group_navigation'),
           id: 'nav-' + sc.id,
           title: sc.label,
           subtitle: sc.desc,
@@ -110,19 +114,23 @@ export function CommandPalette({ onClose, setActive }: CommandPaletteProps) {
     });
 
     const taskMatches = tasks
-      .filter((t) => !lc || t.title.toLowerCase().includes(lc) || t.id.toLowerCase().includes(lc))
+      .filter((tk) => !lc || tk.title.toLowerCase().includes(lc) || tk.id.toLowerCase().includes(lc))
       .slice(0, 8);
-    taskMatches.forEach((t) => {
-      const proj = projects.find((p) => p.id === t.proj);
-      const u = users.find((u) => u.id === t.who);
+    taskMatches.forEach((tk) => {
+      const proj = projects.find((p) => p.id === tk.proj);
+      const u = users.find((uu) => uu.id === tk.who);
       out.push({
         kind: 'task',
-        group: 'Aufgaben',
-        id: 'task-' + t.id,
-        title: t.title,
-        subtitle: `${proj?.code || '—'} · ${u?.name || '—'} · ${t.estH.toFixed(1).replace('.', ',')}h`,
+        group: t('cmdk.group_tasks'),
+        id: 'task-' + tk.id,
+        title: tk.title,
+        subtitle: t('cmdk.task_meta', {
+          code: proj?.code || '—',
+          name: u?.name || '—',
+          h: fmtNum(tk.estH),
+        }),
         accent: proj?.color,
-        run: () => setUI({ taskDetailId: t.id }),
+        run: () => setUI({ taskDetailId: tk.id }),
       });
     });
 
@@ -130,15 +138,22 @@ export function CommandPalette({ onClose, setActive }: CommandPaletteProps) {
       .filter((p) => !lc || p.name.toLowerCase().includes(lc) || p.code.toLowerCase().includes(lc))
       .slice(0, 5);
     projMatches.forEach((p) => {
-      const taskCount = tasks.filter((t) => t.proj === p.id).length;
+      const taskCount = tasks.filter((tk) => tk.proj === p.id).length;
+      let subtitle = t('cmdk.project_meta', { code: p.code, count: taskCount });
+      if (p.due) {
+        subtitle += t('cmdk.project_meta_due', {
+          date: new Date(p.due).toLocaleDateString(locale === 'en' ? 'en-US' : 'de-DE', {
+            day: '2-digit',
+            month: 'short',
+          }),
+        });
+      }
       out.push({
         kind: 'project',
-        group: 'Projekte',
+        group: t('cmdk.group_projects'),
         id: 'proj-' + p.id,
         title: p.name,
-        subtitle: `${p.code} · ${taskCount} Aufgaben${
-          p.due ? ' · fällig ' + new Date(p.due).toLocaleDateString('de-DE', { day: '2-digit', month: 'short' }) : ''
-        }`,
+        subtitle,
         accent: p.color,
         run: () => {
           setFilter({ proj: p.id, who: 'all' });
@@ -207,7 +222,7 @@ export function CommandPalette({ onClose, setActive }: CommandPaletteProps) {
           <input
             ref={inputRef}
             type="text"
-            placeholder="Suchen oder Befehl ausführen…"
+            placeholder={t('cmdk.cmdk_search_placeholder')}
             value={q}
             onChange={(e) => setQ(e.target.value)}
           />
@@ -218,7 +233,7 @@ export function CommandPalette({ onClose, setActive }: CommandPaletteProps) {
           {items.length === 0 && (
             <div className="cmdk-empty">
               <Icon name="search-x" size={24} style={{ color: 'var(--ink-400)' }} />
-              <div style={{ fontSize: 13, marginTop: 8 }}>Keine Treffer für „{q}"</div>
+              <div style={{ fontSize: 13, marginTop: 8 }}>{t('cmdk.cmdk_empty_for', { q })}</div>
             </div>
           )}
           {Object.entries(grouped).map(([groupName, groupItems]) => (
@@ -262,16 +277,18 @@ export function CommandPalette({ onClose, setActive }: CommandPaletteProps) {
 
         <div className="cmdk-foot">
           <span>
-            <span className="cmdk-kbd cmdk-kbd-mono">↑↓</span> Navigieren
+            <span className="cmdk-kbd cmdk-kbd-mono">↑↓</span> {t('cmdk.cmdk_navigate')}
           </span>
           <span>
-            <span className="cmdk-kbd cmdk-kbd-mono">↵</span> Öffnen
+            <span className="cmdk-kbd cmdk-kbd-mono">↵</span> {t('cmdk.cmdk_open')}
           </span>
           <span>
-            <span className="cmdk-kbd cmdk-kbd-mono">esc</span> Schließen
+            <span className="cmdk-kbd cmdk-kbd-mono">esc</span> {t('cmdk.cmdk_close')}
           </span>
           <div style={{ flex: 1 }} />
-          <span style={{ color: 'var(--ink-500)' }}>{items.length} Treffer</span>
+          <span style={{ color: 'var(--ink-500)' }}>
+            {t('cmdk.cmdk_results_count', { count: items.length })}
+          </span>
         </div>
       </div>
     </div>

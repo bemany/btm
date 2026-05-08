@@ -3,16 +3,17 @@ import type { Project } from '../../store/types';
 import { useStore } from '../../store/store';
 import { Icon } from '../shared/Icon';
 import { showToast } from '../shared/Toast';
+import { useT, useLocale } from '../../i18n';
 
 const PALETTE = [
-  '#C85A2C', // accent
-  '#5573A0', // legal blue
-  '#5E7F4E', // store green
-  '#B88A2E', // build amber
-  '#6B6359', // ops gray
-  '#8a5a8a', // purple
-  '#9a3838', // crimson
-  '#3F6F75', // teal
+  '#C85A2C',
+  '#5573A0',
+  '#5E7F4E',
+  '#B88A2E',
+  '#6B6359',
+  '#8a5a8a',
+  '#9a3838',
+  '#3F6F75',
 ];
 
 export interface NewProjectModalProps {
@@ -24,6 +25,8 @@ export function NewProjectModal({ onClose, existing }: NewProjectModalProps) {
   const addProject = useStore((s) => s.addProject);
   const updateProject = useStore((s) => s.updateProject);
   const deleteProject = useStore((s) => s.deleteProject);
+  const t = useT();
+  const [locale] = useLocale();
 
   const isEdit = !!existing;
   const [code, setCode] = useState(existing?.code || '');
@@ -46,7 +49,7 @@ export function NewProjectModal({ onClose, existing }: NewProjectModalProps) {
         due: due || null,
         color,
       });
-      showToast(`Projekt „${codeUp}" gespeichert`);
+      showToast(t('projects.saved_toast', { code: codeUp }));
     } else {
       const p = await addProject({
         code: codeUp,
@@ -55,21 +58,16 @@ export function NewProjectModal({ onClose, existing }: NewProjectModalProps) {
         due: due || null,
         color,
       });
-      showToast(p ? `Projekt „${p.code}" angelegt` : 'Projekt konnte nicht angelegt werden');
+      showToast(p ? t('projects.created_toast', { code: p.code }) : t('projects.create_failed'));
     }
     onClose();
   };
 
   const onDelete = () => {
     if (!isEdit || !existing) return;
-    if (
-      !window.confirm(
-        `Projekt „${existing.code}" wirklich löschen? Aufgaben bleiben erhalten, werden aber projektlos.`,
-      )
-    )
-      return;
+    if (!window.confirm(t('projects.delete_confirm', { code: existing.code }))) return;
     deleteProject(existing.id);
-    showToast(`Projekt „${existing.code}" gelöscht`);
+    showToast(t('projects.delete_toast', { code: existing.code }));
     onClose();
   };
 
@@ -91,50 +89,50 @@ export function NewProjectModal({ onClose, existing }: NewProjectModalProps) {
     >
       <form className="modal" onSubmit={submit}>
         <div className="modal-head">
-          <h3>{isEdit ? 'Projekt bearbeiten' : 'Neues Projekt'}</h3>
-          <button type="button" className="x" onClick={onClose} aria-label="Schließen">
+          <h3>{isEdit ? t('projects.edit_title') : t('projects.new_project')}</h3>
+          <button type="button" className="x" onClick={onClose} aria-label={t('common.close')}>
             <Icon name="x" size={16} />
           </button>
         </div>
         <div className="modal-body">
           <div className="form-grid-2">
             <div className="form-row">
-              <label>Code</label>
+              <label>{t('projects.project_code')}</label>
               <input
                 type="text"
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
-                placeholder="z. B. FAHRERAPP · E5"
+                placeholder={t('projects.code_placeholder')}
                 autoFocus
               />
-              <div className="hint">Kurz · erscheint als Tag auf Cards.</div>
+              <div className="hint">{t('projects.code_hint')}</div>
             </div>
             <div className="form-row">
-              <label>Fällig</label>
+              <label>{t('projects.due_label')}</label>
               <input type="date" value={due ?? ''} onChange={(e) => setDue(e.target.value)} />
-              <div className="hint">Optional.</div>
+              <div className="hint">{t('projects.due_hint')}</div>
             </div>
           </div>
           <div className="form-row">
-            <label>Name</label>
+            <label>{t('projects.project_name')}</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="z. B. FahrerApp · Etappe 5: Telematik-Integration"
+              placeholder={t('projects.name_placeholder')}
             />
           </div>
           <div className="form-row">
-            <label>Kunde / Bereich</label>
+            <label>{t('projects.client_label')}</label>
             <input
               type="text"
               value={client}
               onChange={(e) => setClient(e.target.value)}
-              placeholder="Mein Driver, Bethesna intern, …"
+              placeholder={t('projects.client_placeholder')}
             />
           </div>
           <div className="form-row">
-            <label>Farbe</label>
+            <label>{t('projects.color')}</label>
             <div className="color-picker">
               {PALETTE.map((c) => (
                 <button
@@ -182,13 +180,20 @@ export function NewProjectModal({ onClose, existing }: NewProjectModalProps) {
                 paddingLeft: 8,
               }}
             >
-              {code || 'CODE'}
+              {code || t('projects.preview_code_default')}
             </div>
-            <div style={{ fontWeight: 600, fontSize: 14, paddingLeft: 8 }}>{name || 'Projektname'}</div>
+            <div style={{ fontWeight: 600, fontSize: 14, paddingLeft: 8 }}>
+              {name || t('projects.preview_name_default')}
+            </div>
             <div style={{ fontSize: 11, color: 'var(--ink-500)', paddingLeft: 8, marginTop: 2 }}>
-              {client || 'Kunde'}
+              {client || t('projects.preview_client_default')}
               {due &&
-                ` · fällig ${new Date(due).toLocaleDateString('de-DE', { day: '2-digit', month: 'short' })}`}
+                ` ${t('projects.due_short', {
+                  date: new Date(due).toLocaleDateString(locale === 'en' ? 'en-US' : 'de-DE', {
+                    day: '2-digit',
+                    month: 'short',
+                  }),
+                })}`}
             </div>
           </div>
         </div>
@@ -200,15 +205,15 @@ export function NewProjectModal({ onClose, existing }: NewProjectModalProps) {
               onClick={onDelete}
               style={{ color: 'var(--err-500)' }}
             >
-              <Icon name="trash-2" size={13} /> Löschen
+              <Icon name="trash-2" size={13} /> {t('projects.delete_label')}
             </button>
           )}
           <div style={{ flex: 1 }} />
           <button type="button" className="btn-ghost" onClick={onClose}>
-            Abbrechen
+            {t('common.cancel')}
           </button>
           <button type="submit" className="btn-primary" disabled={!canSave}>
-            {isEdit ? 'Speichern' : 'Projekt anlegen'}
+            {isEdit ? t('projects.submit_save') : t('projects.submit_create')}
             <span style={{ opacity: 0.6, marginLeft: 8, fontFamily: 'var(--font-mono)', fontSize: 10 }}>⌘↵</span>
           </button>
         </div>

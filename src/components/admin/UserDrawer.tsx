@@ -7,6 +7,7 @@ import { showToast } from '../shared/Toast';
 import * as api from '../../data/api';
 import { SYNC_KEYS } from '../../data/sync';
 import { PALETTE } from './adminUtils';
+import { useT } from '../../i18n';
 
 interface Props {
   id: string; // existing user id OR '__new__'
@@ -21,7 +22,7 @@ interface Draft {
   teamId: string | null;
   cap: number;
   role: 'admin' | 'member';
-  status: 'active' | 'inactive';
+  status: 'active' | 'invited' | 'inactive';
   color: string;
 }
 
@@ -66,6 +67,7 @@ export function UserDrawer({ id, onClose }: Props) {
   const teams = useStore((s) => s.teams);
   const tasks = useStore((s) => s.tasks);
   const queryClient = useQueryClient();
+  const t = useT();
 
   const existing = !isNew ? users.find((u) => u.id === id) : null;
 
@@ -76,7 +78,7 @@ export function UserDrawer({ id, onClose }: Props) {
     if (existing) setDraft(fromUser(existing));
   }, [existing?.id]);
 
-  const userTasks = !isNew && existing ? tasks.filter((t) => t.who === existing.id) : [];
+  const userTasks = !isNew && existing ? tasks.filter((tk) => tk.who === existing.id) : [];
 
   const update = (patch: Partial<Draft>) => setDraft((d) => ({ ...d, ...patch }));
 
@@ -86,7 +88,7 @@ export function UserDrawer({ id, onClose }: Props) {
     try {
       if (isNew) {
         if (!draft.email || !draft.name) {
-          showToast('Name & E-Mail nötig');
+          showToast(t('admin.err_name_email'));
           setSaving(false);
           return;
         }
@@ -101,7 +103,7 @@ export function UserDrawer({ id, onClose }: Props) {
           queryClient.invalidateQueries({ queryKey: SYNC_KEYS.USERS }),
           queryClient.invalidateQueries({ queryKey: SYNC_KEYS.INVITATIONS }),
         ]);
-        showToast(`Einladung an ${draft.email} gesendet`);
+        showToast(t('admin.invite_sent', { email: draft.email }));
       } else {
         await api.updateUser(id, {
           name: draft.name,
@@ -113,11 +115,11 @@ export function UserDrawer({ id, onClose }: Props) {
           teamId: draft.teamId,
         });
         await queryClient.invalidateQueries({ queryKey: SYNC_KEYS.USERS });
-        showToast('Profil aktualisiert');
+        showToast(t('admin.profile_updated'));
       }
       onClose();
     } catch (e) {
-      showToast(e instanceof Error ? e.message : 'Speichern fehlgeschlagen');
+      showToast(e instanceof Error ? e.message : t('toast.save_failed'));
     } finally {
       setSaving(false);
     }
@@ -128,7 +130,7 @@ export function UserDrawer({ id, onClose }: Props) {
     const next = existing.status === 'inactive' ? 'active' : 'inactive';
     await api.updateUser(existing.id, { status: next });
     await queryClient.invalidateQueries({ queryKey: SYNC_KEYS.USERS });
-    showToast(next === 'inactive' ? 'Deaktiviert' : 'Reaktiviert');
+    showToast(next === 'inactive' ? t('admin.deactivated_toast') : t('admin.reactivated_toast'));
     onClose();
   };
 
@@ -137,12 +139,14 @@ export function UserDrawer({ id, onClose }: Props) {
       <div className="drawer-backdrop" onClick={onClose} />
       <div className="drawer admin-drawer">
         <div className="drawer-head">
-          <div className="admin-drawer-eyebrow">{isNew ? 'Neuen Nutzer einladen' : 'Nutzer bearbeiten'}</div>
+          <div className="admin-drawer-eyebrow">
+            {isNew ? t('admin.drawer_eyebrow_new') : t('admin.drawer_eyebrow_edit')}
+          </div>
           <div style={{ flex: 1 }} />
           {!isNew && existing && (
             <span className={`admin-status-pill ${existing.status}`}>
               <span className="dot" />
-              {existing.status === 'active' ? 'Aktiv' : 'Deaktiviert'}
+              {existing.status === 'active' ? t('admin.status_active') : t('admin.status_inactive')}
             </span>
           )}
           <button className="x" onClick={onClose}>
@@ -159,36 +163,35 @@ export function UserDrawer({ id, onClose }: Props) {
             <div style={{ flex: 1 }}>
               <input
                 className="admin-input title"
-                placeholder="Vor- und Nachname"
+                placeholder={t('admin.name_placeholder')}
                 value={draft.name}
                 onChange={(e) => update({ name: e.target.value })}
               />
               <input
                 className="admin-input subtle"
-                placeholder="Funktion (z.B. Backend-Engineer)"
+                placeholder={t('admin.job_placeholder')}
                 value={draft.jobTitle}
                 onChange={(e) => update({ jobTitle: e.target.value })}
               />
             </div>
           </div>
 
-          {/* Kontakt */}
           <div className="admin-drawer-section">
-            <div className="admin-drawer-section-label">Kontakt</div>
+            <div className="admin-drawer-section-label">{t('admin.section_contact')}</div>
             <div className="admin-field">
-              <label>E-Mail</label>
+              <label>{t('admin.field_email')}</label>
               <input
                 className="admin-input"
                 type="email"
                 disabled={!isNew}
-                placeholder="vorname.nachname@bethesna.org"
+                placeholder={t('admin.email_placeholder')}
                 value={draft.email}
                 onChange={(e) => update({ email: e.target.value })}
               />
-              {!isNew && <div className="hint">E-Mail kann nach Anlegen nicht mehr geändert werden.</div>}
+              {!isNew && <div className="hint">{t('admin.email_locked_hint')}</div>}
             </div>
             <div className="admin-field">
-              <label>Telefon</label>
+              <label>{t('admin.field_phone')}</label>
               <input
                 className="admin-input"
                 placeholder="+49 …"
@@ -198,26 +201,25 @@ export function UserDrawer({ id, onClose }: Props) {
             </div>
           </div>
 
-          {/* Organisation */}
           <div className="admin-drawer-section">
-            <div className="admin-drawer-section-label">Organisation</div>
+            <div className="admin-drawer-section-label">{t('admin.section_org')}</div>
             <div className="admin-field">
-              <label>Team</label>
+              <label>{t('admin.field_team')}</label>
               <select
                 className="admin-input"
                 value={draft.teamId ?? ''}
                 onChange={(e) => update({ teamId: e.target.value || null })}
               >
-                <option value="">— kein Team —</option>
-                {teams.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.name}
+                <option value="">{t('admin.team_none')}</option>
+                {teams.map((tm) => (
+                  <option key={tm.id} value={tm.id}>
+                    {tm.name}
                   </option>
                 ))}
               </select>
             </div>
             <div className="admin-field">
-              <label>Kapazität · Sollstunden pro Woche</label>
+              <label>{t('admin.field_capacity')}</label>
               <div className="admin-cap-row">
                 <input
                   type="range"
@@ -229,7 +231,7 @@ export function UserDrawer({ id, onClose }: Props) {
                 />
                 <div className="admin-cap-val">
                   {draft.cap}
-                  <span className="dim">h/Wo</span>
+                  <span className="dim">{t('admin.cap_unit')}</span>
                 </div>
               </div>
               <div className="admin-cap-marks">
@@ -246,7 +248,7 @@ export function UserDrawer({ id, onClose }: Props) {
             </div>
             {!isNew && (
               <div className="admin-field">
-                <label>Avatar-Farbe</label>
+                <label>{t('admin.field_color')}</label>
                 <div className="admin-team-palette">
                   {PALETTE.map((c) => (
                     <button
@@ -261,9 +263,8 @@ export function UserDrawer({ id, onClose }: Props) {
             )}
           </div>
 
-          {/* Berechtigung */}
           <div className="admin-drawer-section">
-            <div className="admin-drawer-section-label">Berechtigung</div>
+            <div className="admin-drawer-section-label">{t('admin.section_perm')}</div>
             <div className="admin-access-toggle">
               <button
                 className={`admin-access-opt ${draft.role === 'member' ? 'active' : ''}`}
@@ -271,8 +272,8 @@ export function UserDrawer({ id, onClose }: Props) {
               >
                 <Icon name="user" size={14} />
                 <div>
-                  <div className="lbl">Mitglied</div>
-                  <div className="sub">Aufgaben, Zeiten, Board</div>
+                  <div className="lbl">{t('admin.perm_member')}</div>
+                  <div className="sub">{t('admin.perm_member_sub')}</div>
                 </div>
               </button>
               <button
@@ -281,35 +282,34 @@ export function UserDrawer({ id, onClose }: Props) {
               >
                 <Icon name="shield-check" size={14} />
                 <div>
-                  <div className="lbl">Admin</div>
-                  <div className="sub">User &amp; Teams verwalten</div>
+                  <div className="lbl">{t('admin.perm_admin')}</div>
+                  <div className="sub">{t('admin.perm_admin_sub')}</div>
                 </div>
               </button>
             </div>
           </div>
 
-          {/* Stats */}
           {!isNew && existing && (
             <div className="admin-drawer-section">
-              <div className="admin-drawer-section-label">Aktuelle Auslastung</div>
+              <div className="admin-drawer-section-label">{t('admin.section_load')}</div>
               <div className="admin-drawer-stats">
                 <div className="admin-drawer-stat">
-                  <div className="k">Offen</div>
-                  <div className="v">{userTasks.filter((t) => t.col !== 'done').length}</div>
+                  <div className="k">{t('admin.load_open')}</div>
+                  <div className="v">{userTasks.filter((tk) => tk.col !== 'done').length}</div>
                 </div>
                 <div className="admin-drawer-stat">
-                  <div className="k">In Arbeit</div>
+                  <div className="k">{t('admin.load_doing')}</div>
                   <div className="v" style={{ color: 'var(--accent-600)' }}>
-                    {userTasks.filter((t) => t.col === 'doing').length}
+                    {userTasks.filter((tk) => tk.col === 'doing').length}
                   </div>
                 </div>
                 <div className="admin-drawer-stat">
-                  <div className="k">Erledigt</div>
-                  <div className="v">{userTasks.filter((t) => t.col === 'done').length}</div>
+                  <div className="k">{t('admin.load_done')}</div>
+                  <div className="v">{userTasks.filter((tk) => tk.col === 'done').length}</div>
                 </div>
                 <div className="admin-drawer-stat">
-                  <div className="k">Geloggt</div>
-                  <div className="v">{userTasks.reduce((s, t) => s + (t.loggedH || 0), 0).toFixed(1)}h</div>
+                  <div className="k">{t('admin.load_logged')}</div>
+                  <div className="v">{userTasks.reduce((s, tk) => s + (tk.loggedH || 0), 0).toFixed(1)}h</div>
                 </div>
               </div>
             </div>
@@ -320,16 +320,16 @@ export function UserDrawer({ id, onClose }: Props) {
           {!isNew && existing && (
             <button className="admin-btn ghost danger" onClick={toggleStatus}>
               <Icon name={existing.status === 'inactive' ? 'user-check' : 'user-minus'} size={12} />
-              {existing.status === 'inactive' ? 'Reaktivieren' : 'Deaktivieren'}
+              {existing.status === 'inactive' ? t('admin.btn_reactivate') : t('admin.btn_deactivate')}
             </button>
           )}
           <div style={{ flex: 1 }} />
           <button className="admin-btn ghost" onClick={onClose} disabled={saving}>
-            Abbrechen
+            {t('common.cancel')}
           </button>
           <button className="admin-btn accent" onClick={save} disabled={saving}>
             <Icon name={isNew ? 'send' : 'check'} size={12} />
-            {isNew ? 'Einladung senden' : 'Speichern'}
+            {isNew ? t('admin.btn_send_invite') : t('common.save')}
           </button>
         </div>
       </div>
