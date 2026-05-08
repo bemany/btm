@@ -16,8 +16,7 @@ export interface SidebarProps {
   setCollapsed: (updater: boolean | ((v: boolean) => boolean)) => void;
   theme: ThemeMode;
   setTheme: (t: ThemeMode) => void;
-  onOpenApiTokens: () => void;
-  onReplayTour?: () => void;
+  onOpenSettings: (tab?: 'appearance' | 'language' | 'api_tokens' | 'data') => void;
 }
 
 interface Item {
@@ -34,17 +33,14 @@ export function Sidebar({
   setCollapsed,
   theme,
   setTheme,
-  onOpenApiTokens,
-  onReplayTour,
+  onOpenSettings,
 }: SidebarProps) {
   const tasks = useStore((s) => s.tasks);
   const currentUser = useStore((s) => s.currentUser);
   const projects = useStore((s) => s.projects);
   const timer = useStore((s) => s.timer);
-  const resetDemo = useStore((s) => s.resetDemo);
   const { user, signOut } = useAuth();
   const t = useT();
-  const [locale, setLocale] = useLocale();
 
   // Anzeige im Foot priorisiert echten eingeloggten User; Initial = erste 2 Buchstaben des Namens
   const displayName = user?.name ?? '—';
@@ -276,90 +272,46 @@ export function Sidebar({
 
             {(() => {
               const { base: curBase, brightness: curBright } = decomposeTheme(theme);
-              const setBase = (b: 'default' | 'glass') =>
-                setTheme(composeTheme(b, curBright));
-              const setBright = (br: 'light' | 'dark') =>
-                setTheme(composeTheme(curBase, br));
               return (
-                <>
-                  <div className="sb-profile-section-label">{t('sidebar.profile_appearance')}</div>
+                <div className="sb-quick-toggle">
                   <button
-                    className={`sb-profile-item ${curBase === 'glass' ? 'active' : ''}`}
-                    onClick={() => setBase('glass')}
+                    type="button"
+                    className={`sb-quick-btn ${curBase === 'glass' ? 'is-active' : ''}`}
+                    onClick={() => setTheme(composeTheme('glass', curBright))}
+                    title={t('sidebar.profile_glass')}
                   >
                     <span className="sb-profile-swatch glass" />
-                    <div className="sb-profile-item-text">
-                      <div className="sb-profile-item-title">{t('sidebar.profile_glass')}</div>
-                      <div className="sb-profile-item-sub">{t('sidebar.profile_glass_sub')}</div>
-                    </div>
-                    {curBase === 'glass' && <Icon name="check" size={14} style={{ color: 'var(--accent-500)' }} />}
+                    <span className="sb-quick-label">{t('sidebar.profile_glass')}</span>
                   </button>
                   <button
-                    className={`sb-profile-item ${curBase === 'default' ? 'active' : ''}`}
-                    onClick={() => setBase('default')}
+                    type="button"
+                    className={`sb-quick-btn ${curBase === 'default' ? 'is-active' : ''}`}
+                    onClick={() => setTheme(composeTheme('default', curBright))}
+                    title={t('sidebar.profile_studio')}
                   >
                     <span className="sb-profile-swatch studio" />
-                    <div className="sb-profile-item-text">
-                      <div className="sb-profile-item-title">{t('sidebar.profile_studio')}</div>
-                      <div className="sb-profile-item-sub">{t('sidebar.profile_studio_sub')}</div>
-                    </div>
-                    {curBase === 'default' && <Icon name="check" size={14} style={{ color: 'var(--accent-500)' }} />}
+                    <span className="sb-quick-label">{t('sidebar.profile_studio')}</span>
                   </button>
-
-                  <div className="sb-profile-section-label" style={{ marginTop: 6 }}>
-                    {t('sidebar.profile_brightness')}
-                  </div>
+                  <span className="sb-quick-sep" aria-hidden="true" />
                   <button
-                    className={`sb-profile-item ${curBright === 'light' ? 'active' : ''}`}
-                    onClick={() => setBright('light')}
+                    type="button"
+                    className={`sb-quick-btn icon ${curBright === 'light' ? 'is-active' : ''}`}
+                    onClick={() => setTheme(composeTheme(curBase, 'light'))}
+                    title={t('sidebar.profile_light')}
+                    aria-label={t('sidebar.profile_light')}
                   >
-                    <span className="sb-profile-icon">
-                      <Icon name="sun" size={14} style={{ color: 'var(--ink-700)' }} />
-                    </span>
-                    <div className="sb-profile-item-text">
-                      <div className="sb-profile-item-title">{t('sidebar.profile_light')}</div>
-                      <div className="sb-profile-item-sub">{t('sidebar.profile_light_sub')}</div>
-                    </div>
-                    {curBright === 'light' && <Icon name="check" size={14} style={{ color: 'var(--accent-500)' }} />}
+                    <Icon name="sun" size={14} />
                   </button>
                   <button
-                    className={`sb-profile-item ${curBright === 'dark' ? 'active' : ''}`}
-                    onClick={() => setBright('dark')}
+                    type="button"
+                    className={`sb-quick-btn icon ${curBright === 'dark' ? 'is-active' : ''}`}
+                    onClick={() => setTheme(composeTheme(curBase, 'dark'))}
+                    title={t('sidebar.profile_dark')}
+                    aria-label={t('sidebar.profile_dark')}
                   >
-                    <span className="sb-profile-icon">
-                      <Icon name="moon" size={14} style={{ color: 'var(--ink-700)' }} />
-                    </span>
-                    <div className="sb-profile-item-text">
-                      <div className="sb-profile-item-title">{t('sidebar.profile_dark')}</div>
-                      <div className="sb-profile-item-sub">{t('sidebar.profile_dark_sub')}</div>
-                    </div>
-                    {curBright === 'dark' && <Icon name="check" size={14} style={{ color: 'var(--accent-500)' }} />}
+                    <Icon name="moon" size={14} />
                   </button>
-
-                  <div className="sb-profile-section-label" style={{ marginTop: 6 }}>
-                    {t('sidebar.profile_language')}
-                  </div>
-                  <button
-                    className={`sb-profile-item ${locale === 'de' ? 'active' : ''}`}
-                    onClick={() => setLocale('de')}
-                  >
-                    <span className="sb-profile-icon" aria-hidden="true">DE</span>
-                    <div className="sb-profile-item-text">
-                      <div className="sb-profile-item-title">{t('sidebar.profile_language_de')}</div>
-                    </div>
-                    {locale === 'de' && <Icon name="check" size={14} style={{ color: 'var(--accent-500)' }} />}
-                  </button>
-                  <button
-                    className={`sb-profile-item ${locale === 'en' ? 'active' : ''}`}
-                    onClick={() => setLocale('en')}
-                  >
-                    <span className="sb-profile-icon" aria-hidden="true">EN</span>
-                    <div className="sb-profile-item-text">
-                      <div className="sb-profile-item-title">{t('sidebar.profile_language_en')}</div>
-                    </div>
-                    {locale === 'en' && <Icon name="check" size={14} style={{ color: 'var(--accent-500)' }} />}
-                  </button>
-                </>
+                </div>
               );
             })()}
 
@@ -369,51 +321,16 @@ export function Sidebar({
               className="sb-profile-item"
               onClick={() => {
                 setProfileOpen(false);
-                onOpenApiTokens();
+                onOpenSettings();
               }}
             >
               <span className="sb-profile-icon">
-                <Icon name="key-round" size={14} style={{ color: 'var(--ink-500)' }} />
+                <Icon name="settings" size={14} style={{ color: 'var(--ink-500)' }} />
               </span>
               <div className="sb-profile-item-text">
-                <div className="sb-profile-item-title">{t('sidebar.profile_api_tokens')}</div>
-                <div className="sb-profile-item-sub">{t('sidebar.profile_api_tokens_sub')}</div>
+                <div className="sb-profile-item-title">{t('settings.profile_settings')}</div>
               </div>
-            </button>
-
-            {onReplayTour && (
-              <button
-                className="sb-profile-item"
-                onClick={() => {
-                  setProfileOpen(false);
-                  onReplayTour();
-                }}
-              >
-                <span className="sb-profile-icon">
-                  <Icon name="compass" size={14} style={{ color: 'var(--ink-500)' }} />
-                </span>
-                <div className="sb-profile-item-text">
-                  <div className="sb-profile-item-title">{t('sidebar.profile_replay_tour')}</div>
-                  <div className="sb-profile-item-sub">{t('sidebar.profile_replay_tour_sub')}</div>
-                </div>
-              </button>
-            )}
-
-            <button
-              className="sb-profile-item"
-              onClick={() => {
-                resetDemo();
-                showToast(t('toast.state_reset'));
-                setProfileOpen(false);
-              }}
-            >
-              <span className="sb-profile-icon">
-                <Icon name="rotate-ccw" size={14} style={{ color: 'var(--ink-500)' }} />
-              </span>
-              <div className="sb-profile-item-text">
-                <div className="sb-profile-item-title">{t('sidebar.profile_reset_local')}</div>
-                <div className="sb-profile-item-sub">{t('sidebar.profile_reset_local_sub')}</div>
-              </div>
+              <span className="sb-profile-kbd">{t('settings.profile_settings_kbd')}</span>
             </button>
 
             {user && (

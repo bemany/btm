@@ -50,9 +50,10 @@ const TaskDetailDrawer = lazy(() =>
 const CommandPalette = lazy(() =>
   import('./components/command-palette/CommandPalette').then((m) => ({ default: m.CommandPalette })),
 );
-const ApiTokensDrawer = lazy(() =>
-  import('./components/profile/ApiTokensDrawer').then((m) => ({ default: m.ApiTokensDrawer })),
+const SettingsModal = lazy(() =>
+  import('./components/settings/SettingsModal').then((m) => ({ default: m.SettingsModal })),
 );
+type SettingsTabId = 'appearance' | 'language' | 'api_tokens' | 'data';
 
 function ScreenFallback() {
   return (
@@ -91,7 +92,7 @@ export function App() {
 
   const [collapsed, setCollapsed] = useState(false);
   const [cmdkOpen, setCmdkOpen] = useState(false);
-  const [apiTokensOpen, setApiTokensOpen] = useState(false);
+  const [settingsTab, setSettingsTab] = useState<SettingsTabId | null>(null);
   const [theme, setThemeState] = useState<ThemeMode>(loadTheme);
   const [tourReplay, setTourReplay] = useState(0);
   const isMobile = useIsMobile(768);
@@ -124,6 +125,10 @@ export function App() {
       if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) {
         e.preventDefault();
         setCmdkOpen((v) => !v);
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key === ',') {
+        e.preventDefault();
+        setSettingsTab((v) => (v ? null : 'appearance'));
       }
       if (
         e.key === '/' &&
@@ -180,8 +185,7 @@ export function App() {
           setCollapsed={setCollapsed}
           theme={theme}
           setTheme={setTheme}
-          onOpenApiTokens={() => setApiTokensOpen(true)}
-          onReplayTour={() => setTourReplay((n) => n + 1)}
+          onOpenSettings={(tab) => setSettingsTab(tab ?? 'appearance')}
         />
         <Topbar active={active} setActive={setActive} collapsed={collapsed} setCollapsed={setCollapsed} />
         <main className="app-main">
@@ -212,7 +216,15 @@ export function App() {
         {drawer === 'ai' && <AIDrawer setActive={setActive} />}
         {taskDetailId && <TaskDetailDrawer id={taskDetailId} />}
         {cmdkOpen && <CommandPalette onClose={() => setCmdkOpen(false)} setActive={setActive} />}
-        {apiTokensOpen && <ApiTokensDrawer onClose={() => setApiTokensOpen(false)} />}
+        {settingsTab && (
+          <SettingsModal
+            initialTab={settingsTab}
+            theme={theme}
+            setTheme={setTheme}
+            onReplayTour={() => setTourReplay((n) => n + 1)}
+            onClose={() => setSettingsTab(null)}
+          />
+        )}
       </Suspense>
 
       <OnboardingTour replayKey={tourReplay} theme={theme} setTheme={setTheme} />

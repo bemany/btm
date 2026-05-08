@@ -25,6 +25,7 @@ import './styles/onboarding.css';
 import './styles/releases.css';
 import './styles/chat-bubble.css';
 import './styles/mobile-app.css';
+import './styles/settings.css';
 
 // Theme früh setzen — sonst hat der Login-Screen kein Glass.
 const VALID_THEMES = ['default', 'glass', 'default-dark', 'glass-dark'] as const;
