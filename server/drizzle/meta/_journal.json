@@ -43,6 +43,13 @@
       "when": 1778099372796,
       "tag": "0005_chemical_maria_hill",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1778256000000,
+      "tag": "0006_comments_notifications",
+      "breakpoints": true
     }
   ]
 }

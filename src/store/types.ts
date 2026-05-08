@@ -1,7 +1,7 @@
 export type ColumnId = 'todo' | 'planned' | 'doing' | 'review' | 'done';
 export type Priority = 'high' | 'med' | 'low';
 export type LayoutMode = 'kanban' | 'list' | 'timeline';
-export type ScreenId = 'week' | 'board' | 'capacity' | 'times' | 'projects' | 'mobile' | 'chrome' | 'tv' | 'admin' | 'releases';
+export type ScreenId = 'week' | 'board' | 'capacity' | 'times' | 'projects' | 'inbox' | 'mobile' | 'chrome' | 'tv' | 'admin' | 'releases';
 export type ThemeBase = 'default' | 'glass';
 export type ThemeBrightness = 'light' | 'dark';
 // CSS-data-theme-Werte: kombinieren Base + Dunkel-Variante.
@@ -85,6 +85,7 @@ export interface Filter {
 export interface UIState {
   drawer: 'ai' | null;
   taskDetailId: string | null;
+  projectDetailId: string | null;
   layout: LayoutMode;
 }
 

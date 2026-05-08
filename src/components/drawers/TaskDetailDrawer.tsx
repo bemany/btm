@@ -7,6 +7,7 @@ import { Icon } from '../shared/Icon';
 import { ProjTag } from '../shared/ProjTag';
 import { showToast } from '../shared/Toast';
 import { useT, useLocale } from '../../i18n';
+import { CommentsSection } from '../comments/CommentsSection';
 
 export interface TaskDetailDrawerProps {
   id: string;
@@ -375,6 +376,8 @@ export function TaskDetailDrawer({ id }: TaskDetailDrawerProps) {
               </span>
             </div>
           ))}
+
+          <CommentsSection subjectType="task" subjectId={t.id} />
 
           <div className="eyebrow" style={{ marginTop: 18, marginBottom: 8 }}>
             {tr('task_detail.attachments')}

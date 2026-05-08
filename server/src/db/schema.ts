@@ -236,6 +236,68 @@ export const apiTokens = pgTable(
   (t) => [index('api_tokens_user_idx').on(t.userId)],
 );
 
+// ── Kommentare + Mentions ─────────────────────────────────────────────
+// Subjektpolymorph: ein Kommentar hängt an genau EINEM Subject (Task ODER
+// Project), Validierung im Endpoint. Body ist Plain-Text mit Mention-Tokens
+// im Format `@[Name](userId)` — sichtbar/copy-paste-fest, paralleler Index
+// in `comment_mentions` für schnelle Inbox-Queries.
+export const comments = pgTable(
+  'comments',
+  {
+    id: text('id').primaryKey(),
+    subjectType: text('subject_type', { enum: ['task', 'project'] }).notNull(),
+    subjectId: text('subject_id').notNull(),
+    authorId: text('author_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    body: text('body').notNull(),
+    editedAt: timestamp('edited_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index('comments_subject_idx').on(t.subjectType, t.subjectId, t.createdAt),
+    index('comments_author_idx').on(t.authorId),
+  ],
+);
+
+export const commentMentions = pgTable(
+  'comment_mentions',
+  {
+    commentId: text('comment_id')
+      .notNull()
+      .references(() => comments.id, { onDelete: 'cascade' }),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+  },
+  (t) => [
+    index('comment_mentions_user_idx').on(t.userId),
+    index('comment_mentions_comment_idx').on(t.commentId),
+  ],
+);
+
+// Generische Notifications. `kind` ist Text damit später `task_assigned`,
+// `comment_reply`, `due_soon` etc. ohne Schema-Migration dazukommen können.
+// `payload` ist jsonb mit kind-spezifischer Struktur (siehe lib/notifications.ts).
+export const notifications = pgTable(
+  'notifications',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    kind: text('kind').notNull(),
+    actorId: text('actor_id').references(() => users.id, { onDelete: 'set null' }),
+    payload: jsonb('payload').notNull(),
+    seenAt: timestamp('seen_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index('notif_user_seen_idx').on(t.userId, t.seenAt, t.createdAt),
+    index('notif_user_created_idx').on(t.userId, t.createdAt),
+  ],
+);
+
 // ── Type-Exports für Frontend / Routes ────────────────────────────────
 
 export type User = typeof users.$inferSelect;
@@ -252,3 +314,8 @@ export type Team = typeof teams.$inferSelect;
 export type NewTeam = typeof teams.$inferInsert;
 export type ActivityEntry = typeof activityLog.$inferSelect;
 export type NewActivityEntry = typeof activityLog.$inferInsert;
+export type Comment = typeof comments.$inferSelect;
+export type NewComment = typeof comments.$inferInsert;
+export type CommentMention = typeof commentMentions.$inferSelect;
+export type Notification = typeof notifications.$inferSelect;
+export type NewNotification = typeof notifications.$inferInsert;

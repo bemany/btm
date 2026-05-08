@@ -29,6 +29,9 @@ const ProjectsScreen = lazy(() =>
 const ReleasesScreen = lazy(() =>
   import('./components/screens/ReleasesScreen').then((m) => ({ default: m.ReleasesScreen })),
 );
+const InboxScreen = lazy(() =>
+  import('./components/screens/InboxScreen').then((m) => ({ default: m.InboxScreen })),
+);
 const AdminScreen = lazy(() =>
   import('./components/admin/AdminScreen').then((m) => ({ default: m.AdminScreen })),
 );
@@ -46,6 +49,9 @@ const AIDrawer = lazy(() =>
 );
 const TaskDetailDrawer = lazy(() =>
   import('./components/drawers/TaskDetailDrawer').then((m) => ({ default: m.TaskDetailDrawer })),
+);
+const ProjectDetailDrawer = lazy(() =>
+  import('./components/drawers/ProjectDetailDrawer').then((m) => ({ default: m.ProjectDetailDrawer })),
 );
 const CommandPalette = lazy(() =>
   import('./components/command-palette/CommandPalette').then((m) => ({ default: m.CommandPalette })),
@@ -78,6 +84,7 @@ function loadTheme(): ThemeMode {
 export function App() {
   const drawer = useStore((s) => s.ui.drawer);
   const taskDetailId = useStore((s) => s.ui.taskDetailId);
+  const projectDetailId = useStore((s) => s.ui.projectDetailId);
   const currentUser = useStore((s) => s.currentUser);
   const setUI = useStore((s) => s.setUI);
   const setUser = useStore((s) => s.setUser);
@@ -140,7 +147,8 @@ export function App() {
       }
       if (e.key === 'Escape') {
         const ui = useStore.getState().ui;
-        if (ui.drawer || ui.taskDetailId) setUI({ drawer: null, taskDetailId: null });
+        if (ui.drawer || ui.taskDetailId || ui.projectDetailId)
+          setUI({ drawer: null, taskDetailId: null, projectDetailId: null });
       }
     };
     window.addEventListener('keydown', onKey);
@@ -157,6 +165,7 @@ export function App() {
         <Suspense fallback={null}>
           {drawer === 'ai' && <AIDrawer setActive={setActive} />}
           {taskDetailId && <TaskDetailDrawer id={taskDetailId} />}
+          {projectDetailId && <ProjectDetailDrawer id={projectDetailId} />}
         </Suspense>
         <OnboardingTour replayKey={tourReplay} theme={theme} setTheme={setTheme} />
         <ReleaseModal />
@@ -200,6 +209,7 @@ export function App() {
               {active === 'chrome' && <ChromePluginScreen />}
               {active === 'tv' && <TVDashboardScreen />}
               {active === 'releases' && <ReleasesScreen />}
+              {active === 'inbox' && <InboxScreen />}
               {active === 'admin' && authUser?.role === 'admin' && <AdminScreen />}
               {active === 'admin' && authUser?.role !== 'admin' && (
                 <div className="page">
@@ -215,6 +225,7 @@ export function App() {
       <Suspense fallback={null}>
         {drawer === 'ai' && <AIDrawer setActive={setActive} />}
         {taskDetailId && <TaskDetailDrawer id={taskDetailId} />}
+        {projectDetailId && <ProjectDetailDrawer id={projectDetailId} />}
         {cmdkOpen && <CommandPalette onClose={() => setCmdkOpen(false)} setActive={setActive} />}
         {settingsTab && (
           <SettingsModal

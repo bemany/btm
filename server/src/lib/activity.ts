@@ -28,6 +28,9 @@ const TOPIC_BY_KIND: Record<string, EventTopic[]> = {
   team_created: ['teams', 'activity'],
   team_updated: ['teams', 'activity'],
   team_deleted: ['teams', 'activity'],
+  comment_created: ['comments', 'activity'],
+  comment_updated: ['comments', 'activity'],
+  comment_deleted: ['comments', 'activity'],
 };
 
 export type ActivityKind =
@@ -52,7 +55,10 @@ export type ActivityKind =
   | 'role_changed'
   | 'team_created'
   | 'team_updated'
-  | 'team_deleted';
+  | 'team_deleted'
+  | 'comment_created'
+  | 'comment_updated'
+  | 'comment_deleted';
 
 export interface LogActivityArgs {
   kind: ActivityKind;

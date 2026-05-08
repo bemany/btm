@@ -374,3 +374,93 @@ export async function listWeekSessions(weekStart?: string): Promise<WeekSession[
   const { sessions } = await apiFetch<{ sessions: WeekSession[] }>(`/me/week-sessions${qs}`);
   return sessions;
 }
+
+// ── Comments ───────────────────────────────────────────────────────────
+
+export type CommentSubjectType = 'task' | 'project';
+
+export interface AppComment {
+  id: string;
+  subjectType: CommentSubjectType;
+  subjectId: string;
+  authorId: string;
+  body: string;
+  editedAt: string | null;
+  createdAt: string;
+}
+
+export async function listComments(
+  subjectType: CommentSubjectType,
+  subjectId: string,
+): Promise<AppComment[]> {
+  const params = new URLSearchParams({ subjectType, subjectId });
+  const { comments } = await apiFetch<{ comments: AppComment[] }>(
+    `/comments?${params.toString()}`,
+  );
+  return comments;
+}
+
+export async function createComment(input: {
+  subjectType: CommentSubjectType;
+  subjectId: string;
+  body: string;
+}): Promise<AppComment> {
+  const { comment } = await apiFetch<{ comment: AppComment }>('/comments', {
+    method: 'POST',
+    body: input,
+  });
+  return comment;
+}
+
+export async function updateComment(id: string, body: string): Promise<AppComment> {
+  const { comment } = await apiFetch<{ comment: AppComment }>(`/comments/${id}`, {
+    method: 'PATCH',
+    body: { body },
+  });
+  return comment;
+}
+
+export async function deleteComment(id: string): Promise<void> {
+  await apiFetch(`/comments/${id}`, { method: 'DELETE' });
+}
+
+// ── Notifications / Inbox ──────────────────────────────────────────────
+
+export interface AppNotification {
+  id: string;
+  userId: string;
+  kind: 'mention'; // erweiterbar
+  actorId: string | null;
+  payload: {
+    commentId?: string;
+    subjectType?: CommentSubjectType;
+    subjectId?: string;
+    subjectTitle?: string;
+    excerpt?: string;
+  };
+  seenAt: string | null;
+  createdAt: string;
+}
+
+export async function listNotifications(opts: { onlyUnread?: boolean; limit?: number } = {}): Promise<
+  AppNotification[]
+> {
+  const params = new URLSearchParams();
+  if (opts.onlyUnread) params.set('onlyUnread', 'true');
+  if (opts.limit) params.set('limit', String(opts.limit));
+  const path = `/notifications${params.toString() ? '?' + params.toString() : ''}`;
+  const { notifications } = await apiFetch<{ notifications: AppNotification[] }>(path);
+  return notifications;
+}
+
+export async function notificationCount(): Promise<{ unread: number }> {
+  return apiFetch<{ unread: number }>('/notifications/count');
+}
+
+export async function markNotificationRead(id: string): Promise<void> {
+  await apiFetch(`/notifications/${id}/read`, { method: 'POST' });
+}
+
+export async function markAllNotificationsRead(): Promise<void> {
+  await apiFetch('/notifications/read-all', { method: 'POST' });
+}

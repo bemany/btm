@@ -72,7 +72,7 @@ function initialState(): BTMState {
     invitations: [],
     filter: { proj: 'all', who: 'mine', q: '' },
     timer: null,
-    ui: { drawer: null, taskDetailId: null, layout: 'kanban' },
+    ui: { drawer: null, taskDetailId: null, projectDetailId: null, layout: 'kanban' },
   };
 }
 
@@ -269,7 +269,7 @@ export const useStore = create<BTMStore>()(
         set((s) => ({
           ...s,
           filter: { proj: 'all', who: 'mine', q: '' },
-          ui: { drawer: null, taskDetailId: null, layout: 'kanban' },
+          ui: { drawer: null, taskDetailId: null, projectDetailId: null, layout: 'kanban' },
         })),
     }),
     {

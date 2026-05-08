@@ -12,7 +12,9 @@ export type EventTopic =
   | 'users'
   | 'teams'
   | 'invitations'
-  | 'activity';
+  | 'activity'
+  | 'comments'
+  | 'notifications';
 
 export interface EventNotification {
   topic: EventTopic;

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useStore } from '../../store/store';
 import type { ScreenId, ThemeMode } from '../../store/types';
 import { composeTheme, decomposeTheme } from '../../store/types';
@@ -7,6 +8,8 @@ import { navigate } from '../../router';
 import { Icon } from '../shared/Icon';
 import { showToast } from '../shared/Toast';
 import { getLastSeenRelease, unseenReleases } from '../../data/releases';
+import * as api from '../../data/api';
+import { SYNC_KEYS } from '../../data/sync';
 import { useT, useLocale } from '../../i18n';
 
 export interface SidebarProps {
@@ -41,6 +44,16 @@ export function Sidebar({
   const timer = useStore((s) => s.timer);
   const { user, signOut } = useAuth();
   const t = useT();
+
+  const { data: notifCount } = useQuery({
+    queryKey: SYNC_KEYS.NOTIFICATION_COUNT,
+    queryFn: api.notificationCount,
+    staleTime: 15_000,
+    refetchInterval: 30_000,
+    refetchOnWindowFocus: true,
+    enabled: !!user,
+  });
+  const unreadCount = notifCount?.unread ?? 0;
 
   // Anzeige im Foot priorisiert echten eingeloggten User; Initial = erste 2 Buchstaben des Namens
   const displayName = user?.name ?? '—';
@@ -88,6 +101,7 @@ export function Sidebar({
 
   const items: Item[] = [
     { id: 'week', label: t('sidebar.week'), icon: 'calendar-days', count: doingCount },
+    { id: 'inbox', label: t('sidebar.inbox'), icon: 'inbox', count: unreadCount },
     { id: 'board', label: t('sidebar.board'), icon: 'kanban-square', count: null },
     { id: 'capacity', label: t('sidebar.capacity'), icon: 'gauge', count: null },
     { id: 'times', label: t('sidebar.times'), icon: 'clock', count: null },

@@ -15,6 +15,7 @@ export function ProjectsScreen({ setActive }: ProjectsScreenProps) {
   const tasks = useStore((s) => s.tasks);
   const projects = useStore((s) => s.projects);
   const setFilter = useStore((s) => s.setFilter);
+  const setUI = useStore((s) => s.setUI);
   const t = useT();
   const [locale] = useLocale();
   const fmtNum = (h: number) => h.toFixed(1).replace('.', locale === 'en' ? '.' : ',');
@@ -73,10 +74,7 @@ export function ProjectsScreen({ setActive }: ProjectsScreenProps) {
               key={p.id}
               className="proj-card"
               style={{ ['--proj-color' as keyof CSSProperties]: p.color } as CSSProperties}
-              onClick={() => {
-                setFilter({ proj: p.id, who: 'all' });
-                setActive('board');
-              }}
+              onClick={() => setUI({ projectDetailId: p.id })}
             >
               <div className="head">
                 <span className="code">{p.code}</span>
