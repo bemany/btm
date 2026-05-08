@@ -11,14 +11,16 @@ import {
   KNOWN_ISSUES,
   setLastSeenRelease,
   latestReleaseVersion,
+  tx,
   type ChangeKind,
   type KnownIssue,
 } from '../../data/releases';
 import { Icon } from '../shared/Icon';
-import { useT } from '../../i18n';
+import { useT, useLocale } from '../../i18n';
 
 export function ReleasesScreen() {
   const t = useT();
+  const [locale] = useLocale();
   const KIND_LABEL: Record<ChangeKind, string> = {
     feature: t('release.kind_feature'),
     fix: t('release.kind_fix'),
@@ -61,12 +63,12 @@ export function ReleasesScreen() {
                   <span className={`rel-status-pill status-${iss.status}`}>
                     {STATUS_LABEL[iss.status]}
                   </span>
-                  <h3>{iss.title}</h3>
+                  <h3>{tx(iss.title, locale)}</h3>
                 </header>
-                <p>{iss.description}</p>
+                <p>{tx(iss.description, locale)}</p>
                 {iss.workaround && (
                   <p className="rel-workaround">
-                    <strong>{t('release.workaround')}</strong> {iss.workaround}
+                    <strong>{t('release.workaround')}</strong> {tx(iss.workaround, locale)}
                   </p>
                 )}
                 <footer>{t('release.since', { date: iss.reportedAt })}</footer>
@@ -85,11 +87,11 @@ export function ReleasesScreen() {
           <div className="rel-cards">
             {ROADMAP.map((item, i) => (
               <article key={i} className="rel-card roadmap">
-                <h3>{item.title}</h3>
-                {item.description && <p>{item.description}</p>}
+                <h3>{tx(item.title, locale)}</h3>
+                {item.description && <p>{tx(item.description, locale)}</p>}
                 {item.eta && (
                   <footer>
-                    <Icon name="clock" size={11} /> {item.eta}
+                    <Icon name="clock" size={11} /> {tx(item.eta, locale)}
                   </footer>
                 )}
               </article>
@@ -109,13 +111,13 @@ export function ReleasesScreen() {
               <header>
                 <span className="rel-version">v{rel.version}</span>
                 <span className="rel-date">{rel.date}</span>
-                <h3>{rel.title}</h3>
+                <h3>{tx(rel.title, locale)}</h3>
               </header>
               <ul className="rel-changes">
                 {rel.changes.map((c, j) => (
                   <li key={j} className={`rel-change kind-${c.kind}`}>
                     <span className={`rel-kind-pill kind-${c.kind}`}>{KIND_LABEL[c.kind]}</span>
-                    <span className="rel-change-text">{c.text}</span>
+                    <span className="rel-change-text">{tx(c.text, locale)}</span>
                   </li>
                 ))}
               </ul>

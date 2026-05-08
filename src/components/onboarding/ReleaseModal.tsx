@@ -9,15 +9,17 @@ import {
   getLastSeenRelease,
   setLastSeenRelease,
   latestReleaseVersion,
+  tx,
   type ChangeKind,
 } from '../../data/releases';
 import { navigate } from '../../router';
 import { Icon } from '../shared/Icon';
-import { useT } from '../../i18n';
+import { useT, useLocale } from '../../i18n';
 
 export function ReleaseModal() {
   const { user, status } = useAuth();
   const t = useT();
+  const [locale] = useLocale();
   const KIND_LABEL: Record<ChangeKind, string> = {
     feature: t('release.kind_feature'),
     fix: t('release.kind_fix'),
@@ -70,7 +72,7 @@ export function ReleaseModal() {
             ? t('release.modal_title_one', { version: unseen[0].version })
             : t('release.modal_title_many', { count: unseen.length })}
         </h2>
-        <p className="rm-sub">{unseen[0].title}</p>
+        <p className="rm-sub">{tx(unseen[0].title, locale)}</p>
 
         <div className="rm-body">
           {unseen.map((rel) => (
@@ -79,14 +81,14 @@ export function ReleaseModal() {
                 <div className="rm-rel-head">
                   <span className="rm-version">v{rel.version}</span>
                   <span className="rm-date">{rel.date}</span>
-                  <span className="rm-rel-title">{rel.title}</span>
+                  <span className="rm-rel-title">{tx(rel.title, locale)}</span>
                 </div>
               )}
               <ul className="rm-changes">
                 {rel.changes.map((c, j) => (
                   <li key={j}>
                     <span className={`rel-kind-pill kind-${c.kind}`}>{KIND_LABEL[c.kind]}</span>
-                    <span>{c.text}</span>
+                    <span>{tx(c.text, locale)}</span>
                   </li>
                 ))}
               </ul>
