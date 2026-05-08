@@ -8,6 +8,7 @@ export interface AuthUser {
   role: Role;
   cap: number;
   color: string;
+  boardDefaultView?: 'kanban' | 'list' | 'timeline';
 }
 
 export type AuthMode = 'session' | 'apiToken' | null;

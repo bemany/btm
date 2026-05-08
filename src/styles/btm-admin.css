@@ -223,6 +223,15 @@
   background: var(--cream-200);
   color: var(--ink-500);
 }
+.admin-user-badge.invited {
+  background: #FBF1D9;
+  color: #8C6F2D;
+  border: 1px solid #E8D7A4;
+}
+.admin-user-card.is-invited {
+  border-style: dashed;
+  border-color: #E8D7A4;
+}
 
 .admin-user-contacts {
   display: flex; flex-direction: column; gap: 4px;

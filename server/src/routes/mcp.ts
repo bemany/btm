@@ -19,10 +19,10 @@ import { logActivity } from '../lib/activity.js';
 
 // ── Tool-Schemas (JSON-Schema für MCP) ─────────────────────────────────
 
-const COL = ['todo', 'doing', 'review', 'done'] as const;
+const COL = ['todo', 'planned', 'doing', 'review', 'done'] as const;
 const PRIO = ['low', 'med', 'high'] as const;
 
-const TOOLS = [
+export const TOOLS = [
   {
     name: 'me',
     description:
@@ -32,7 +32,7 @@ const TOOLS = [
   {
     name: 'list_tasks',
     description:
-      'Listet Aufgaben. Optional gefiltert nach column (todo/doing/review/done), assignee_id, project_id.',
+      'Listet Aufgaben. Optional gefiltert nach column (todo=Backlog, planned=Zu erledigen, doing=In Arbeit, review, done), assignee_id, project_id.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -159,12 +159,12 @@ const TOOLS = [
 
 // ── Tool-Implementierungen ────────────────────────────────────────────
 
-interface ToolCtx {
+export interface ToolCtx {
   userId: string;
   userRole: 'admin' | 'member';
 }
 
-const handlers: Record<string, (args: Record<string, unknown>, ctx: ToolCtx) => Promise<unknown>> = {
+export const handlers: Record<string, (args: Record<string, unknown>, ctx: ToolCtx) => Promise<unknown>> = {
   me: async (_args, ctx) => {
     const [u] = await db.select().from(users).where(eq(users.id, ctx.userId)).limit(1);
     if (!u) throw new Error('user not found');
@@ -447,6 +447,15 @@ export const mcpRoute = new Hono<{ Variables: Variables }>()
     const arr = Array.isArray(body) ? body : [body];
     const responses: RpcResponse[] = [];
 
+    // Debug-Logging: was schickt der Client?
+    const ua = c.req.header('user-agent') ?? '';
+    const sid = c.req.header('mcp-session-id') ?? '';
+    const proto = c.req.header('mcp-protocol-version') ?? '';
+    const methods = arr.map((r: any) => r?.method).filter(Boolean).join(',');
+    if (ua.toLowerCase().includes('claude') || methods) {
+      console.log(`[mcp] req ua="${ua}" sid="${sid}" proto="${proto}" methods=[${methods}]`);
+    }
+
     for (const raw of arr) {
       let parsed;
       try {
@@ -462,14 +471,27 @@ export const mcpRoute = new Hono<{ Variables: Variables }>()
       try {
         switch (parsed.method) {
           case 'initialize': {
+            // Spec: server picks highest mutually-compatible protocol version.
+            // Wir unterstützen alle Versionen ab 2024-11-05 — am einfachsten
+            // ist es, die vom Client angefragte Version zurückzuspiegeln, wenn
+            // sie aus der bekannten Liste stammt. Sonst Default 2025-06-18.
+            const SUPPORTED_VERSIONS = [
+              '2024-11-05',
+              '2025-03-26',
+              '2025-06-18',
+              '2025-11-25',
+            ];
+            const requested = String(params.protocolVersion ?? '');
+            const protocolVersion = SUPPORTED_VERSIONS.includes(requested) ? requested : '2025-06-18';
+            console.log(`[mcp] initialize from ${(params.clientInfo as any)?.name ?? '?'} v=${requested} → ${protocolVersion}`);
             responses.push(
               rpcResult(id, {
-                protocolVersion: '2025-06-18',
+                protocolVersion,
                 serverInfo: SERVER_INFO,
                 capabilities: { tools: { listChanged: false } },
                 instructions:
-                  'BTM MCP — Aufgaben, Projekte und Timer für Bethesna Task Management. Auth über API-Token. Tools: ' +
-                  TOOLS.map((t) => t.name).join(', '),
+                  'BTM MCP server: tasks, projects and timer for Bethesna Task Management. Authenticated via API token. Available tools: ' +
+                  TOOLS.map((t) => t.name).join(', ') + '.',
               }),
             );
             break;
@@ -525,6 +547,15 @@ export const mcpRoute = new Hono<{ Variables: Variables }>()
     }
 
     if (responses.length === 0) return c.body(null, 204);
+
+    // Mcp-Session-Id: nur beim initialize-Response setzen (Claude.ai-Connector
+    // erwartet/respektiert den Header). Stateless-Server — die ID dient nur
+    // der Client-Tracking; wir nutzen sie nicht.
+    const isInit = arr.some((r: any) => r?.method === 'initialize');
+    if (isInit) {
+      c.header('Mcp-Session-Id', `btm-${nanoid(16)}`);
+    }
+
     if (responses.length === 1 && !Array.isArray(body)) return c.json(responses[0]);
     return c.json(responses);
   });

@@ -75,25 +75,45 @@ export function appIconAttachment(): MailAttachment | null {
   return { filename: 'btm-icon.png', path, cid: APP_ICON_CID };
 }
 
-export function magicLinkEmail(opts: { url: string; email: string }): { subject: string; text: string; html: string } {
-  const subject = 'Dein Login-Link für BTM';
+export function magicLinkEmail(opts: {
+  url: string;
+  email: string;
+  code?: string;
+}): { subject: string; text: string; html: string } {
+  const subject = 'Dein Login für BTM';
+  const codeBlock = opts.code
+    ? `
+
+Oder falls du in der App bist (z. B. PWA auf dem Handy), gib einfach
+diesen Code ein:
+
+    ${opts.code.replace(/(.)(?=.)/g, '$1 ')}
+`
+    : '';
   const text = `Hi,
 
 du hast einen Login für BTM angefordert. Öffne diesen Link, um dich einzuloggen:
 
 ${opts.url}
-
-Der Link ist 15 Minuten gültig. Wenn du das nicht warst, ignoriere diese Mail.
+${codeBlock}
+Link und Code sind 15 Minuten gültig. Wenn du das nicht warst, ignoriere diese Mail.
 
 — BTM (Bethesna Task Management)
 `;
+  const codeHtml = opts.code
+    ? `
+    <div style="margin:22px 0 6px;font-size:12px;color:#6B6359;text-transform:uppercase;letter-spacing:0.08em;font-family:Menlo,Consolas,'SF Mono',monospace;">Oder Code in der App eingeben</div>
+    <div style="display:inline-block;background:#FBF1D9;border:1px solid #E8D7A4;border-radius:8px;padding:12px 18px;font-family:Menlo,Consolas,'SF Mono',monospace;font-size:26px;font-weight:700;letter-spacing:0.32em;color:#1C1A17;">${opts.code}</div>
+    <p style="font-size:11.5px;color:#6B6359;margin:10px 0 0;line-height:1.55;">Praktisch wenn du in der PWA bist und der Browser-Wechsel nervt.</p>`
+    : '';
   const html = `<!doctype html>
 <html lang="de"><body style="font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;background:#FAF7F2;color:#1C1A17;padding:32px;">
   <div style="max-width:480px;margin:auto;background:#fff;border:1px solid #E3DCCE;border-radius:12px;padding:28px;">
     <div style="font-family:'Archivo',-apple-system,sans-serif;font-weight:700;font-size:20px;letter-spacing:-0.01em;margin-bottom:16px;">BTM Login</div>
     <p style="font-size:15px;line-height:1.55;margin:0 0 20px;">Klick auf den Knopf, um dich einzuloggen:</p>
     <a href="${opts.url}" style="display:inline-block;background:#C85A2C;color:#FAF7F2;text-decoration:none;padding:12px 22px;border-radius:8px;font-weight:600;font-size:14px;">Bei BTM einloggen</a>
-    <p style="font-size:12px;color:#6B6359;margin:24px 0 0;line-height:1.55;">Link ist 15 Minuten gültig. Wenn du das nicht warst: einfach ignorieren.</p>
+${codeHtml}
+    <p style="font-size:12px;color:#6B6359;margin:24px 0 0;line-height:1.55;">Link und Code sind 15 Minuten gültig. Wenn du das nicht warst: einfach ignorieren.</p>
   </div>
 </body></html>`;
   return { subject, text, html };

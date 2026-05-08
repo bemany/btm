@@ -225,7 +225,7 @@ export async function listUsers(): Promise<AppUser[]> {
 
 export async function updateUser(
   id: string,
-  patch: Partial<Pick<AppUser, 'name' | 'jobTitle' | 'phone' | 'cap' | 'color' | 'role' | 'status' | 'teamId'>>,
+  patch: Partial<Pick<AppUser, 'name' | 'jobTitle' | 'phone' | 'cap' | 'color' | 'role' | 'status' | 'teamId' | 'boardDefaultView'>>,
 ): Promise<AppUser> {
   const { user } = await apiFetch<{ user: AppUser }>(`/users/${id}`, {
     method: 'PATCH',
@@ -357,4 +357,17 @@ export async function setTaskHoursForDay(taskId: string, day: string, hours: num
     method: 'POST',
     body: { day, hours },
   });
+}
+
+// Wochengrid-Daten: pro (taskId, day) die gebuchten Stunden des aktuellen
+// Users für Mo-Fr. Aggregiert mehrere Sessions pro Tag.
+export interface WeekSession {
+  taskId: string;
+  day: string; // 'YYYY-MM-DD'
+  hours: number;
+}
+export async function listWeekSessions(weekStart?: string): Promise<WeekSession[]> {
+  const qs = weekStart ? `?week=${weekStart}` : '';
+  const { sessions } = await apiFetch<{ sessions: WeekSession[] }>(`/me/week-sessions${qs}`);
+  return sessions;
 }

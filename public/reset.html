@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>BTM · Reset</title>
+    <style>
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0;
+        height: 100%;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+        background: linear-gradient(135deg, #FAF7F2 0%, #F0EAE2 100%);
+        color: #1C1A17;
+      }
+      body { display: grid; place-items: center; padding: 24px; }
+      .card {
+        max-width: 460px;
+        width: 100%;
+        background: #fff;
+        border: 1px solid #E2D8C5;
+        border-radius: 12px;
+        padding: 28px 28px 24px;
+        box-shadow: 0 1px 0 rgba(255,255,255,0.5) inset, 0 8px 32px rgba(0,0,0,0.08);
+      }
+      h1 { margin: 0 0 8px; font-size: 22px; letter-spacing: -0.015em; }
+      p { margin: 0 0 14px; font-size: 14px; line-height: 1.55; color: #4D453A; }
+      ul { margin: 0 0 18px; padding-left: 18px; font-size: 13px; color: #4D453A; line-height: 1.7; }
+      ul li b { color: #1C1A17; }
+      .status {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 12px;
+        background: #F5EFE5;
+        padding: 10px 12px;
+        border-radius: 6px;
+        white-space: pre-wrap;
+        margin-bottom: 14px;
+      }
+      .row { display: flex; gap: 8px; }
+      button, a.btn {
+        flex: 1;
+        background: #E07140;
+        color: #fff;
+        border: none;
+        padding: 11px 14px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        text-align: center;
+        font-family: inherit;
+      }
+      button:hover, a.btn:hover { background: #C85A2C; }
+      a.btn.ghost {
+        background: transparent;
+        color: #4D453A;
+        border: 1px solid #E2D8C5;
+      }
+      a.btn.ghost:hover { background: #F5EFE5; color: #1C1A17; }
+      .ok { color: #4A6839; }
+      .err { color: #993C3C; }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h1>BTM · Cache zurücksetzen</h1>
+      <p>
+        Diese Seite löscht den Browser-Cache der BTM-App, alle Service-Worker-Versionen
+        und Workbox-Eintraege. Notwendig wenn nach einem Update Ladefehler auftauchen.
+      </p>
+      <ul>
+        <li><b>Service Worker</b> entfernen — alte Versionen können Requests im Browser blockieren</li>
+        <li><b>Workbox-Caches</b> leeren — veraltete Asset- und Response-Caches</li>
+        <li><b>Fenster-Reload</b> — App lädt frisch von Server</li>
+      </ul>
+      <div class="status" id="status">Bereit. Klick auf "Jetzt zurücksetzen".</div>
+      <div class="row">
+        <button id="run">Jetzt zurücksetzen</button>
+        <a class="btn ghost" href="/">Zur App</a>
+      </div>
+    </div>
+    <script>
+      const $ = document.getElementById('status');
+      const log = (msg, kind = '') => {
+        const cls = kind ? ` class="${kind}"` : '';
+        $.innerHTML += `\n<span${cls}>${msg}</span>`;
+      };
+      document.getElementById('run').addEventListener('click', async () => {
+        $.textContent = 'Starte…';
+        try {
+          if ('serviceWorker' in navigator) {
+            const regs = await navigator.serviceWorker.getRegistrations();
+            log(`Service Worker gefunden: ${regs.length}`);
+            for (const r of regs) {
+              await r.unregister();
+              log(`  → unregistriert: ${r.scope}`, 'ok');
+            }
+          } else {
+            log('Service Worker API nicht verfuegbar.');
+          }
+          if ('caches' in window) {
+            const names = await caches.keys();
+            log(`Caches gefunden: ${names.length}`);
+            for (const n of names) {
+              await caches.delete(n);
+              log(`  → gelöscht: ${n}`, 'ok');
+            }
+          }
+          log('Erfolgreich geleert. Reload in 1.5s…', 'ok');
+          setTimeout(() => {
+            window.location.replace('/');
+          }, 1500);
+        } catch (e) {
+          log('Fehler: ' + (e && e.message ? e.message : String(e)), 'err');
+        }
+      });
+    </script>
+  </body>
+</html>

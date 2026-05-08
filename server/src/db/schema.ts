@@ -15,12 +15,18 @@ export const users = pgTable('users', {
   image: text('image'),
   // App-spezifisch:
   role: text('role', { enum: ['admin', 'member'] }).notNull().default('member'),
-  status: text('status', { enum: ['active', 'inactive'] }).notNull().default('active'),
+  status: text('status', { enum: ['active', 'invited', 'inactive'] }).notNull().default('active'),
   cap: integer('cap').notNull().default(40), // Wochenkapazität in h
   color: text('color').notNull().default('#6B6359'),
   jobTitle: text('job_title'), // Funktion / Rolle (z.B. "Backend-Engineer")
   phone: text('phone'),
   teamId: text('team_id'), // FK zu teams.id (set null on team delete)
+  // Default-Ansicht im Wochenboard (Kanban / Liste / Timeline). User-spezifisch,
+  // wird beim Onboarding gesetzt und kann via Gear-Popover am Board geändert werden.
+  boardDefaultView: text('board_default_view', { enum: ['kanban', 'list', 'timeline'] })
+    .notNull()
+    .default('kanban'),
+  onboardingCompletedAt: timestamp('onboarding_completed_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
@@ -73,6 +79,9 @@ export const projects = pgTable(
     client: text('client'),
     due: text('due'), // ISO-Date oder NULL
     createdById: text('created_by_id').references(() => users.id, { onDelete: 'set null' }),
+    // Wenn gesetzt: privates Projekt — nur für diesen User sichtbar.
+    // Wird beim Anlegen eines Users automatisch mit `Privat <Name>` befüllt.
+    privateOwnerId: text('private_owner_id').references(() => users.id, { onDelete: 'cascade' }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
@@ -85,7 +94,7 @@ export const tasks = pgTable(
     id: text('id').primaryKey(),
     title: text('title').notNull(),
     description: text('description'),
-    column: text('column', { enum: ['todo', 'doing', 'review', 'done'] })
+    column: text('column', { enum: ['todo', 'planned', 'doing', 'review', 'done'] })
       .notNull()
       .default('todo'),
     priority: text('priority', { enum: ['low', 'med', 'high'] })
@@ -182,6 +191,22 @@ export const activityLog = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index('activity_created_idx').on(t.createdAt)],
+);
+
+// 6-stelliger Login-Code für PWA — wird parallel zum Magic-Link in der
+// Mail verschickt, damit Mobile-User nicht aus der PWA in den Browser
+// rausgeworfen werden. Eingabe direkt in der App.
+export const loginCodes = pgTable(
+  'login_codes',
+  {
+    id: text('id').primaryKey(),
+    email: text('email').notNull(),
+    code: text('code').notNull(), // 6 Ziffern
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    usedAt: timestamp('used_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index('login_codes_email_idx').on(t.email)],
 );
 
 // API-Tokens für MCP / CLI / Programmatic Access — pro User, hashed.

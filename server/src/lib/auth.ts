@@ -1,8 +1,10 @@
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { magicLink } from 'better-auth/plugins';
+import { nanoid } from 'nanoid';
 import { db } from '../db/client.js';
 import * as schema from '../db/schema.js';
+import { loginCodes } from '../db/schema.js';
 import { sendMail, magicLinkEmail } from './mailer.js';
 
 const initialAdminEmail = (process.env.INITIAL_ADMIN_EMAIL ?? '').trim().toLowerCase();
@@ -36,7 +38,22 @@ export const auth = betterAuth({
     magicLink({
       expiresIn: 60 * 15, // 15 min
       sendMagicLink: async ({ email, url }) => {
-        const mail = magicLinkEmail({ email, url });
+        // Parallel zum Magic-Link einen 6-stelligen Code generieren und in
+        // login_codes speichern. So kann der User in der PWA einfach den
+        // Code eintippen statt aus der App in den Browser zu wechseln.
+        const code = String(Math.floor(100000 + Math.random() * 900000));
+        const lowerEmail = email.toLowerCase();
+        try {
+          await db.insert(loginCodes).values({
+            id: `LC${nanoid(12)}`,
+            email: lowerEmail,
+            code,
+            expiresAt: new Date(Date.now() + 15 * 60 * 1000),
+          });
+        } catch (e) {
+          console.warn('[auth] failed to insert login_code', e);
+        }
+        const mail = magicLinkEmail({ email, url, code });
         await sendMail({ to: email, ...mail });
       },
     }),
@@ -57,6 +74,17 @@ export const auth = betterAuth({
           const role: 'admin' | 'member' =
             initialAdminEmail && email === initialAdminEmail ? 'admin' : 'member';
           return { data: { ...user, name: fallbackName, role } };
+        },
+        // Nach erfolgreichem User-Create automatisch ein Privat-Projekt anlegen
+        // (sichtbar nur für diesen User). Dafür ist ensurePrivateProject() in
+        // lib/private-project.ts zuständig.
+        after: async (user) => {
+          try {
+            const { ensurePrivateProject } = await import('./private-project.js');
+            await ensurePrivateProject(user.id, user.name);
+          } catch (e) {
+            console.warn('[auth] ensurePrivateProject failed', e);
+          }
         },
       },
     },

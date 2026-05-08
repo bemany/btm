@@ -105,6 +105,12 @@ body[data-theme="glass-dark"]   .pill.todo {
   color: var(--ink-700);
   border-color: var(--ink-200);
 }
+body[data-theme="default-dark"] .pill.planned,
+body[data-theme="glass-dark"]   .pill.planned {
+  background: rgba(200, 160, 76, 0.18);
+  color: #E8C76A;
+  border-color: rgba(200, 160, 76, 0.35);
+}
 body[data-theme="default-dark"] .pill.doing,
 body[data-theme="glass-dark"]   .pill.doing {
   background: rgba(224, 113, 64, 0.15);
@@ -343,4 +349,144 @@ body[data-theme="glass-dark"] .btn-primary {
 body[data-theme="glass-dark"] .btn-ghost {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* ============================================================
+   Dark-Mode-Kontrast-Patches
+   ------------------------------------------------------------
+   Elemente, die im Light-Mode bewusst eine dunkle Surface haben
+   (Timer-Hero, Timer-Chip im Topbar) brauchen im Dark-Mode eine
+   eigene Palette — sonst kollabieren `var(--cream-*)`-Texte auf
+   eine dunkle Farbe und werden unsichtbar.
+   ============================================================ */
+
+/* Live-Timer-Hero (My Week) — Inhalt explizit hell halten */
+body[data-theme="default-dark"] .timer-hero,
+body[data-theme="glass-dark"]   .timer-hero {
+  color: rgba(255, 255, 255, 0.92);
+}
+body[data-theme="default-dark"] .timer-hero .info .ey,
+body[data-theme="glass-dark"]   .timer-hero .info .ey {
+  color: var(--accent-500);
+}
+body[data-theme="default-dark"] .timer-hero .info .t,
+body[data-theme="glass-dark"]   .timer-hero .info .t {
+  color: rgba(255, 255, 255, 0.95);
+}
+body[data-theme="default-dark"] .timer-hero .info .m,
+body[data-theme="glass-dark"]   .timer-hero .info .m {
+  color: rgba(255, 255, 255, 0.7);
+}
+body[data-theme="default-dark"] .timer-hero .clock,
+body[data-theme="glass-dark"]   .timer-hero .clock {
+  color: rgba(255, 255, 255, 0.96);
+}
+body[data-theme="default-dark"] .timer-hero .pomo-ring-lg .lbl,
+body[data-theme="glass-dark"]   .timer-hero .pomo-ring-lg .lbl {
+  color: rgba(255, 255, 255, 0.7);
+}
+body[data-theme="default-dark"] .timer-hero .pomo-ring-lg .lbl .big,
+body[data-theme="glass-dark"]   .timer-hero .pomo-ring-lg .lbl .big {
+  color: rgba(255, 255, 255, 0.95);
+}
+body[data-theme="default-dark"] .timer-hero .btn,
+body[data-theme="glass-dark"]   .timer-hero .btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: rgba(255, 255, 255, 0.92);
+}
+body[data-theme="default-dark"] .timer-hero .btn:hover,
+body[data-theme="glass-dark"]   .timer-hero .btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+}
+body[data-theme="default-dark"] .timer-hero .btn.danger,
+body[data-theme="glass-dark"]   .timer-hero .btn.danger {
+  background: var(--accent-500);
+  border-color: var(--accent-500);
+  color: #fff;
+}
+/* Projekt-Tag innerhalb des Hero — Background braucht hellen Anteil */
+body[data-theme="default-dark"] .timer-hero .proj-tag,
+body[data-theme="glass-dark"]   .timer-hero .proj-tag {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.88);
+}
+
+/* Timer-Chip (Topbar) — Hintergrund ist im Dark-Glass schon
+   rgba-weiß, der Text muss hell statt dark cream sein */
+body[data-theme="default-dark"] .timer-chip,
+body[data-theme="glass-dark"]   .timer-chip {
+  color: rgba(255, 255, 255, 0.92);
+}
+body[data-theme="default-dark"] .timer-chip .stop-btn,
+body[data-theme="glass-dark"]   .timer-chip .stop-btn {
+  border-color: rgba(255, 255, 255, 0.25);
+  color: rgba(255, 255, 255, 0.9);
+}
+body[data-theme="default-dark"] .timer-chip .stop-btn:hover,
+body[data-theme="glass-dark"]   .timer-chip .stop-btn:hover {
+  color: #fff;
+}
+
+/* Generischer Fix für alle Stellen mit inline `color: var(--cream-100)`
+   im hero/chip-Kontext — die kommen aus React inline-styles und können
+   nicht selektiert werden. Statt dessen: PomoDots etc. abdecken */
+body[data-theme="default-dark"] .pomo-dots .d,
+body[data-theme="glass-dark"]   .pomo-dots .d {
+  background: rgba(255, 255, 255, 0.18);
+}
+body[data-theme="default-dark"] .pomo-dots .d.done,
+body[data-theme="glass-dark"]   .pomo-dots .d.done {
+  background: var(--accent-500);
+}
+body[data-theme="default-dark"] .pomo-dots .d.now,
+body[data-theme="glass-dark"]   .pomo-dots .d.now {
+  background: rgba(255, 255, 255, 0.7);
+}
+
+/* Topbar-Suchfeld: Input-Text + Placeholder + Kbd-Hint */
+body[data-theme="default-dark"] .tb-search input,
+body[data-theme="glass-dark"]   .tb-search input {
+  color: rgba(255, 255, 255, 0.95);
+}
+body[data-theme="default-dark"] .tb-search input::placeholder,
+body[data-theme="glass-dark"]   .tb-search input::placeholder {
+  color: rgba(255, 255, 255, 0.45);
+}
+body[data-theme="default-dark"] .tb-search .kbd,
+body[data-theme="glass-dark"]   .tb-search .kbd {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.65);
+}
+
+/* Sidebar-Collapse-Toggle (oben links) und ähnliche Icon-Buttons */
+body[data-theme="default-dark"] .sb-collapse-btn,
+body[data-theme="glass-dark"]   .sb-collapse-btn,
+body[data-theme="default-dark"] .tb-icon-btn,
+body[data-theme="glass-dark"]   .tb-icon-btn {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* Generischer .btn (ungestylte Buttons in z. B. Tasks-Liste) */
+body[data-theme="glass-dark"] .btn:not(.danger):not(.primary) {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.9);
+}
+body[data-theme="glass-dark"] .btn:not(.danger):not(.primary):hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* Inline-Style-Fallback: `color: var(--cream-100)` an PomoDots-Subtext
+   im MyWeek lässt sich nur durch das Eltern-Element neu setzen.
+   Per CSS-custom-property innerhalb des Hero überschreiben — wirkt
+   auf alle nested Elemente, die var(--cream-100) per inline-style nutzen. */
+body[data-theme="default-dark"] .timer-hero,
+body[data-theme="glass-dark"]   .timer-hero,
+body[data-theme="default-dark"] .timer-chip,
+body[data-theme="glass-dark"]   .timer-chip {
+  --cream-50:  #fff;
+  --cream-100: rgba(255, 255, 255, 0.7);
 }

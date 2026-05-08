@@ -34,7 +34,10 @@ export function TimeCell({ task, dayIdx, value }: TimeCellProps) {
     setSaving(true);
     try {
       await setTaskHoursForDay(task.id, dayIso(dayIdx), num);
-      await queryClient.invalidateQueries({ queryKey: SYNC_KEYS.TASKS });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: SYNC_KEYS.TASKS }),
+        queryClient.invalidateQueries({ queryKey: SYNC_KEYS.WEEK_SESSIONS }),
+      ]);
       showToast(num === 0 ? 'Stunden gelöscht' : 'Stunden gespeichert');
     } catch (e) {
       showToast(e instanceof Error ? e.message : 'Speichern fehlgeschlagen');

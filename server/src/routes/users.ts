@@ -23,8 +23,9 @@ const updateUserSchema = z.object({
   cap: z.number().int().min(0).max(168).optional(),
   color: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
   role: z.enum(['admin', 'member']).optional(),
-  status: z.enum(['active', 'inactive']).optional(),
+  status: z.enum(['active', 'invited', 'inactive']).optional(),
   teamId: z.string().nullable().optional(),
+  boardDefaultView: z.enum(['kanban', 'list', 'timeline']).optional(),
 });
 
 const projectionFields = {
@@ -39,6 +40,7 @@ const projectionFields = {
   jobTitle: users.jobTitle,
   phone: users.phone,
   teamId: users.teamId,
+  boardDefaultView: users.boardDefaultView,
   createdAt: users.createdAt,
 } as const;
 
@@ -182,6 +184,32 @@ export const invitationsRoute = new Hono<{ Variables: Variables }>()
         expiresAt,
       })
       .returning();
+
+    // Inactive User-Record gleich mit anlegen, damit Aufgaben *vor* dem
+    // Login schon zugewiesen werden können. Beim ersten Magic-Link-Verify
+    // findet Better-Auth den existierenden Datensatz und switcht status='active'.
+    const userId = `U${nanoid(10)}`;
+    const colors = ['#6B6359', '#5573A0', '#5E7F4E', '#C85A2C', '#8C6F2D', '#A85A95', '#4A8580'];
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    await db.insert(users).values({
+      id: userId,
+      email,
+      emailVerified: false,
+      name: body.name?.trim() || email.split('@')[0],
+      role: body.role,
+      status: 'invited',
+      cap: body.cap,
+      color,
+      teamId: body.teamId ?? null,
+    });
+    // Privat-Projekt direkt mit anlegen, damit der User nach Annahme
+    // sofort einen persönlichen Bucket hat
+    try {
+      const { ensurePrivateProject } = await import('../lib/private-project.js');
+      await ensurePrivateProject(userId, body.name?.trim() || email.split('@')[0]);
+    } catch {
+      /* nicht kritisch — kann auch beim ersten Login nachgeholt werden */
+    }
 
     const baseUrl = process.env.BETTER_AUTH_URL ?? 'https://btm.bethesna.org';
     const url = `${baseUrl}/invite/${token}`;

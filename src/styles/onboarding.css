@@ -1,0 +1,327 @@
+/* =========================================================
+   Onboarding-Tour-Layer
+   ========================================================= */
+
+.ot-root {
+  position: fixed;
+  inset: 0;
+  z-index: 1500;
+  pointer-events: none;
+}
+
+.ot-svg,
+.ot-fullbackdrop {
+  position: absolute;
+  inset: 0;
+  pointer-events: auto;
+  width: 100%;
+  height: 100%;
+}
+
+.ot-fullbackdrop {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.ot-tooltip {
+  position: absolute;
+  width: 360px;
+  max-width: calc(100vw - 24px);
+  background: var(--bg-panel, #FAF7F2);
+  color: var(--ink-900);
+  border: 1px solid var(--border, var(--ink-200));
+  border-radius: 10px;
+  padding: 16px 18px 14px;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.5) inset,
+    0 8px 28px rgba(0, 0, 0, 0.18),
+    0 24px 64px rgba(0, 0, 0, 0.12);
+  pointer-events: auto;
+  font-family: var(--font-body);
+  z-index: 2;
+}
+
+body[data-theme="glass-dark"] .ot-tooltip,
+body[data-theme="default-dark"] .ot-tooltip {
+  background: rgba(28, 26, 23, 0.92);
+  color: rgba(255, 255, 255, 0.95);
+  border-color: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.08) inset,
+    0 16px 40px rgba(0, 0, 0, 0.5);
+}
+
+.ot-tooltip-step {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent-500);
+  margin-bottom: 8px;
+}
+
+.ot-tooltip-title {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.25;
+  margin-bottom: 8px;
+  letter-spacing: -0.01em;
+}
+
+.ot-tooltip-body {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-700);
+  margin-bottom: 14px;
+}
+
+body[data-theme="glass-dark"] .ot-tooltip-body,
+body[data-theme="default-dark"] .ot-tooltip-body {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.ot-tooltip-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ot-btn {
+  background: transparent;
+  border: 1px solid var(--border, var(--ink-200));
+  border-radius: 6px;
+  padding: 7px 12px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink-700);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-body);
+  transition: all 120ms;
+}
+.ot-btn:hover {
+  background: var(--bg-panel-hover, var(--cream-100));
+  color: var(--ink-900);
+}
+.ot-btn.ghost {
+  border-color: transparent;
+  color: var(--ink-500);
+}
+.ot-btn.ghost:hover {
+  background: var(--bg-panel-hover, var(--cream-100));
+  color: var(--ink-700);
+}
+.ot-btn.primary {
+  background: var(--accent-500);
+  border-color: var(--accent-500);
+  color: #fff;
+}
+.ot-btn.primary:hover {
+  background: var(--accent-600);
+  border-color: var(--accent-600);
+}
+
+body[data-theme="glass-dark"] .ot-btn,
+body[data-theme="default-dark"] .ot-btn {
+  border-color: rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.85);
+}
+body[data-theme="glass-dark"] .ot-btn:hover,
+body[data-theme="default-dark"] .ot-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+body[data-theme="glass-dark"] .ot-btn.ghost,
+body[data-theme="default-dark"] .ot-btn.ghost {
+  border-color: transparent;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Theme-Picker im Onboarding-Step 2 ----------------------------------- */
+.ot-theme-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 0 0 14px;
+}
+.ot-theme-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--bg-panel, #FAF7F2);
+  border: 1.5px solid var(--border, var(--ink-200));
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-body);
+  transition: all 120ms;
+  color: inherit;
+}
+.ot-theme-card:hover {
+  border-color: var(--accent-500);
+}
+.ot-theme-card.is-active {
+  border-color: var(--accent-500);
+  background: rgba(224, 113, 64, 0.08);
+}
+.ot-theme-swatch {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  flex-shrink: 0;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+.ot-theme-swatch.swatch-glass {
+  background: linear-gradient(135deg, #F5EFE5 0%, #E8DDC9 100%);
+}
+.ot-theme-swatch.swatch-glass-dark {
+  background: linear-gradient(135deg, #2A2620 0%, #1F1C18 100%);
+}
+.ot-theme-swatch.swatch-default {
+  background: #F0EAE2;
+}
+.ot-theme-swatch.swatch-default-dark {
+  background: #1A1815;
+}
+.ot-theme-card-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.ot-theme-card-title {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-900);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ot-theme-card-sub {
+  font-size: 10.5px;
+  color: var(--ink-500);
+  line-height: 1.35;
+}
+.ot-theme-card-check {
+  color: var(--accent-500);
+  flex-shrink: 0;
+}
+
+body[data-theme="glass-dark"] .ot-theme-card,
+body[data-theme="default-dark"] .ot-theme-card {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.92);
+}
+body[data-theme="glass-dark"] .ot-theme-card.is-active,
+body[data-theme="default-dark"] .ot-theme-card.is-active {
+  background: rgba(224, 113, 64, 0.18);
+  border-color: var(--accent-500);
+}
+body[data-theme="glass-dark"] .ot-theme-card-title,
+body[data-theme="default-dark"] .ot-theme-card-title {
+  color: rgba(255, 255, 255, 0.95);
+}
+body[data-theme="glass-dark"] .ot-theme-card-sub,
+body[data-theme="default-dark"] .ot-theme-card-sub {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* View-Picker im Onboarding-Step 3 (analog zum Theme-Picker) ------------ */
+.ot-view-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0 0 14px;
+}
+.ot-view-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--bg-panel, #FAF7F2);
+  border: 1.5px solid var(--border, var(--ink-200));
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-body);
+  transition: all 120ms;
+  color: inherit;
+}
+.ot-view-card:hover {
+  border-color: var(--accent-500);
+}
+.ot-view-card.is-active {
+  border-color: var(--accent-500);
+  background: rgba(224, 113, 64, 0.08);
+}
+.ot-view-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background: var(--cream-100);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  color: var(--ink-700);
+  border: 1px solid var(--ink-200);
+}
+.ot-view-card.is-active .ot-view-icon {
+  background: rgba(224, 113, 64, 0.18);
+  color: var(--accent-700);
+  border-color: rgba(224, 113, 64, 0.35);
+}
+.ot-view-card-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.ot-view-card-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-900);
+}
+.ot-view-card-sub {
+  font-size: 11.5px;
+  color: var(--ink-500);
+  line-height: 1.4;
+}
+.ot-view-card-check {
+  color: var(--accent-500);
+  flex-shrink: 0;
+}
+
+body[data-theme="glass-dark"] .ot-view-card,
+body[data-theme="default-dark"] .ot-view-card {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.92);
+}
+body[data-theme="glass-dark"] .ot-view-card.is-active,
+body[data-theme="default-dark"] .ot-view-card.is-active {
+  background: rgba(224, 113, 64, 0.18);
+  border-color: var(--accent-500);
+}
+body[data-theme="glass-dark"] .ot-view-card-title,
+body[data-theme="default-dark"] .ot-view-card-title {
+  color: rgba(255, 255, 255, 0.95);
+}
+body[data-theme="glass-dark"] .ot-view-card-sub,
+body[data-theme="default-dark"] .ot-view-card-sub {
+  color: rgba(255, 255, 255, 0.6);
+}
+body[data-theme="glass-dark"] .ot-view-icon,
+body[data-theme="default-dark"] .ot-view-icon {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.85);
+}

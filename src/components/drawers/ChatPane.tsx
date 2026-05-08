@@ -17,8 +17,33 @@ interface ChatBubbleProps {
   onExtractNow: () => void;
 }
 
+// Trennt `<think>…</think>`-Blöcke vom sichtbaren Output. Manche Modelle
+// (GLM, Qwen-R1 …) liefern interne Überlegungen mit; per Default einklappen.
+type Segment = { kind: 'text' | 'think'; content: string };
+function splitThink(raw: string): Segment[] {
+  const segs: Segment[] = [];
+  const re = /<think>([\s\S]*?)<\/think>/gi;
+  let last = 0;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(raw)) !== null) {
+    if (m.index > last) segs.push({ kind: 'text', content: raw.slice(last, m.index) });
+    segs.push({ kind: 'think', content: m[1].trim() });
+    last = re.lastIndex;
+  }
+  const rest = raw.slice(last);
+  const open = /<think>([\s\S]*)$/i.exec(rest);
+  if (open) {
+    if (open.index > 0) segs.push({ kind: 'text', content: rest.slice(0, open.index) });
+    segs.push({ kind: 'think', content: open[1].trim() });
+  } else if (rest.length) {
+    segs.push({ kind: 'text', content: rest });
+  }
+  return segs.length ? segs : [{ kind: 'text', content: raw }];
+}
+
 function ChatBubble({ msg, onSuggest, onUseAsBrief, onExtractNow }: ChatBubbleProps) {
   const isUser = msg.role === 'user';
+  const segments = isUser ? [{ kind: 'text' as const, content: msg.text }] : splitThink(msg.text);
   return (
     <div className={`chat-msg ${msg.role}`}>
       {!isUser && (
@@ -27,11 +52,27 @@ function ChatBubble({ msg, onSuggest, onUseAsBrief, onExtractNow }: ChatBubblePr
         </div>
       )}
       <div className="chat-bubble-wrap">
-        <div className="chat-bubble">
-          {msg.text.split('\n').map((line, j) => (
-            <div key={j}>{line || ' '}</div>
-          ))}
-        </div>
+        {segments.map((seg, k) =>
+          seg.kind === 'think' ? (
+            <details key={k} className="chat-think">
+              <summary>
+                <Icon name="brain" size={11} />
+                <span>Gedanken</span>
+              </summary>
+              <div className="chat-think-body">
+                {seg.content.split('\n').map((line, j) => (
+                  <div key={j}>{line || ' '}</div>
+                ))}
+              </div>
+            </details>
+          ) : seg.content.trim() ? (
+            <div key={k} className="chat-bubble">
+              {seg.content.split('\n').map((line, j) => (
+                <div key={j}>{line || ' '}</div>
+              ))}
+            </div>
+          ) : null,
+        )}
         {msg.brief && (
           <div className="chat-brief">
             <div className="chat-brief-head">

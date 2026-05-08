@@ -102,9 +102,9 @@
     font-size: 22px !important;
   }
 
-  /* Kanban: horizontal scroll */
+  /* Kanban: horizontal scroll, 5 Spalten (Backlog → Zu erledigen → In Arbeit → Review → Erledigt) */
   .kanban {
-    grid-template-columns: repeat(4, 84vw) !important;
+    grid-template-columns: repeat(5, 84vw) !important;
     overflow-x: auto;
     scroll-snap-type: x mandatory;
     gap: 10px !important;
@@ -197,11 +197,54 @@
   .lp-org-tag {
     display: none;
   }
+
+  /* ChatBubble FAB + Panel — auf Mobile kleiner Button, full-width Panel */
+  .cb-fab {
+    width: 48px !important;
+    height: 48px !important;
+    right: 12px !important;
+    bottom: 12px !important;
+  }
+  .cb-panel {
+    right: 8px !important;
+    left: 8px !important;
+    bottom: 8px !important;
+    width: auto !important;
+    max-width: none !important;
+    height: calc(100vh - 16px) !important;
+    max-height: calc(100vh - 16px) !important;
+    border-radius: 12px !important;
+  }
+
+  /* OnboardingTour-Tooltip: nicht über den Bildschirmrand laufen */
+  .ot-tooltip {
+    width: calc(100vw - 16px) !important;
+    max-width: calc(100vw - 16px) !important;
+  }
+
+  /* Release-Modal */
+  .rm-modal {
+    max-width: 96vw !important;
+    max-height: 86vh !important;
+    padding: 18px 16px 14px !important;
+  }
+  .rm-title {
+    font-size: 18px !important;
+  }
+
+  /* Reset.html, Page-Container default */
+  .page-head .left .eyebrow {
+    font-size: 10px !important;
+  }
+  .subtitle {
+    font-size: 12px !important;
+    line-height: 1.5 !important;
+  }
 }
 
 @media (max-width: 480px) {
   .kanban {
-    grid-template-columns: repeat(4, 92vw) !important;
+    grid-template-columns: repeat(5, 92vw) !important;
   }
   .lp-hero h1 {
     font-size: 32px !important;

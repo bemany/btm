@@ -16,6 +16,7 @@ import { activityRoute } from './routes/activity.js';
 import { aiRoute } from './routes/ai.js';
 import { mcpRoute } from './routes/mcp.js';
 import { eventsRoute } from './routes/events.js';
+import { loginCodeRoute } from './routes/login-code.js';
 
 const app = new Hono<{ Variables: Variables }>();
 
@@ -70,6 +71,7 @@ app.route('/api/activity', activityRoute);
 app.route('/api/ai', aiRoute);
 app.route('/api/mcp', mcpRoute);
 app.route('/api/events', eventsRoute);
+app.route('/api/login-code', loginCodeRoute);
 
 app.get('/api/healthz', (c) => c.json({ ok: true, ts: Date.now() }));
 

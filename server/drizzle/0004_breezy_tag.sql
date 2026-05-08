@@ -1,0 +1,1 @@
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "board_default_view" text DEFAULT 'kanban' NOT NULL;

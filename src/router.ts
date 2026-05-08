@@ -70,6 +70,7 @@ export const SCREEN_TO_PATH: Record<ScreenId, string> = {
   mobile: '/mobile',
   chrome: '/chrome',
   tv: '/tv',
+  releases: '/releases',
 };
 
 const PATH_TO_SCREEN: Record<string, ScreenId> = {
@@ -83,6 +84,7 @@ const PATH_TO_SCREEN: Record<string, ScreenId> = {
   '/mobile': 'mobile',
   '/chrome': 'chrome',
   '/tv': 'tv',
+  '/releases': 'releases',
 };
 
 export function pathToScreen(pathname: string): ScreenId | null {

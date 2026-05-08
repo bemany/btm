@@ -1,0 +1,78 @@
+# BTM Stack — Docker-Compose Setup für /opt/btm/ auf dem DO-VPS.
+#
+# Architektur:
+#   • btm-postgres (postgres:16-alpine) — isoliert im internen `btm`-Netz
+#   • btm-api (gebauter Hono-Container)  — im `btm`-Netz UND im externen
+#     `n8n-docker-caddy_default`-Netz, sodass Caddy es als `btm-api:3001`
+#     reverse-proxyen kann.
+#
+# Caddyfile-Block in /opt/n8n-docker-caddy/caddy_config/Caddyfile:
+#   btm.bethesna.org {
+#     handle /api/events { reverse_proxy btm-api:3001 { flush_interval -1 } }
+#     handle /api/* { reverse_proxy btm-api:3001 }
+#     handle { root * /srv/btm; try_files {path} /index.html; file_server }
+#   }
+#
+# Frontend-dist mountet Caddy-Container per Volume.
+
+services:
+  btm-postgres:
+    image: postgres:16-alpine
+    container_name: btm-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: btm
+      POSTGRES_USER: btm
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - btm-pgdata:/var/lib/postgresql/data
+    networks:
+      - btm
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U btm -d btm"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  btm-api:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    image: btm-api:latest
+    container_name: btm-api
+    restart: unless-stopped
+    depends_on:
+      btm-postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      HOST: 0.0.0.0
+      DATABASE_URL: postgres://btm:${DB_PASSWORD}@btm-postgres:5432/btm
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL}
+      TRUSTED_ORIGINS: ${TRUSTED_ORIGINS}
+      INITIAL_ADMIN_EMAIL: ${INITIAL_ADMIN_EMAIL}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_SECURE: ${SMTP_SECURE}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      SMTP_FROM: ${SMTP_FROM}
+      LMSTUDIO_URL: ${LMSTUDIO_URL}
+      LMSTUDIO_TOKEN: ${LMSTUDIO_TOKEN}
+      LMSTUDIO_MODEL: ${LMSTUDIO_MODEL}
+    networks:
+      - btm
+      - caddy
+
+networks:
+  btm:
+    name: btm_default
+  caddy:
+    name: n8n-docker-caddy_default
+    external: true
+
+volumes:
+  btm-pgdata:
+    name: btm-pgdata

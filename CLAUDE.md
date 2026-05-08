@@ -15,15 +15,27 @@ Multi-User-Auth, Server-State-Persistenz, MCP-Anbindung folgen.
 | Repo | https://github.com/bemany/btm | Privat |
 | Doku | https://docs.bemany.tech/doc/lxc-139-bethesna-tasks-btm-frontend-Ya09Ax1TX1 | Outline |
 
-## Infrastruktur
+## Infrastruktur (seit 2026-05-05 auf Digital Ocean)
 
-- **LXC 139** (`bethesna-tasks`, `192.168.40.139`) auf g40 — Frontend-Build via Caddy, Backend `btm-api.service`, Postgres 16 lokal.
-- **Cloudflare-Tunnel CT124** (hakan-Account, Tunnel-ID `4d67c57e-…`) → `btm.bethesna.org → http://192.168.40.139:80`.
-- **DNS**: CNAME `btm.bethesna.org` → `…cfargotunnel.com` (proxied).
-- **Postgres**: 16.13, Datenbank `btm`, User `btm`, Passwort in `/opt/apps/btm/server/.env` (chmod 600).
+- **DO-VPS** `n8n-bemany` (`142.93.172.15`) — Ubuntu 22.04, 2 cores, 4 GB RAM. SSH key-auth (`~/.ssh/id_ed25519`).
+- **Stack als Docker-Compose** unter `/opt/btm/`:
+  - `btm-api` (gebaut aus `server/Dockerfile`, Node 22 alpine multi-stage)
+  - `btm-postgres` (postgres:16-alpine, Volume `btm-pgdata`)
+  - Beide Container in den Netzen `btm_default` (intern) und `n8n-docker-caddy_default` (für Caddy).
+- **Reverse-Proxy: bestehender Caddy-Container** in `/root/n8n-docker-caddy/`:
+  - Caddyfile-Block `btm.bethesna.org { … }` mit `/api/events` → `flush_interval -1` (SSE), `/api/*` → `btm-api:3001`, Rest → `/srv/btm` (Volume `/opt/btm/dist`).
+  - Caddy holt Lets-Encrypt-Cert direkt (kein Cloudflare-Tunnel mehr).
+- **DNS**: A `btm.bethesna.org` → `142.93.172.15`, Cloudflare-Proxy AUS (grey cloud).
+- **Postgres**: 16-alpine, Datenbank `btm`, User `btm`. Passwort + Secrets in `/opt/btm/.env` (chmod 600, nur root). Compose injiziert per `environment:` → kein Read im Container.
 - **Initial-Admin**: `esref@bemany.de` (Magic-Link → automatisch role=admin durch DB-Hook).
 - **SMTP** für Magic-Links: `smtp.ionos.de:465 SSL`, User `portal@meinfahrer.app`.
-- **LM-Studio** (geplant): `https://llm1.bemany.tech` mit Token `sk-lm-…` für Chat (`glm-4.6v-flash`) und Embeddings (`nomic-embed-text-v1.5`).
+- **LM-Studio**: `https://llm1.bemany.tech` mit Token `sk-lm-…` für Chat (`google/gemma-4-e4b`) — Tool-Use im Chat aktiv.
+- **Backup**: `/opt/btm/backup.sh` (cron 03:30 UTC täglich), pg_dump.gz in `/opt/btm/backups/`, 14 Tage Retention.
+
+### Alte Setup (LXC 139) — Rollback-Fallback
+- LXC 139 (`192.168.40.139`) auf g40 läuft noch, `btm-api.service` ist `disabled` + `stopped`. Daten + Code intakt.
+- Bei Bedarf zurück: `pct exec 139 -- systemctl enable --now btm-api`, dann CF-Tunnel-Route wieder anlegen + DNS auf CNAME zurück.
+- Geplant: nach 1 Woche stabilen DO-Betrieb LXC 139 archivieren.
 
 ## Stack
 
@@ -66,20 +78,34 @@ Tabellen: `users`, `sessions`, `accounts`, `verifications` (Better-Auth) + `proj
 
 Migrations: `server/drizzle/`. Anwenden via `npm run db:migrate` (im server-Subdir).
 
-## Deploy-Workflow
+## Deploy-Workflow (DO-VPS, Docker)
 
 ```bash
-# Frontend: lokal + Push → 139
-git push origin main
-ssh root@192.168.40.139 "sudo -u deploy bash -c '
-  cd /opt/apps/btm
-  git pull --ff-only
-  npm ci --no-audit --no-fund && npm run build       # Frontend in dist/
-  cd server
-  npm ci --no-audit --no-fund && npm run build       # Backend in server/dist/
-  npm run db:migrate                                  # neue Drizzle-Migrations
-'"
-sshpass -p root ssh root@192.168.40.131 'pct exec 139 -- systemctl restart btm-api'
+# Lokal bauen + Bundle-Pakete erstellen
+cd ~/Documents/GitHub/btm
+npm run build                                          # Frontend → dist/
+tar --exclude=server/node_modules --exclude=server/dist --exclude=server/.env \
+    -czf /tmp/btm-server-src.tar.gz server docker-compose.yml
+tar -czf /tmp/btm-dist.tar.gz dist
+
+# Hochladen (Key-Auth)
+scp -i ~/.ssh/id_ed25519 /tmp/btm-server-src.tar.gz /tmp/btm-dist.tar.gz \
+    root@142.93.172.15:/opt/btm/
+
+# Auf dem Server: extract, build, restart
+ssh -i ~/.ssh/id_ed25519 root@142.93.172.15 "
+  cd /opt/btm
+  tar -xzf btm-server-src.tar.gz && tar -xzf btm-dist.tar.gz
+  rm btm-server-src.tar.gz btm-dist.tar.gz
+  docker compose build btm-api
+  docker compose up -d btm-api
+  # Drizzle-Migrationen werden NICHT auto-applied — bei Schema-Änderungen
+  # einmalig manuell:
+  # docker exec btm-api node -e \"…\"  oder direkt SQL via btm-postgres-Container
+"
+
+# Logs prüfen
+ssh -i ~/.ssh/id_ed25519 root@142.93.172.15 "docker logs btm-api --tail 30 -f"
 ```
 
 ## Lokal entwickeln

@@ -16,6 +16,7 @@ const TIMER_KEY = ['btm', 'liveTimer'] as const;
 const USERS_KEY = ['btm', 'users'] as const;
 const TEAMS_KEY = ['btm', 'teams'] as const;
 const INVITATIONS_KEY = ['btm', 'invitations'] as const;
+const WEEK_SESSIONS_KEY = ['btm', 'weekSessions'] as const;
 
 export function useServerSync(): void {
   const setTasks = useStore((s) => s.setTasks);
@@ -107,4 +108,5 @@ export const SYNC_KEYS = {
   USERS: USERS_KEY,
   TEAMS: TEAMS_KEY,
   INVITATIONS: INVITATIONS_KEY,
+  WEEK_SESSIONS: WEEK_SESSIONS_KEY,
 } as const;

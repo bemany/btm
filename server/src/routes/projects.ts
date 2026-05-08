@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { eq, asc } from 'drizzle-orm';
+import { and, eq, asc, isNull, or } from 'drizzle-orm';
 import { z } from 'zod';
 import { nanoid } from 'nanoid';
 import { db } from '../db/client.js';
@@ -20,7 +20,19 @@ const updateSchema = createSchema.partial();
 export const projectsRoute = new Hono<{ Variables: Variables }>()
   .use('*', requireAuth)
   .get('/', async (c) => {
-    const list = await db.select().from(projects).orderBy(asc(projects.code));
+    const me = c.get('user')!;
+    // Sichtbar: alle „normalen" Projekte (private_owner_id IS NULL) + die
+    // eigenen Privat-Projekte. Andere User sehen meine Privaten nicht.
+    const list = await db
+      .select()
+      .from(projects)
+      .where(
+        or(
+          isNull(projects.privateOwnerId),
+          eq(projects.privateOwnerId, me.id),
+        ),
+      )
+      .orderBy(asc(projects.code));
     return c.json({ projects: list });
   })
   .post('/', async (c) => {

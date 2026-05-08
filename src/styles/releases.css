@@ -1,0 +1,493 @@
+/* =========================================================
+   Release-Seite (/releases) und Release-Modal
+   ========================================================= */
+
+.rel-page {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 32px 28px 80px;
+}
+
+.rel-header h1 {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin: 0 0 6px;
+}
+.rel-header .rel-sub {
+  color: var(--ink-500);
+  font-size: 13px;
+  margin: 0 0 28px;
+}
+.rel-header code {
+  font-family: var(--font-mono);
+  background: var(--bg-panel-hover, var(--cream-100));
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.rel-section {
+  margin-top: 36px;
+}
+.rel-section-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 14px;
+}
+.rel-section-head h2 {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 600;
+  margin: 0;
+  letter-spacing: -0.005em;
+}
+.rel-section-icon {
+  color: var(--ink-500);
+}
+.rel-section-icon.warn {
+  color: var(--accent-500);
+}
+
+.rel-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 12px;
+}
+.rel-card {
+  background: var(--bg-panel, #FAF7F2);
+  border: 1px solid var(--border, var(--ink-200));
+  border-radius: 8px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.rel-card header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.rel-card h3 {
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  font-weight: 600;
+  margin: 0;
+  line-height: 1.35;
+}
+.rel-card p {
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--ink-700);
+  margin: 0;
+}
+.rel-card footer {
+  font-size: 11px;
+  color: var(--ink-500);
+  font-family: var(--font-mono);
+  margin-top: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.rel-workaround {
+  background: var(--bg-panel-hover, var(--cream-100));
+  border-left: 3px solid var(--accent-500);
+  padding: 8px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  color: var(--ink-700);
+}
+
+.rel-card.issue {
+  border-left: 3px solid var(--ink-300);
+}
+.rel-card.issue.status-investigating {
+  border-left-color: #C8A04C;
+}
+.rel-card.issue.status-fix-pending {
+  border-left-color: var(--accent-500);
+}
+.rel-card.issue.status-external {
+  border-left-color: #7A9CC8;
+}
+
+.rel-status-pill {
+  align-self: flex-start;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--cream-100);
+  color: var(--ink-700);
+}
+.rel-status-pill.status-investigating {
+  background: rgba(200, 160, 76, 0.15);
+  color: #8C6F2D;
+}
+.rel-status-pill.status-fix-pending {
+  background: rgba(224, 113, 64, 0.18);
+  color: var(--accent-700);
+}
+.rel-status-pill.status-external {
+  background: rgba(122, 156, 200, 0.15);
+  color: #4F6E94;
+}
+
+/* Releases ------------------------------------------------------------- */
+.rel-releases {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.rel-release {
+  background: var(--bg-panel, #FAF7F2);
+  border: 1px solid var(--border, var(--ink-200));
+  border-radius: 8px;
+  padding: 18px 20px;
+}
+.rel-release header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.rel-version {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--ink-900);
+  padding: 2px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.02em;
+}
+.rel-date {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-500);
+}
+.rel-release h3 {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+  flex: 1 1 100%;
+  letter-spacing: -0.005em;
+}
+.rel-changes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.rel-change {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.rel-change-text {
+  color: var(--ink-800);
+  flex: 1;
+}
+.rel-kind-pill {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 7px;
+  border-radius: 4px;
+  margin-top: 2px;
+}
+.rel-kind-pill.kind-feature {
+  background: rgba(94, 127, 78, 0.16);
+  color: #4A6839;
+}
+.rel-kind-pill.kind-fix {
+  background: rgba(122, 156, 200, 0.18);
+  color: #4F6E94;
+}
+.rel-kind-pill.kind-change {
+  background: var(--cream-100);
+  color: var(--ink-700);
+}
+.rel-kind-pill.kind-breaking {
+  background: rgba(200, 60, 60, 0.16);
+  color: #993C3C;
+}
+
+/* Dark-Mode-Overrides */
+/* Headlines: rel-header h1, rel-section-head h2, rel-card h3, rel-release h3
+   benutzen alle var(--ink-900) — das wird im Dark-Mode hell, sollte also
+   automatisch funktionieren. ABER: wenn ein Vorfahr eine inline color-style
+   setzt oder der Theme-Token nicht greift, sind die Headlines unsichtbar.
+   Hier zur Sicherheit explizit setzen. */
+body[data-theme="glass-dark"] .rel-header h1,
+body[data-theme="default-dark"] .rel-header h1,
+body[data-theme="glass-dark"] .rel-section-head h2,
+body[data-theme="default-dark"] .rel-section-head h2,
+body[data-theme="glass-dark"] .rel-card h3,
+body[data-theme="default-dark"] .rel-card h3,
+body[data-theme="glass-dark"] .rel-release h3,
+body[data-theme="default-dark"] .rel-release h3 {
+  color: rgba(255, 255, 255, 0.95);
+}
+body[data-theme="glass-dark"] .rel-section-head .rel-section-icon,
+body[data-theme="default-dark"] .rel-section-head .rel-section-icon {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+body[data-theme="glass-dark"] .rel-card,
+body[data-theme="default-dark"] .rel-card,
+body[data-theme="glass-dark"] .rel-release,
+body[data-theme="default-dark"] .rel-release {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+body[data-theme="glass-dark"] .rel-card p,
+body[data-theme="default-dark"] .rel-card p,
+body[data-theme="glass-dark"] .rel-change-text,
+body[data-theme="default-dark"] .rel-change-text {
+  color: rgba(255, 255, 255, 0.78);
+}
+body[data-theme="glass-dark"] .rel-card footer,
+body[data-theme="default-dark"] .rel-card footer,
+body[data-theme="glass-dark"] .rel-date,
+body[data-theme="default-dark"] .rel-date,
+body[data-theme="glass-dark"] .rel-header .rel-sub,
+body[data-theme="default-dark"] .rel-header .rel-sub {
+  color: rgba(255, 255, 255, 0.55);
+}
+body[data-theme="glass-dark"] .rel-version,
+body[data-theme="default-dark"] .rel-version {
+  background: rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.95);
+}
+body[data-theme="glass-dark"] .rel-workaround,
+body[data-theme="default-dark"] .rel-workaround {
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.78);
+}
+body[data-theme="glass-dark"] .rel-status-pill,
+body[data-theme="default-dark"] .rel-status-pill {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.85);
+}
+body[data-theme="glass-dark"] .rel-kind-pill.kind-change,
+body[data-theme="default-dark"] .rel-kind-pill.kind-change {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.7);
+}
+body[data-theme="glass-dark"] .rel-header code,
+body[data-theme="default-dark"] .rel-header code {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.92);
+}
+
+/* ───────────── Release-Modal ──────────────────────────────────────────── */
+.rm-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1400;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+.rm-modal {
+  background: var(--bg-panel, #FAF7F2);
+  border: 1px solid var(--border, var(--ink-200));
+  border-radius: 12px;
+  padding: 24px 26px 20px;
+  max-width: 540px;
+  width: 100%;
+  max-height: 80vh;
+  overflow: auto;
+  position: relative;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.5) inset,
+    0 24px 64px rgba(0, 0, 0, 0.25);
+  font-family: var(--font-body);
+}
+.rm-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: var(--ink-500);
+  border-radius: 6px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+.rm-close:hover {
+  background: var(--bg-panel-hover, var(--cream-100));
+  color: var(--ink-900);
+}
+.rm-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent-500);
+  margin-bottom: 8px;
+}
+.rm-title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 600;
+  margin: 0 0 4px;
+  letter-spacing: -0.015em;
+}
+.rm-sub {
+  font-size: 13px;
+  color: var(--ink-700);
+  margin: 0 0 18px;
+}
+.rm-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.rm-rel-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.rm-version {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--ink-900);
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+.rm-date {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-500);
+}
+.rm-rel-title {
+  font-size: 13px;
+  font-weight: 600;
+}
+.rm-changes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.rm-changes li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-800);
+}
+.rm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border, var(--ink-200));
+}
+.rm-btn {
+  background: transparent;
+  border: 1px solid var(--border, var(--ink-200));
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink-700);
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition: all 120ms;
+}
+.rm-btn:hover {
+  background: var(--bg-panel-hover, var(--cream-100));
+  color: var(--ink-900);
+}
+.rm-btn.primary {
+  background: var(--accent-500);
+  border-color: var(--accent-500);
+  color: #fff;
+}
+.rm-btn.primary:hover {
+  background: var(--accent-600);
+  border-color: var(--accent-600);
+}
+
+body[data-theme="glass-dark"] .rm-modal,
+body[data-theme="default-dark"] .rm-modal {
+  background: rgba(28, 26, 23, 0.92);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+}
+body[data-theme="glass-dark"] .rm-sub,
+body[data-theme="default-dark"] .rm-sub,
+body[data-theme="glass-dark"] .rm-changes li,
+body[data-theme="default-dark"] .rm-changes li {
+  color: rgba(255, 255, 255, 0.78);
+}
+body[data-theme="glass-dark"] .rm-version,
+body[data-theme="default-dark"] .rm-version {
+  background: rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.95);
+}
+body[data-theme="glass-dark"] .rm-actions,
+body[data-theme="default-dark"] .rm-actions {
+  border-top-color: rgba(255, 255, 255, 0.1);
+}
+body[data-theme="glass-dark"] .rm-btn,
+body[data-theme="default-dark"] .rm-btn {
+  border-color: rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.85);
+}
+body[data-theme="glass-dark"] .rm-btn:hover,
+body[data-theme="default-dark"] .rm-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+/* Sidebar NEU-Badge --------------------------------------------------- */
+.sb-item .sb-new-pill {
+  background: var(--accent-500);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 2px 6px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  margin-left: auto;
+}

@@ -1,13 +1,13 @@
 import { Hono } from 'hono';
-import { and, eq, asc, sql } from 'drizzle-orm';
+import { and, eq, asc, sql, isNull, or } from 'drizzle-orm';
 import { z } from 'zod';
 import { nanoid } from 'nanoid';
 import { db } from '../db/client.js';
-import { tasks, taskSessions, liveTimers } from '../db/schema.js';
+import { tasks, taskSessions, liveTimers, projects } from '../db/schema.js';
 import { requireAuth, type Variables } from '../lib/context.js';
 import { logActivity } from '../lib/activity.js';
 
-const ColumnEnum = z.enum(['todo', 'doing', 'review', 'done']);
+const ColumnEnum = z.enum(['todo', 'planned', 'doing', 'review', 'done']);
 const PrioEnum = z.enum(['low', 'med', 'high']);
 
 const createSchema = z.object({
@@ -26,8 +26,38 @@ const updateSchema = createSchema.partial();
 export const tasksRoute = new Hono<{ Variables: Variables }>()
   .use('*', requireAuth)
   .get('/', async (c) => {
-    const list = await db.select().from(tasks).orderBy(asc(tasks.sortOrder), asc(tasks.createdAt));
-    return c.json({ tasks: list });
+    const me = c.get('user')!;
+    // Filter: Tasks die zu einem fremden Privat-Projekt gehören NICHT zeigen.
+    // Tasks ohne Projekt + Tasks in nicht-privaten Projekten + Tasks im eigenen
+    // Privat-Projekt sind sichtbar.
+    const rows = await db
+      .select({
+        id: tasks.id,
+        title: tasks.title,
+        description: tasks.description,
+        column: tasks.column,
+        priority: tasks.priority,
+        estH: tasks.estH,
+        loggedH: tasks.loggedH,
+        due: tasks.due,
+        projectId: tasks.projectId,
+        assigneeId: tasks.assigneeId,
+        createdById: tasks.createdById,
+        sortOrder: tasks.sortOrder,
+        createdAt: tasks.createdAt,
+        updatedAt: tasks.updatedAt,
+      })
+      .from(tasks)
+      .leftJoin(projects, eq(tasks.projectId, projects.id))
+      .where(
+        or(
+          isNull(tasks.projectId),
+          isNull(projects.privateOwnerId),
+          eq(projects.privateOwnerId, me.id),
+        ),
+      )
+      .orderBy(asc(tasks.sortOrder), asc(tasks.createdAt));
+    return c.json({ tasks: rows });
   })
   .post('/', async (c) => {
     const user = c.get('user')!;

@@ -1,7 +1,7 @@
-export type ColumnId = 'todo' | 'doing' | 'review' | 'done';
+export type ColumnId = 'todo' | 'planned' | 'doing' | 'review' | 'done';
 export type Priority = 'high' | 'med' | 'low';
 export type LayoutMode = 'kanban' | 'list' | 'timeline';
-export type ScreenId = 'week' | 'board' | 'capacity' | 'times' | 'projects' | 'mobile' | 'chrome' | 'tv' | 'admin';
+export type ScreenId = 'week' | 'board' | 'capacity' | 'times' | 'projects' | 'mobile' | 'chrome' | 'tv' | 'admin' | 'releases';
 export type ThemeBase = 'default' | 'glass';
 export type ThemeBrightness = 'light' | 'dark';
 // CSS-data-theme-Werte: kombinieren Base + Dunkel-Variante.
@@ -22,15 +22,6 @@ export function decomposeTheme(theme: ThemeMode): { base: ThemeBase; brightness:
 }
 
 export const ALL_THEMES: ThemeMode[] = ['default', 'glass', 'default-dark', 'glass-dark'];
-
-export interface Persona {
-  id: string;
-  name: string;
-  full: string;
-  role: string;
-  cap: number;
-  color: string;
-}
 
 export interface Project {
   id: string;
@@ -98,7 +89,7 @@ export interface UIState {
 }
 
 export type Role = 'admin' | 'member';
-export type UserStatus = 'active' | 'inactive';
+export type UserStatus = 'active' | 'invited' | 'inactive';
 
 export interface AppUser {
   id: string;
@@ -112,6 +103,7 @@ export interface AppUser {
   jobTitle: string | null;
   phone: string | null;
   teamId: string | null;
+  boardDefaultView: LayoutMode;
   createdAt: string;
 }
 

@@ -39,12 +39,16 @@ export default defineConfig({
       workbox: {
         // Vite-emittiertes Build-Output cachen.
         globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
+        // reset.html darf NIE im Precache landen — wäre sonst nicht
+        // erreichbar wenn der SW selbst kaputt ist (Henne/Ei).
+        globIgnores: ['**/reset.html'],
         cleanupOutdatedCaches: true,
         clientsClaim: true,
         skipWaiting: true,
         navigateFallback: '/index.html',
         // /api/* darf NIE gecacht werden — Auth-State ist sensibel.
-        navigateFallbackDenylist: [/^\/api\//],
+        // /reset.html muss IMMER frisch vom Server kommen (SW-Reset-Tool).
+        navigateFallbackDenylist: [/^\/api\//, /^\/reset\.html$/],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
