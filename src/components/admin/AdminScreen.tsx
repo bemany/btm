@@ -344,9 +344,11 @@ function InviteCard({ inv, teamName }: { inv: AppInvitation; teamName?: string }
 function ActivitySidebar({ users }: { users: AppUser[] }) {
   const t = useT();
   const [tab, setTab] = useState<'all' | 'work' | 'admin'>('all');
+  const [actorFilter, setActorFilter] = useState<string>('all');
   const { data: activity = [] } = useQuery({
-    queryKey: ['btm', 'activity'],
-    queryFn: () => api.listActivity({ limit: 50 }),
+    queryKey: ['btm', 'activity', actorFilter],
+    queryFn: () =>
+      api.listActivity({ limit: 50, actorId: actorFilter !== 'all' ? actorFilter : undefined }),
     staleTime: 15_000,
     refetchInterval: 30_000,
   });
@@ -362,6 +364,8 @@ function ActivitySidebar({ users }: { users: AppUser[] }) {
     if (tab === 'admin') return !WORK_KINDS.has(a.kind);
     return true;
   });
+
+  const sortedUsers = [...users].sort((a, b) => a.name.localeCompare(b.name));
 
   return (
     <>
@@ -382,6 +386,19 @@ function ActivitySidebar({ users }: { users: AppUser[] }) {
           </button>
         ))}
       </div>
+      <select
+        className="admin-side-actor-filter"
+        value={actorFilter}
+        onChange={(e) => setActorFilter(e.target.value)}
+        aria-label={t('admin.activity_filter_user_label')}
+      >
+        <option value="all">{t('admin.activity_filter_all_users')}</option>
+        {sortedUsers.map((u) => (
+          <option key={u.id} value={u.id}>
+            {u.name}
+          </option>
+        ))}
+      </select>
       <div className="admin-side-list">
         {filtered.length === 0 && <div className="admin-empty">{t('admin.activity_empty')}</div>}
         {filtered.map((a) => {

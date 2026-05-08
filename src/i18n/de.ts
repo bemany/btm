@@ -514,6 +514,8 @@ export const de = {
     activity_tab_all: 'Alle',
     activity_tab_work: 'Arbeit',
     activity_tab_admin: 'Admin',
+    activity_filter_all_users: 'Alle Bearbeiter',
+    activity_filter_user_label: 'Bearbeiter',
     user_card_team: 'Team',
     user_card_capacity: 'Kapazität',
     user_card_active: 'Aktiv',

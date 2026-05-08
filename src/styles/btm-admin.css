@@ -456,6 +456,32 @@
   color: var(--cream-50);
   border-color: var(--ink-900);
 }
+.admin-side-actor-filter {
+  margin: 8px 14px 4px;
+  padding: 7px 10px;
+  background: var(--cream-50);
+  border: 1px solid var(--ink-200);
+  border-radius: 6px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--ink-700);
+  cursor: pointer;
+  transition: border-color 120ms ease, background 120ms ease;
+}
+.admin-side-actor-filter:hover {
+  border-color: var(--ink-300);
+}
+.admin-side-actor-filter:focus {
+  outline: 0;
+  border-color: var(--accent-500);
+  box-shadow: 0 0 0 3px rgba(200, 90, 44, 0.12);
+}
+body[data-theme="default-dark"] .admin-side-actor-filter,
+body[data-theme="glass-dark"]   .admin-side-actor-filter {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: var(--ink-900);
+}
 .admin-side-list {
   flex: 1;
   overflow: auto;

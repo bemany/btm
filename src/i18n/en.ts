@@ -512,6 +512,8 @@ export const en: Translations = {
     activity_tab_all: 'All',
     activity_tab_work: 'Work',
     activity_tab_admin: 'Admin',
+    activity_filter_all_users: 'All actors',
+    activity_filter_user_label: 'Actor',
     user_card_team: 'Team',
     user_card_capacity: 'Capacity',
     user_card_active: 'Active',

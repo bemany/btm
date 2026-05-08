@@ -314,11 +314,14 @@ export interface ActivityEntry {
   createdAt: string;
 }
 
-export async function listActivity(opts: { limit?: number; before?: string; kind?: string } = {}): Promise<ActivityEntry[]> {
+export async function listActivity(
+  opts: { limit?: number; before?: string; kind?: string; actorId?: string } = {},
+): Promise<ActivityEntry[]> {
   const params = new URLSearchParams();
   if (opts.limit) params.set('limit', String(opts.limit));
   if (opts.before) params.set('before', opts.before);
   if (opts.kind) params.set('kind', opts.kind);
+  if (opts.actorId) params.set('actorId', opts.actorId);
   const path = `/activity${params.toString() ? '?' + params.toString() : ''}`;
   const { activity } = await apiFetch<{ activity: ActivityEntry[] }>(path);
   return activity;
