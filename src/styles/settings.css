@@ -7,12 +7,12 @@
   position: fixed;
   inset: 0;
   z-index: 200;
-  background: rgba(28, 26, 23, 0.45);
+  background: rgba(18, 16, 14, 0.65);
   display: grid;
   place-items: center;
   padding: 24px;
-  -webkit-backdrop-filter: blur(2px);
-  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
   animation: set-fade 140ms ease-out;
 }
 
@@ -51,7 +51,7 @@
 }
 
 body[data-theme='glass'] .set-shell {
-  background: rgba(250, 247, 242, 0.92);
+  background: rgba(250, 247, 242, 0.98);
   -webkit-backdrop-filter: blur(28px) saturate(160%);
   backdrop-filter: blur(28px) saturate(160%);
   border-color: rgba(255, 255, 255, 0.55);
@@ -60,11 +60,11 @@ body[data-theme='glass'] .set-shell {
 body[data-theme='default-dark'] .set-shell,
 body[data-theme='glass-dark'] .set-shell {
   background: var(--cream-50);
-  border-color: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
 body[data-theme='glass-dark'] .set-shell {
-  background: rgba(36, 33, 30, 0.78);
+  background: rgba(28, 26, 24, 0.97);
   -webkit-backdrop-filter: blur(28px) saturate(160%);
   backdrop-filter: blur(28px) saturate(160%);
 }
@@ -338,16 +338,19 @@ body[data-theme='glass-dark'] .set-nav {
   color: var(--err-700);
 }
 
-/* Sidebar Profil-Menu — Quick-Toggle-Row für Theme */
+/* Sidebar Profil-Menu — Quick-Toggle, 2×2 Grid (Theme oben, Helligkeit unten).
+   Zwei Zeilen statt einer langen — passt sicher in die schmale Sidebar
+   und bleibt im Dark-Mode innerhalb des Container-Borders. */
 .sb-quick-toggle {
-  display: flex;
-  align-items: center;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 4px;
   padding: 4px;
   background: var(--cream-100);
   border: 1px solid var(--ink-100);
   border-radius: 8px;
   margin: 6px 4px;
+  box-sizing: border-box;
 }
 body[data-theme='glass'] .sb-quick-toggle,
 body[data-theme='glass-dark'] .sb-quick-toggle {
@@ -356,7 +359,6 @@ body[data-theme='glass-dark'] .sb-quick-toggle {
 }
 
 .sb-quick-btn {
-  flex: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -370,14 +372,8 @@ body[data-theme='glass-dark'] .sb-quick-toggle {
   font-weight: 500;
   color: var(--ink-700);
   cursor: pointer;
+  min-width: 0;
   transition: background 120ms ease, color 120ms ease;
-}
-
-.sb-quick-btn.icon {
-  flex: 0 0 auto;
-  width: 28px;
-  padding: 6px 0;
-  color: var(--ink-500);
 }
 
 .sb-quick-btn:hover {
@@ -394,6 +390,12 @@ body[data-theme='glass-dark'] .sb-quick-toggle {
   color: var(--cream-50);
 }
 
+body[data-theme='default-dark'] .sb-quick-btn:hover,
+body[data-theme='glass-dark'] .sb-quick-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--cream-50);
+}
+
 .sb-quick-btn .sb-profile-swatch {
   width: 14px;
   height: 14px;
@@ -401,19 +403,16 @@ body[data-theme='glass-dark'] .sb-quick-toggle {
   flex-shrink: 0;
 }
 
-.sb-quick-sep {
-  width: 1px;
-  height: 18px;
-  background: var(--ink-200);
-  margin: 0 2px;
-}
-body[data-theme='glass'] .sb-quick-sep,
-body[data-theme='glass-dark'] .sb-quick-sep {
-  background: rgba(255, 255, 255, 0.1);
-}
-
 .sb-quick-label {
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Separator wird im 2×2-Grid nicht mehr benötigt — versteckt halten falls
+   noch im DOM (Markup hat noch <span class="sb-quick-sep" />). */
+.sb-quick-sep {
+  display: none;
 }
 
 /* Tastenkürzel-Indikator im Profil-Item */

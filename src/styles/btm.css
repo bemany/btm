@@ -679,8 +679,8 @@ body[data-theme="default-dark"] .board-gear-item.is-current {
 /* Kanban ----------------------------------------------------- */
 .kanban {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
   height: 100%;
 }
 .k-col {
