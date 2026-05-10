@@ -1,8 +1,9 @@
 # BTM — Bethesna Task Management
 
 Internes Task-, Zeit- und Kapazitäts-Tool für ~5–25 Mitarbeiter.
-Phase-1-Frontend ist live, Phase-2-Backend (eigene API + Postgres) ebenfalls.
-Multi-User-Auth, Server-State-Persistenz, MCP-Anbindung folgen.
+Stand v0.10.0 (10.05.2026): voll multi-user, Server-State persistent, MCP über `/api/mcp`,
+Mail-Notifications + Daily-Digest, Comments + Mentions + Inbox, Subtasks, Projekt-Owner,
+Feedback-System, animierte Glass-Hintergründe. Siehe [`RELEASES.md`](./RELEASES.md) für Versions-Historie.
 
 ---
 
@@ -32,10 +33,10 @@ Multi-User-Auth, Server-State-Persistenz, MCP-Anbindung folgen.
 - **LM-Studio**: `https://llm1.bemany.tech` mit Token `sk-lm-…` für Chat (`google/gemma-4-e4b`) — Tool-Use im Chat aktiv.
 - **Backup**: `/opt/btm/backup.sh` (cron 03:30 UTC täglich), pg_dump.gz in `/opt/btm/backups/`, 14 Tage Retention.
 
-### Alte Setup (LXC 139) — Rollback-Fallback
+### Alte Setup (LXC 139) — Rollback-Fallback (auslaufend)
 - LXC 139 (`192.168.40.139`) auf g40 läuft noch, `btm-api.service` ist `disabled` + `stopped`. Daten + Code intakt.
 - Bei Bedarf zurück: `pct exec 139 -- systemctl enable --now btm-api`, dann CF-Tunnel-Route wieder anlegen + DNS auf CNAME zurück.
-- Geplant: nach 1 Woche stabilen DO-Betrieb LXC 139 archivieren.
+- Heute Tag 5 nach Migration — bei stabilem Betrieb am 12.05. archivieren (Snapshot + LXC stoppen).
 
 ## Stack
 
@@ -43,7 +44,7 @@ Multi-User-Auth, Server-State-Persistenz, MCP-Anbindung folgen.
 - **Backend**: Hono auf Node 22, Better-Auth (Magic-Link + Admin-Rolle), Drizzle ORM, postgres-js Pool.
 - **Auth**: Cookie-Sessions (Better-Auth) ODER Bearer-API-Token (`btm_<token>`, sha256-hashed at rest, scopes read/write).
 - **Mail**: nodemailer (SMTP-SSL).
-- **Webserver**: Caddy 2.11 — `/api/*` → `localhost:3001`, `/` → `/opt/apps/btm/dist` (SPA-Fallback, immutable Asset-Cache).
+- **Webserver**: Caddy-Container in `/root/n8n-docker-caddy/` — `/api/events` mit `flush_interval -1` (SSE), `/api/*` → `btm-api:3001`, Rest → Volume `/srv/btm` (= Host `/opt/btm/dist`).
 - **PWA**: vite-plugin-pwa (autoUpdate), Workbox precache + Window-focus-Refresh.
 
 ## Repo-Struktur
@@ -54,29 +55,43 @@ btm/
 │   ├── App.tsx           # Screen-Router, Tweaks-Effects, Hotkeys
 │   ├── main.tsx          # Mount, ErrorBoundary, QueryClientProvider, AuthProvider, AppGate
 │   ├── auth/             # AuthContext, LoginScreen, AppGate
-│   ├── data/             # api.ts (Server-Calls + Field-Mapping), sync.ts (Tanstack), apiTokens.ts
+│   ├── data/             # api.ts (Server-Calls + Field-Mapping), sync.ts (Tanstack), apiTokens.ts, releases.ts
 │   ├── store/            # Zustand-Store (UI-State + Bridge zu Server-Daten)
-│   ├── components/       # shell/, board/, screens/, drawers/, command-palette/, tweaks/, profile/
-│   ├── lib/              # format.ts, pomodoro.ts, mockReply.ts (wird durch LM-Studio ersetzt)
-│   └── styles/           # globio-tokens, btm, btm-glass, btm-dark, btm-admin, cmdk, sidebar-profile, auth, api-tokens
+│   ├── components/       # shell/, board/, screens/, drawers/, command-palette/, comments/, backgrounds/, settings/, projects/, sessions/, feedback/
+│   ├── lib/              # format.ts, pomodoro.ts, inlineMarkdown.tsx, i18n
+│   └── styles/           # globio-tokens, btm, btm-glass, btm-dark, btm-admin, cmdk, comments, inbox, datepicker, backgrounds, subtasks, sessions, project-members, feedback, settings, releases
 ├── server/               # Backend (eigenes package.json + tsconfig)
 │   ├── src/
 │   │   ├── index.ts      # Hono-Server-Entrypoint
-│   │   ├── lib/          # auth.ts (Better-Auth), context.ts (Bearer + Cookie), mailer.ts, api-token.ts
-│   │   ├── routes/       # me, tasks, projects, users, api-tokens, (TODO: teams, activity)
+│   │   ├── lib/          # auth, context, mailer, api-token, mentions, notifications, digest, project-visibility, activity, events
+│   │   ├── routes/       # me, tasks, projects, users, api-tokens, comments, notifications, feedback, activity, sessions, mcp, sse
 │   │   └── db/           # client.ts, schema.ts, migrate.ts
-│   └── drizzle/          # SQL-Migrations (drizzle-kit generate)
+│   └── drizzle/          # SQL-Migrations (0000–0010), drizzle-kit generate
 ├── scripts/
 │   ├── generate-icons.mjs   # SVG → PNG-PWA-Icons
 │   └── smoke-test.mjs       # Playwright-Headless gegen Live, Screenshots /tmp/btm-shots/
 └── public/               # static assets, app-icon.svg + PNG-Varianten, logo
 ```
 
-## DB-Schema (heute)
+## DB-Schema (Stand v0.10.0)
 
-Tabellen: `users`, `sessions`, `accounts`, `verifications` (Better-Auth) + `projects`, `tasks`, `task_sessions`, `live_timers`, `invitations`, `api_tokens`.
+Better-Auth: `users`, `sessions`, `accounts`, `verifications`.
 
-Migrations: `server/drizzle/`. Anwenden via `npm run db:migrate` (im server-Subdir).
+Domain:
+- `projects`, `project_members` (role: owner|member|reader)
+- `tasks` (mit `parent_task_id` für Subtasks), `task_sessions`, `live_timers`
+- `comments`, `comment_mentions`, `notifications` (kind: 'mention' | 'review_assigned' | …)
+- `feedback` (kind: bug|feature, status: open|in_progress|done)
+- `activity_log`, `invitations`, `api_tokens`
+
+User-Spalten zusätzlich zu Better-Auth-Default: `role`, `status`, `phone`, `teamId`, `office`, `jobTitle`, `avatarBase64`, `boardView`, `language`, `backgroundChoice`, `notifyPrefs` (JSONB: `{ mention: bool, digest: bool }`), `lastSeenInboxAt`.
+
+Migrations: `server/drizzle/0000_*.sql … 0010_subtasks_and_feedback.sql`.
+Auf Production **manuell** anwenden:
+```bash
+ssh -i ~/.ssh/id_ed25519 root@142.93.172.15 "docker exec -i btm-postgres psql -U btm -d btm" < server/drizzle/0010_subtasks_and_feedback.sql
+```
+Lokal: `npm run db:migrate` im `server/`-Subdir.
 
 ## Deploy-Workflow (DO-VPS, Docker)
 
@@ -125,41 +140,30 @@ cp .env.example .env  # DATABASE_URL etc. setzen
 npm run dev           # tsx watch src/index.ts
 ```
 
-## ToDo (bis "vollständig nutzbar")
-
-### Blocker
-- [ ] **Liste/Timeline-Ansicht klickbar** — Snap-Back zwischen Tweak-State und Store-Layout. Fix gemacht, deploy ausstehend.
-- [ ] **Avatar/User-Anzeige auf echte Server-User mappen** — `Avatar.tsx`, `CapacityScreen.tsx`, `BoardTimeline.tsx` nutzen noch hardcoded PERSONAS.
-- [ ] **TaskDetailDrawer-Selects** (Assignee/Project) müssen aus `/api/users` und Projects-Store kommen.
-- [ ] **TimeCell** schreibt nicht zum Server — Sessions verschwinden nach Reload.
-
-### Wichtig
-- [ ] **Admin-UI**: UserCard-Grid + InviteCard + UserDrawer + TeamsDrawer + ActivitySidebar (Design im Bundle `GflJT49HmCtRM3_1bRc--g` vorhanden).
-- [ ] **Backend-Erweiterung für Admin**: `users.status/phone/teamId`, Tabellen `teams` + `activity_log`, Routes `/api/teams`, `/api/activity`. Activity-Instrumentation in `tasks.ts`/`projects.ts`/`users.ts`.
-- [ ] **Dark-Mode**: CSS `btm-dark.css` ist drin, Theme-Switcher unten links muss auf 4 Modi.
-- [ ] **Sidebar-Admin-Eintrag** nur für `role=admin`.
-- [ ] **Invite-Page** `/invite/:token` als Landing für eingeladene User.
-- [ ] **AI-Drawer auf LM-Studio** (`glm-4.6v-flash`) statt `mockReply`. Token: `sk-lm-…` aus Memory.
-- [ ] **MCP-Server** im `mcp/`-Subdir mit stdio-Transport, Tools für Tasks/Projects/Timer/me. Onboarding-Snippet im API-Token-Drawer.
+## ToDo
 
 ### Production
-- [ ] **Postgres-Backup-Job** auf g40 (täglich pg_dump → PBS).
-- [ ] **Mobile-Responsive** — aktuell `viewport: width=1440` hartcoded.
+- [ ] **Postgres-Backup-Job vom DO-VPS** — aktuell läuft `/opt/btm/backup.sh` lokal mit 14d-Retention. Off-site-Kopie nach g40-PBS oder S3-Bucket fehlt.
 - [ ] **Bundle-Splitting** — 980 kB JS auf Vendor/React/App auftrennen.
-- [ ] **Live-Updates** statt Polling (SSE oder WebSocket).
-- [ ] **Error-Toasts** für API-Fails.
 - [ ] **Loading-Skeletons** vor erstem Sync.
 - [ ] **CSP-Header** + Rate-Limiting auf API.
+- [ ] **LXC 139 archivieren** — sobald DO 1 Woche stabil (Ziel 12.05.).
 
 ### Nice-to-have
-- [ ] PWA-Offline-Cache für Tasks/Projects.
-- [ ] Tastatur-Shortcuts (viel aus Prototyp ist noch nicht verkabelt).
-- [ ] EN-Sprache.
-- [ ] Audit-Log persistent.
+- [ ] PWA-Offline-Cache für Tasks/Projects (Workbox runtime-caching).
+- [ ] Tastatur-Shortcuts vollständig verkabeln (vieles aus Prototyp noch nicht).
+- [ ] Audit-Log-UI für Admin (Daten existieren in `activity_log`, Sidebar zeigt's, aber kein dedizierter Screen).
+- [ ] Anhänge an Aufgaben (Roadmap-Item, Drawer-Platzhalter steht).
+- [ ] KI legt Tasks direkt an (Tool-Use im AI-Drawer ausbauen).
+- [ ] Live-Updates für Comments/Inbox (SSE-Topic `notifications` + `comments` existieren — Frontend invalidiert noch via Polling).
+
+### Erledigt seit v0.5.0
+Alle früheren Blocker (Live-Timeline, Server-User-Mapping, TimeCell-Persist, Admin-UI, Dark-Mode-4-Modi, Invite-Page, AI auf LM-Studio, MCP-Server, SSE, Mobile, Error-Toasts, EN-Sprache) — siehe `RELEASES.md`.
 
 ## Wichtige Werte / Geheimnisse
 
-Nicht in Git committen, leben in `/opt/apps/btm/server/.env` auf 139:
+Nicht in Git committen, leben in `/opt/btm/.env` auf der DO-VPS (chmod 600, root-only).
+Compose injiziert per `environment:` → kein direkter Read im Container nötig:
 
 ```
 DATABASE_URL=postgres://btm:<PASS>@localhost:5432/btm
@@ -183,10 +187,14 @@ Backups dieser Datei separat sichern.
 - **Field-Mapping** Server↔Frontend liegt in `src/data/api.ts`. UI-Komponenten arbeiten mit dem Frontend-Schema (`task.col`, `task.who`, `task.proj`); der Server hat `column`, `assigneeId`, `projectId`. Mapping nur in dieser Datei.
 - **Auth-Schicht**: Browser-Session (Cookie) für UI, Bearer-Token für MCP/CLI. Token-Erstellen geht *nur* via Cookie-Session.
 - **Demo-Datum**: Frontend hat einen UI-Anker `Mo 04.05.2026 KW 19` in `src/lib/format.ts`. Echte Daten kommen aus DB; das ist nur die Format-Konstante.
-- **Persona-Konstante**: `src/store/seed.ts` hat noch hardcoded `PERSONAS` als Frontend-Fallback. Nicht weiter ausbauen — Migration auf Server-User-Liste steht an.
+- **Releases**: Bei jedem Deploy mit User-sichtbaren Änderungen Eintrag in `src/data/releases.ts` (oben anhängen) + `RELEASES.md` spiegeln + `version` bumpen.
+- **Mention-Encoding**: `@[Name](userId)` als sichtbares Token im Comment-Body. Regex `MENTION_RE` in `server/src/lib/mentions.ts` und `src/lib/inlineMarkdown.tsx` — beide synchron halten.
+- **Notifications-Trigger**: explizit in Routes (`fanoutMentions()` in `comments.ts`, Review-Notify in `tasks.ts`), nicht via DB-Trigger. Diff-basiert beim Edit (oldSet vs newSet) — keine Doppel-Notifications.
+- **Project-Visibility**: `server/src/lib/project-visibility.ts` filtert in jeder Tasks-Query basierend auf `project_members`. Projekte ohne Mitglieder sind public (kein Plötzliches-Verschwinden bei Migration).
 
 ## Kontakt-Pfade
 
-- **Cloudflare-API-Token (hakan)** für Tunnel-Routes: in Memory `~/.claude/projects/-Users-esrefyalcinkaya/memory/MEMORY.md`.
+- **Cloudflare-API-Token (hakan)** für Tunnel-Routes: in Memory `~/.claude/projects/-Users-user-Documents-GitHub-btm/memory/MEMORY.md`.
 - **Outline-API-Token** für Doku: gleiche Memory-Datei.
-- **g40 root**: `sshpass -p root ssh root@192.168.40.131`.
+- **DO-VPS**: `ssh -i ~/.ssh/id_ed25519 root@142.93.172.15`.
+- **g40 root** (LXC 139 Rollback): `sshpass -p root ssh root@192.168.40.131`.
