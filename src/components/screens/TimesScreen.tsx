@@ -1,8 +1,9 @@
-import { Fragment, useMemo } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useStore } from '../../store/store';
 import { useTick } from '../shared/hooks';
 import { Icon } from '../shared/Icon';
+import { Avatar } from '../shared/Avatar';
 import { ProjTag } from '../shared/ProjTag';
 import { showToast } from '../shared/Toast';
 import { fmtHMS, fmtMS, DEMO_TODAY } from '../../lib/format';
@@ -10,7 +11,30 @@ import { computePomo } from '../../lib/pomodoro';
 import { TimeCell } from './TimeCell';
 import { listWeekSessions } from '../../data/api';
 import { SYNC_KEYS } from '../../data/sync';
+import { useAuth } from '../../auth/AuthContext';
 import { useT, useLocale } from '../../i18n';
+
+/** Berechnet den Montag der Woche von `dateISO` (lokal). */
+function mondayOf(dateISO: string): string {
+  const d = new Date(dateISO + 'T12:00:00'); // Mittagsanker, vermeidet TZ-Drift
+  const dow = (d.getDay() || 7) - 1; // Mo=0
+  d.setDate(d.getDate() - dow);
+  return d.toISOString().slice(0, 10);
+}
+
+/** ISO-Wochenzahl (KW) von einem Datum. */
+function isoWeek(dateISO: string): number {
+  const d = new Date(dateISO + 'T12:00:00');
+  const target = new Date(d.valueOf());
+  const dayNr = (d.getDay() + 6) % 7;
+  target.setDate(target.getDate() - dayNr + 3);
+  const firstThursday = target.valueOf();
+  target.setMonth(0, 1);
+  if (target.getDay() !== 4) {
+    target.setMonth(0, 1 + ((4 - target.getDay() + 7) % 7));
+  }
+  return 1 + Math.ceil((firstThursday - target.valueOf()) / 604800000);
+}
 
 export function TimesScreen() {
   const tasks = useStore((s) => s.tasks);
@@ -24,10 +48,9 @@ export function TimesScreen() {
   const fmtNum = (h: number) => h.toFixed(1).replace('.', locale === 'en' ? '.' : ',');
 
   const users = useStore((s) => s.users);
+  const { user: authUser } = useAuth();
+  const isAdmin = authUser?.role === 'admin';
   useTick(!!timer);
-  const meUser = users.find((u) => u.id === currentUser);
-  const me = { name: meUser ? meUser.name.split(' ')[0] || meUser.name : '—' };
-  const myTasks = tasks.filter((tk) => tk.who === currentUser);
   const days = [
     t('board.timeline_day_mo'),
     t('board.timeline_day_di'),
@@ -36,21 +59,46 @@ export function TimesScreen() {
     t('board.timeline_day_fr'),
   ];
 
-  const weekStart = useMemo(() => {
-    const d = new Date(DEMO_TODAY);
+  // ── State: ausgewählter User + Wochenanker ───────────────────────
+  const [selectedUserId, setSelectedUserId] = useState<string>(currentUser ?? '');
+  const [weekStart, setWeekStart] = useState<string>(() =>
+    mondayOf(DEMO_TODAY instanceof Date ? DEMO_TODAY.toISOString().slice(0, 10) : String(DEMO_TODAY).slice(0, 10)),
+  );
+
+  const targetUser = users.find((u) => u.id === selectedUserId) ?? users.find((u) => u.id === currentUser);
+  const me = { name: targetUser ? targetUser.name.split(' ')[0] || targetUser.name : '—' };
+  const targetTasks = tasks.filter((tk) => tk.who === selectedUserId);
+
+  // Wochen-Navigation
+  const shiftWeek = (deltaDays: number) => {
+    const d = new Date(weekStart + 'T12:00:00');
+    d.setDate(d.getDate() + deltaDays);
+    setWeekStart(d.toISOString().slice(0, 10));
+  };
+  const goToday = () => setWeekStart(mondayOf(new Date().toISOString().slice(0, 10)));
+  const friday = useMemo(() => {
+    const d = new Date(weekStart + 'T12:00:00');
+    d.setDate(d.getDate() + 4);
     return d.toISOString().slice(0, 10);
-  }, []);
+  }, [weekStart]);
+  const kw = useMemo(() => isoWeek(weekStart), [weekStart]);
+  const fmtDay = (iso: string) =>
+    new Date(iso + 'T12:00:00').toLocaleDateString(locale === 'en' ? 'en-US' : 'de-DE', {
+      day: '2-digit',
+      month: '2-digit',
+    });
 
   const sessionsQ = useQuery({
-    queryKey: [...SYNC_KEYS.WEEK_SESSIONS, weekStart],
-    queryFn: () => listWeekSessions(weekStart),
+    queryKey: [...SYNC_KEYS.WEEK_SESSIONS, weekStart, selectedUserId],
+    queryFn: () => listWeekSessions(weekStart, selectedUserId || undefined),
     staleTime: 30_000,
     refetchOnWindowFocus: true,
+    enabled: !!selectedUserId,
   });
 
   const grid = useMemo(() => {
     const m: Record<string, number[]> = {};
-    myTasks.forEach((tk) => {
+    targetTasks.forEach((tk) => {
       m[tk.id] = days.map(() => 0);
     });
     const sessions = sessionsQ.data ?? [];
@@ -63,7 +111,7 @@ export function TimesScreen() {
       m[s.taskId][di] += s.hours;
     }
     return m;
-  }, [myTasks, sessionsQ.data, weekStart, days]);
+  }, [targetTasks, sessionsQ.data, weekStart, days]);
 
   const liveTask = timer ? tasks.find((tk) => tk.id === timer.taskId) : null;
   const pomo = timer ? computePomo(timer.pomodoro, Date.now()) : null;
@@ -82,6 +130,79 @@ export function TimesScreen() {
             <Icon name="download" size={14} /> {t('times.export_csv')}
           </button>
         </div>
+      </div>
+
+      {/* Wochen-Navigation + User-Picker */}
+      <div className="times-toolbar">
+        <div className="times-nav">
+          <button
+            type="button"
+            className="times-nav-btn"
+            onClick={() => shiftWeek(-7)}
+            title={t('times.prev_week')}
+            aria-label={t('times.prev_week')}
+          >
+            <Icon name="chevron-left" size={14} />
+          </button>
+          <div className="times-nav-label">
+            <span className="times-nav-kw">KW {kw}</span>
+            <span className="times-nav-range">
+              {fmtDay(weekStart)} – {fmtDay(friday)}
+            </span>
+          </div>
+          <button
+            type="button"
+            className="times-nav-btn"
+            onClick={() => shiftWeek(7)}
+            title={t('times.next_week')}
+            aria-label={t('times.next_week')}
+          >
+            <Icon name="chevron-right" size={14} />
+          </button>
+          <button type="button" className="times-nav-today" onClick={goToday}>
+            {t('common.today')}
+          </button>
+        </div>
+
+        <div style={{ flex: 1 }} />
+
+        {isAdmin && users.length > 1 && (
+          <div className="times-user-picker">
+            <span className="times-user-picker-label">{t('times.show_for')}</span>
+            <div className="times-user-chips">
+              {users
+                .filter((u) => u.status === 'active')
+                .slice(0, 6)
+                .map((u) => (
+                  <button
+                    key={u.id}
+                    type="button"
+                    className={`times-user-chip ${u.id === selectedUserId ? 'is-active' : ''}`}
+                    onClick={() => setSelectedUserId(u.id)}
+                    title={u.name}
+                  >
+                    <Avatar id={u.id} size={20} />
+                    <span>{u.name.split(' ')[0]}</span>
+                  </button>
+                ))}
+              {users.filter((u) => u.status === 'active').length > 6 && (
+                <select
+                  className="times-user-select"
+                  value={selectedUserId}
+                  onChange={(e) => setSelectedUserId(e.target.value)}
+                >
+                  {users
+                    .filter((u) => u.status === 'active')
+                    .map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.name}
+                      </option>
+                    ))}
+                </select>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {timer && liveTask ? (
@@ -183,7 +304,7 @@ export function TimesScreen() {
       )}
 
       <div className="eyebrow" style={{ marginBottom: 10 }}>
-        {t('times.grid_eyebrow', { name: me.name, kw: 19 })}
+        {t('times.grid_eyebrow', { name: me.name, kw })}
       </div>
       <div className="tg-grid" style={{ gridTemplateColumns: '2fr repeat(5, 1fr) 80px' }}>
         <div className="tg-cell col-head" style={{ justifyContent: 'flex-start' }}>
@@ -197,7 +318,7 @@ export function TimesScreen() {
         <div className="tg-cell col-head" style={{ background: 'var(--ink-900)', color: 'var(--cream-50)' }}>
           Σ
         </div>
-        {myTasks
+        {targetTasks
           .filter((tk) => tk.col !== 'done' || tk.loggedH > 0)
           .map((tk) => {
             const row = grid[tk.id] || [0, 0, 0, 0, 0];

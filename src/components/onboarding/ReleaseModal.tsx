@@ -15,6 +15,7 @@ import {
 import { navigate } from '../../router';
 import { Icon } from '../shared/Icon';
 import { useT, useLocale } from '../../i18n';
+import { renderInlineMarkdown } from '../../lib/inlineMarkdown';
 
 export function ReleaseModal() {
   const { user, status } = useAuth();
@@ -88,7 +89,7 @@ export function ReleaseModal() {
                 {rel.changes.map((c, j) => (
                   <li key={j}>
                     <span className={`rel-kind-pill kind-${c.kind}`}>{KIND_LABEL[c.kind]}</span>
-                    <span>{tx(c.text, locale)}</span>
+                    <span>{renderInlineMarkdown(tx(c.text, locale))}</span>
                   </li>
                 ))}
               </ul>

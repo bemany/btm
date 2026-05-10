@@ -17,6 +17,7 @@ import {
 } from '../../data/releases';
 import { Icon } from '../shared/Icon';
 import { useT, useLocale } from '../../i18n';
+import { renderInlineMarkdown } from '../../lib/inlineMarkdown';
 
 export function ReleasesScreen() {
   const t = useT();
@@ -50,81 +51,91 @@ export function ReleasesScreen() {
         </p>
       </div>
 
-      {KNOWN_ISSUES.length > 0 && (
-        <section className="rel-section">
-          <div className="rel-section-head">
-            <Icon name="alert-triangle" size={16} className="rel-section-icon warn" />
-            <h2>{t('release.section_issues')}</h2>
-          </div>
-          <div className="rel-cards">
-            {KNOWN_ISSUES.map((iss, i) => (
-              <article key={i} className={`rel-card issue status-${iss.status}`}>
-                <header>
-                  <span className={`rel-status-pill status-${iss.status}`}>
-                    {STATUS_LABEL[iss.status]}
-                  </span>
-                  <h3>{tx(iss.title, locale)}</h3>
-                </header>
-                <p>{tx(iss.description, locale)}</p>
-                {iss.workaround && (
-                  <p className="rel-workaround">
-                    <strong>{t('release.workaround')}</strong> {tx(iss.workaround, locale)}
-                  </p>
-                )}
-                <footer>{t('release.since', { date: iss.reportedAt })}</footer>
-              </article>
-            ))}
-          </div>
-        </section>
-      )}
+      {/* Hauptlayout: Releases links (80%), Status-Sidebar rechts (20%, sticky) */}
+      <div className="rel-layout">
+        <main className="rel-main">
+          <section className="rel-section">
+            <div className="rel-section-head">
+              <Icon name="package" size={16} className="rel-section-icon" />
+              <h2>{t('release.section_releases')}</h2>
+            </div>
+            <div className="rel-releases">
+              {RELEASES.map((rel) => (
+                <article key={rel.version} className="rel-release">
+                  <header>
+                    <span className="rel-version">v{rel.version}</span>
+                    <span className="rel-date">{rel.date}</span>
+                    <h3>{tx(rel.title, locale)}</h3>
+                  </header>
+                  <ul className="rel-changes">
+                    {rel.changes.map((c, j) => (
+                      <li key={j} className={`rel-change kind-${c.kind}`}>
+                        <span className={`rel-kind-pill kind-${c.kind}`}>{KIND_LABEL[c.kind]}</span>
+                        <span className="rel-change-text">{renderInlineMarkdown(tx(c.text, locale))}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </article>
+              ))}
+            </div>
+          </section>
+        </main>
 
-      {ROADMAP.length > 0 && (
-        <section className="rel-section">
-          <div className="rel-section-head">
-            <Icon name="hammer" size={16} className="rel-section-icon" />
-            <h2>{t('release.section_roadmap')}</h2>
-          </div>
-          <div className="rel-cards">
-            {ROADMAP.map((item, i) => (
-              <article key={i} className="rel-card roadmap">
-                <h3>{tx(item.title, locale)}</h3>
-                {item.description && <p>{tx(item.description, locale)}</p>}
-                {item.eta && (
-                  <footer>
-                    <Icon name="clock" size={11} /> {tx(item.eta, locale)}
-                  </footer>
-                )}
-              </article>
-            ))}
-          </div>
-        </section>
-      )}
-
-      <section className="rel-section">
-        <div className="rel-section-head">
-          <Icon name="package" size={16} className="rel-section-icon" />
-          <h2>{t('release.section_releases')}</h2>
-        </div>
-        <div className="rel-releases">
-          {RELEASES.map((rel) => (
-            <article key={rel.version} className="rel-release">
-              <header>
-                <span className="rel-version">v{rel.version}</span>
-                <span className="rel-date">{rel.date}</span>
-                <h3>{tx(rel.title, locale)}</h3>
-              </header>
-              <ul className="rel-changes">
-                {rel.changes.map((c, j) => (
-                  <li key={j} className={`rel-change kind-${c.kind}`}>
-                    <span className={`rel-kind-pill kind-${c.kind}`}>{KIND_LABEL[c.kind]}</span>
-                    <span className="rel-change-text">{tx(c.text, locale)}</span>
-                  </li>
+        <aside className="rel-aside">
+          {KNOWN_ISSUES.length > 0 && (
+            <section className="rel-section">
+              <div className="rel-section-head">
+                <Icon name="alert-triangle" size={14} className="rel-section-icon warn" />
+                <h2>{t('release.section_issues')}</h2>
+              </div>
+              <div className="rel-aside-cards">
+                {KNOWN_ISSUES.map((iss, i) => (
+                  <article key={i} className={`rel-card issue status-${iss.status}`}>
+                    <header>
+                      <span className={`rel-status-pill status-${iss.status}`}>
+                        {STATUS_LABEL[iss.status]}
+                      </span>
+                      <h3>{tx(iss.title, locale)}</h3>
+                    </header>
+                    <p>{renderInlineMarkdown(tx(iss.description, locale))}</p>
+                    {iss.workaround && (
+                      <p className="rel-workaround">
+                        <strong>{t('release.workaround')}</strong>{' '}
+                        {renderInlineMarkdown(tx(iss.workaround, locale))}
+                      </p>
+                    )}
+                    <footer>{t('release.since', { date: iss.reportedAt })}</footer>
+                  </article>
                 ))}
-              </ul>
-            </article>
-          ))}
-        </div>
-      </section>
+              </div>
+            </section>
+          )}
+
+          {ROADMAP.length > 0 && (
+            <section className="rel-section">
+              <div className="rel-section-head">
+                <Icon name="hammer" size={14} className="rel-section-icon" />
+                <h2>{t('release.section_roadmap')}</h2>
+              </div>
+              <div className="rel-aside-cards">
+                {ROADMAP.map((item, i) => (
+                  <article key={i} className="rel-card roadmap">
+                    <h3>{tx(item.title, locale)}</h3>
+                    {item.description && (
+                      <p>{renderInlineMarkdown(tx(item.description, locale))}</p>
+                    )}
+                    {item.eta && (
+                      <footer>
+                        <Icon name="clock" size={11} /> {tx(item.eta, locale)}
+                      </footer>
+                    )}
+                  </article>
+                ))}
+              </div>
+            </section>
+          )}
+        </aside>
+      </div>
     </div>
   );
 }

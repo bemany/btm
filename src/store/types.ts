@@ -30,6 +30,7 @@ export interface Project {
   color: string;
   client: string;
   due: string | null;
+  ownerId?: string | null;
 }
 
 export interface Column {
@@ -39,6 +40,7 @@ export interface Column {
 }
 
 export interface Session {
+  id?: string;
   from: number;
   to: number;
   h: number;
@@ -59,6 +61,8 @@ export interface Task {
   sessions: Session[];
   createdAt: number;
   attachments?: Array<{ name: string; size?: number }>;
+  /** Wenn gesetzt: diese Aufgabe ist Subtask einer anderen. */
+  parentTaskId?: string | null;
 }
 
 export type PomodoroMode = 'focus' | 'short' | 'long';

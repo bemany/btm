@@ -1,0 +1,327 @@
+/* Custom DatePicker im BTM-Design */
+
+.dp-wrap {
+  position: relative;
+  display: inline-block;
+}
+
+.dp-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--cream-50);
+  border: 1px solid var(--ink-200);
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--ink-700);
+  cursor: pointer;
+  transition: border-color 0.12s ease, background 0.12s ease;
+}
+.dp-trigger:hover {
+  border-color: var(--ink-300);
+  background: var(--cream-100);
+}
+.dp-trigger.is-empty .dp-trigger-label {
+  color: var(--ink-500);
+  font-style: italic;
+}
+.dp-trigger.is-mono .dp-trigger-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+.dp-trigger.is-compact {
+  padding: 3px 8px;
+  font-size: 11px;
+}
+.dp-trigger-icon {
+  color: var(--ink-500);
+  flex-shrink: 0;
+}
+.dp-trigger-label {
+  white-space: nowrap;
+}
+
+.dp-trigger-clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink-500);
+  margin-left: 2px;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.dp-trigger-clear:hover {
+  background: var(--ink-100);
+  color: var(--ink-900);
+}
+
+/* Popover — frosted glass, transluzent */
+.dp-pop {
+  position: absolute;
+  z-index: 1100;
+  top: calc(100% + 6px);
+  left: 0;
+  width: 280px;
+  background: rgba(250, 247, 242, 0.62);
+  border: 1px solid rgba(28, 26, 23, 0.08);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  border-radius: 12px;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.7) inset,
+    0 16px 36px rgba(0, 0, 0, 0.16),
+    0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 12px;
+  user-select: none;
+  /* Damit Popover nicht clipt wenn rechts wenig Platz */
+  max-width: calc(100vw - 24px);
+}
+
+.dp-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.dp-head-label {
+  flex: 1;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-900);
+  text-transform: capitalize;
+}
+.dp-nav {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--ink-700);
+  cursor: pointer;
+  padding: 0;
+}
+.dp-nav:hover {
+  background: var(--ink-50, rgba(0, 0, 0, 0.05));
+  border-color: var(--ink-100);
+}
+
+.dp-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  margin-bottom: 4px;
+}
+.dp-weekdays span {
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-500);
+  padding: 4px 0;
+}
+
+.dp-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+.dp-day {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-800);
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.1s ease, color 0.1s ease, border-color 0.1s ease;
+}
+.dp-day:hover {
+  background: var(--ink-50, rgba(0, 0, 0, 0.05));
+}
+.dp-day.is-out {
+  color: var(--ink-300);
+}
+.dp-day.is-today {
+  border-color: var(--ink-300);
+  font-weight: 700;
+}
+.dp-day.is-selected {
+  background: var(--accent-500);
+  color: var(--cream-50);
+  border-color: var(--accent-500);
+}
+.dp-day.is-selected:hover {
+  background: var(--accent-500);
+  filter: brightness(1.05);
+}
+
+.dp-time {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 10px;
+  padding: 8px 10px;
+  background: var(--cream-100);
+  border: 1px solid var(--ink-100);
+  border-radius: 6px;
+}
+.dp-time-icon {
+  color: var(--ink-500);
+  margin-right: 4px;
+}
+.dp-time-input {
+  width: 38px;
+  background: var(--cream-50);
+  border: 1px solid var(--ink-200);
+  border-radius: 4px;
+  padding: 3px 4px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  color: var(--ink-900);
+  /* Native Spinner ausblenden — wir haben keine, brauchen aber keine */
+  -moz-appearance: textfield;
+}
+.dp-time-input::-webkit-outer-spin-button,
+.dp-time-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.dp-time-input:focus {
+  outline: none;
+  border-color: var(--accent-500);
+  box-shadow: 0 0 0 2px rgba(224, 113, 64, 0.18);
+}
+.dp-time-sep {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--ink-700);
+  font-weight: 600;
+}
+
+.dp-foot {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--ink-100);
+}
+.dp-foot-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--ink-700);
+  cursor: pointer;
+}
+.dp-foot-btn:hover {
+  background: var(--ink-50, rgba(0, 0, 0, 0.05));
+  border-color: var(--ink-100);
+}
+.dp-foot-btn.is-primary {
+  background: var(--accent-500);
+  color: var(--cream-50);
+  border-color: var(--accent-500);
+  font-weight: 600;
+}
+.dp-foot-btn.is-primary:hover {
+  filter: brightness(1.05);
+  background: var(--accent-500);
+}
+.dp-foot-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Dark-Mode ─────────────────────────────────────────────────────── */
+
+body[data-theme='glass-dark'] .dp-trigger,
+body[data-theme='default-dark'] .dp-trigger {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: var(--ink-800);
+}
+body[data-theme='glass-dark'] .dp-trigger:hover,
+body[data-theme='default-dark'] .dp-trigger:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+body[data-theme='glass-dark'] .dp-pop,
+body[data-theme='default-dark'] .dp-pop {
+  background: rgba(28, 28, 32, 0.55);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.05) inset,
+    0 18px 44px rgba(0, 0, 0, 0.55),
+    0 2px 8px rgba(0, 0, 0, 0.32);
+  backdrop-filter: blur(32px) saturate(180%);
+  -webkit-backdrop-filter: blur(32px) saturate(180%);
+}
+body[data-theme='glass-dark'] .dp-day,
+body[data-theme='default-dark'] .dp-day {
+  color: var(--ink-800);
+}
+body[data-theme='glass-dark'] .dp-day:hover,
+body[data-theme='default-dark'] .dp-day:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+body[data-theme='glass-dark'] .dp-day.is-out,
+body[data-theme='default-dark'] .dp-day.is-out {
+  color: rgba(255, 255, 255, 0.25);
+}
+body[data-theme='glass-dark'] .dp-day.is-today,
+body[data-theme='default-dark'] .dp-day.is-today {
+  border-color: rgba(255, 255, 255, 0.25);
+}
+body[data-theme='glass-dark'] .dp-time,
+body[data-theme='default-dark'] .dp-time {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+body[data-theme='glass-dark'] .dp-time-input,
+body[data-theme='default-dark'] .dp-time-input {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: var(--ink-900);
+}
+body[data-theme='glass-dark'] .dp-foot,
+body[data-theme='default-dark'] .dp-foot {
+  border-top-color: rgba(255, 255, 255, 0.1);
+}
+body[data-theme='glass-dark'] .dp-foot-btn:hover,
+body[data-theme='default-dark'] .dp-foot-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+body[data-theme='glass-dark'] .dp-nav:hover,
+body[data-theme='default-dark'] .dp-nav:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+body[data-theme='glass-dark'] .dp-trigger-clear:hover,
+body[data-theme='default-dark'] .dp-trigger-clear:hover {
+  background: rgba(255, 255, 255, 0.12);
+}

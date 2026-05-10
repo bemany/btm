@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Icon } from '../components/shared/Icon';
 import { showToast } from '../components/shared/Toast';
 import { useAuth } from './AuthContext';
@@ -14,6 +14,40 @@ export function LoginScreen() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [code, setCode] = useState('');
   const [verifying, setVerifying] = useState(false);
+
+  // Auto-Login wenn URL `?as=email&code=123456` enthält (Admin-Magic-Link).
+  // Wird genau einmal pro Mount ausgeführt — danach URL bereinigt.
+  const autoTriedRef = useRef(false);
+  useEffect(() => {
+    if (autoTriedRef.current) return;
+    const params = new URLSearchParams(window.location.search);
+    const asEmail = params.get('as');
+    const asCode = params.get('code');
+    if (!asEmail || !asCode || !/^\d{6}$/.test(asCode)) return;
+    autoTriedRef.current = true;
+    setEmail(asEmail);
+    setCode(asCode);
+    setPhase('sent');
+    // Direkt verifizieren
+    void (async () => {
+      try {
+        const r = await fetch('/api/login-code', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: asEmail, code: asCode, callbackURL: '/' }),
+        });
+        if (!r.ok) throw new Error('invalid');
+        const { verifyUrl } = (await r.json()) as { verifyUrl: string };
+        // URL bereinigen, dann auf verifyUrl
+        window.history.replaceState({}, '', '/');
+        window.location.href = verifyUrl;
+      } catch {
+        setErrorMsg(t('login.code_invalid'));
+        showToast(t('login.code_invalid'));
+      }
+    })();
+  }, [t]);
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();

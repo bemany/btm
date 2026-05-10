@@ -27,6 +27,17 @@ export const users = pgTable('users', {
     .notNull()
     .default('kanban'),
   onboardingCompletedAt: timestamp('onboarding_completed_at', { withTimezone: true }),
+  // Mail-Notification-Präferenzen. Default: instant-Mention-Mails an, Daily-
+  // Digest an. Beide unabhängig — der User kann sich auch nur Digest oder
+  // nur Sofort-Mails wünschen.
+  notifyMentionsMail: boolean('notify_mentions_mail').notNull().default(true),
+  notifyDigestMail: boolean('notify_digest_mail').notNull().default(true),
+  // Wann der letzte Digest verschickt wurde (UTC). Wird vom Scheduler
+  // genutzt um Doppel-Sendung zu verhindern.
+  digestLastSentAt: timestamp('digest_last_sent_at', { withTimezone: true }),
+  // Animierter Hintergrund (Glass-Modus). Frontend hat den Catalog,
+  // Server speichert nur den ID-String — Validierung im Endpoint.
+  backgroundChoice: text('background_choice').notNull().default('none'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
@@ -79,6 +90,11 @@ export const projects = pgTable(
     client: text('client'),
     due: text('due'), // ISO-Date oder NULL
     createdById: text('created_by_id').references(() => users.id, { onDelete: 'set null' }),
+    // Projekt-Verantwortlicher: bekommt Notification wenn eine Aufgabe in
+    // Review wechselt, und nur er/sie (oder ein Admin) darf Aufgaben auf
+    // „Erledigt" setzen. NULL = niemand zuständig (Standard für Privat- und
+    // bestehende Projekte).
+    ownerId: text('owner_id').references(() => users.id, { onDelete: 'set null' }),
     // Wenn gesetzt: privates Projekt — nur für diesen User sichtbar.
     // Wird beim Anlegen eines Users automatisch mit `Privat <Name>` befüllt.
     privateOwnerId: text('private_owner_id').references(() => users.id, { onDelete: 'cascade' }),
@@ -86,6 +102,30 @@ export const projects = pgTable(
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index('projects_code_idx').on(t.code)],
+);
+
+// Projekt-Mitgliedschaften — wer hat Zugriff auf welches Projekt mit
+// welcher Rolle:
+//   • owner   — voller Zugriff inkl. Aufgaben auf 'done' setzen
+//   • member  — kann Aufgaben anlegen/bearbeiten, aber nicht abschließen
+//   • viewer  — nur lesen
+//
+// Existenz eines Eintrags ist orthogonal zu privateOwnerId — Privat-Projekte
+// brauchen normalerweise keinen Member-Eintrag, da nur der Owner sie sieht.
+// Auch wenn die Tabelle leer ist für ein Projekt, dürfen alle aktiven User
+// es sehen (Backwards-Compat). Admins sehen alles unabhängig.
+export const projectMembers = pgTable(
+  'project_members',
+  {
+    projectId: text('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
+    userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    role: text('role', { enum: ['owner', 'member', 'viewer'] }).notNull().default('member'),
+    addedAt: timestamp('added_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index('project_members_pid_idx').on(t.projectId),
+    index('project_members_uid_idx').on(t.userId),
+  ],
 );
 
 export const tasks = pgTable(
@@ -107,11 +147,18 @@ export const tasks = pgTable(
     assigneeId: text('assignee_id').references(() => users.id, { onDelete: 'set null' }),
     createdById: text('created_by_id').references(() => users.id, { onDelete: 'set null' }),
     sortOrder: integer('sort_order').notNull().default(0),
+    // Subtask-Beziehung. Wenn gesetzt, ist diese Aufgabe Teil einer
+    // anderen. Sub-Aufgaben tauchen als eigenständige Karten im Board auf,
+    // werden aber im UI mit Hinweis auf den Parent dekoriert. Mehrstufige
+    // Hierarchien (Subtask von Subtask) sind technisch erlaubt, im UI
+    // visualisieren wir aktuell nur eine Ebene.
+    parentTaskId: text('parent_task_id'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
     index('tasks_assignee_col_idx').on(t.assigneeId, t.column),
+    index('tasks_parent_idx').on(t.parentTaskId),
     index('tasks_project_idx').on(t.projectId),
   ],
 );
@@ -298,6 +345,35 @@ export const notifications = pgTable(
   ],
 );
 
+// User-Feedback (Bug-Reports + Feature-Requests). Wird von Nutzern aus
+// dem In-App-Feedback-Modal befüllt, im Admin sichtbar. Status-Workflow:
+// open → in_progress → done | wontfix.
+export const feedback = pgTable(
+  'feedback',
+  {
+    id: text('id').primaryKey(),
+    type: text('type', { enum: ['bug', 'feature'] }).notNull(),
+    title: text('title').notNull(),
+    body: text('body').notNull(),
+    // Snapshot-Felder zum Zeitpunkt des Reports (Routing, Theme, …) damit
+    // Admin sieht, wo der User war als er das Problem hatte.
+    contextPath: text('context_path'),
+    contextTheme: text('context_theme'),
+    contextUserAgent: text('context_user_agent'),
+    submitterId: text('submitter_id').references(() => users.id, { onDelete: 'set null' }),
+    status: text('status', { enum: ['open', 'in_progress', 'done', 'wontfix'] })
+      .notNull()
+      .default('open'),
+    adminNote: text('admin_note'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index('feedback_status_idx').on(t.status, t.createdAt),
+    index('feedback_submitter_idx').on(t.submitterId),
+  ],
+);
+
 // ── Type-Exports für Frontend / Routes ────────────────────────────────
 
 export type User = typeof users.$inferSelect;
@@ -319,3 +395,5 @@ export type NewComment = typeof comments.$inferInsert;
 export type CommentMention = typeof commentMentions.$inferSelect;
 export type Notification = typeof notifications.$inferSelect;
 export type NewNotification = typeof notifications.$inferInsert;
+export type Feedback = typeof feedback.$inferSelect;
+export type NewFeedback = typeof feedback.$inferInsert;

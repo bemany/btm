@@ -72,30 +72,8 @@ export function CapacityScreen() {
         </div>
       </div>
 
-      <div
-        style={{
-          background: 'var(--cream-50)',
-          border: '1px solid var(--ink-100)',
-          borderRadius: 8,
-          overflow: 'hidden',
-        }}
-      >
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '220px 1fr 120px 80px',
-            gap: 16,
-            padding: '10px 16px',
-            background: 'var(--cream-100)',
-            borderBottom: '1px solid var(--ink-100)',
-            fontFamily: 'var(--font-mono)',
-            fontSize: 10,
-            textTransform: 'uppercase',
-            letterSpacing: '0.06em',
-            color: 'var(--ink-500)',
-            fontWeight: 600,
-          }}
-        >
+      <div className="cap-container">
+        <div className="cap-table-head">
           <span>{t('capacity.employee')}</span>
           <span>{t('capacity.utilization')}</span>
           <span style={{ textAlign: 'right' }}>{t('capacity.hours')}</span>

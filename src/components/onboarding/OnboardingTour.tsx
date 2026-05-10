@@ -9,7 +9,7 @@
 // Buttons navigieren, Esc / „Überspringen" beendet die Tour und schreibt
 // `onboardingCompletedAt` in die DB.
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../../auth/AuthContext';
 import { Icon } from '../shared/Icon';
 import { apiFetch } from '../../lib/api';
@@ -52,6 +52,12 @@ const STEPS: Step[] = [
     bodyKey: 'onboarding.ai_body',
   },
   {
+    selector: '.app-topbar .tb-bell',
+    placement: 'bottom',
+    titleKey: 'onboarding.inbox_title',
+    bodyKey: 'onboarding.inbox_body',
+  },
+  {
     selector: '.app-sidebar .sb-foot-wrap',
     placement: 'right',
     titleKey: 'onboarding.profile_title',
@@ -83,6 +89,12 @@ export function OnboardingTour({ replayKey = 0, theme, setTheme }: Props) {
   const [stepIdx, setStepIdx] = useState(0);
   const [rect, setRect] = useState<DOMRect | null>(null);
   const [savedView, setSavedView] = useState<LayoutMode | null>(null);
+  // Schutz vor Mehrfach-Starts: useEffect-Deps `[user, replayKey]` feuern
+  // sonst auch dann, wenn AuthContext nur die User-Referenz erneuert
+  // (z.B. nach refreshAuth im View-Picker). Wir merken uns, welcher
+  // replayKey schon verarbeitet wurde — derselbe replayKey startet nicht
+  // ein zweites Mal.
+  const lastHandledReplayKey = useRef<number>(-1);
 
   const themeOptions: Array<{ id: ThemeMode; label: string; sub: string }> = [
     { id: 'glass', label: t('onboarding.theme_glass_light'), sub: t('onboarding.theme_glass_light_sub') },
@@ -101,6 +113,12 @@ export function OnboardingTour({ replayKey = 0, theme, setTheme }: Props) {
   // Beim Mount / replayKey-Wechsel prüfen, ob die Tour starten soll.
   useEffect(() => {
     if (!user) return;
+    // Selber replayKey schon verarbeitet → nicht erneut triggern.
+    // Wichtig: useEffect feuert auch wenn `user` die Referenz wechselt
+    // (z.B. nach refreshAuth() im View-Picker), und ohne diesen Guard
+    // würde dann der Replay-Reset-Pfad mehrfach laufen.
+    if (lastHandledReplayKey.current === replayKey) return;
+    lastHandledReplayKey.current = replayKey;
     let cancelled = false;
     (async () => {
       try {
@@ -113,11 +131,14 @@ export function OnboardingTour({ replayKey = 0, theme, setTheme }: Props) {
           }
           return;
         }
-        const me = await apiFetch<{ user: { onboardingCompletedAt: string | null } }>('/me');
-        if (cancelled) return;
-        if (!me.user.onboardingCompletedAt) {
-          setStepIdx(0);
-          setActive(true);
+        // Initial-Mount: nur starten wenn nicht schon erledigt.
+        // Wir vertrauen dem User-Objekt aus AuthContext — kein zweiter
+        // /me-Roundtrip nötig (vermeidet Race mit POST /complete).
+        if (!user.onboardingCompletedAt) {
+          if (!cancelled) {
+            setStepIdx(0);
+            setActive(true);
+          }
         }
       } catch {
         /* ignore — keine Tour-Anzeige bei Auth-Issues */
@@ -169,10 +190,14 @@ export function OnboardingTour({ replayKey = 0, theme, setTheme }: Props) {
     setActive(false);
     try {
       await apiFetch('/me/onboarding/complete', { method: 'POST' });
+      // AuthContext refreshen, damit `user.onboardingCompletedAt` lokal aktuell
+      // ist — sonst kann ein nachfolgender Re-Mount der Komponente die Tour
+      // erneut starten (Server sagt zwar OK, aber AuthUser hat noch null).
+      await refreshAuth();
     } catch {
       /* still close locally */
     }
-  }, []);
+  }, [refreshAuth]);
 
   const next = useCallback(() => {
     if (!active) return;

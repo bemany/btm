@@ -3,7 +3,7 @@ import { eq, asc, and } from 'drizzle-orm';
 import { z } from 'zod';
 import { nanoid } from 'nanoid';
 import { db } from '../db/client.js';
-import { users, invitations } from '../db/schema.js';
+import { users, invitations, loginCodes } from '../db/schema.js';
 import { requireAuth, requireAdmin, type Variables } from '../lib/context.js';
 import { sendMail, inviteEmail, appIconAttachment } from '../lib/mailer.js';
 import { logActivity } from '../lib/activity.js';
@@ -82,6 +82,38 @@ export const usersRoute = new Hono<{ Variables: Variables }>()
     }
 
     return c.json({ user: row });
+  })
+
+  // Admin-Tool: 6-stelligen Login-Code für einen anderen User generieren
+  // (Impersonation für Support-Zwecke). Der Admin kopiert sich Email + Code,
+  // loggt sich in einem privaten Browser ein. 15 Min gültig.
+  .post('/:id/magic-link', requireAdmin, async (c) => {
+    const me = c.get('user')!;
+    const id = c.req.param('id');
+    const [target] = await db.select().from(users).where(eq(users.id, id)).limit(1);
+    if (!target) return c.json({ error: 'not found' }, 404);
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    const lowerEmail = target.email.toLowerCase();
+    await db.insert(loginCodes).values({
+      id: `LC${nanoid(12)}`,
+      email: lowerEmail,
+      code,
+      expiresAt: new Date(Date.now() + 15 * 60 * 1000),
+    });
+    const baseUrl = process.env.BETTER_AUTH_URL ?? 'https://btm.bethesna.org';
+    const loginUrl = `${baseUrl}/?as=${encodeURIComponent(lowerEmail)}&code=${code}`;
+    logActivity({
+      kind: 'user_updated',
+      actorId: me.id,
+      target: id,
+      meta: { adminMagicLink: true, targetEmail: lowerEmail },
+    });
+    return c.json({
+      email: lowerEmail,
+      code,
+      url: loginUrl,
+      expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
+    });
   });
 
 export const invitationsRoute = new Hono<{ Variables: Variables }>()

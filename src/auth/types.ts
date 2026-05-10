@@ -8,7 +8,12 @@ export interface AuthUser {
   role: Role;
   cap: number;
   color: string;
+  jobTitle?: string | null;
   boardDefaultView?: 'kanban' | 'list' | 'timeline';
+  onboardingCompletedAt?: string | null;
+  notifyMentionsMail?: boolean;
+  notifyDigestMail?: boolean;
+  backgroundChoice?: string;
 }
 
 export type AuthMode = 'session' | 'apiToken' | null;

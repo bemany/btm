@@ -15,6 +15,7 @@ import { teamsRoute } from './routes/teams.js';
 import { activityRoute } from './routes/activity.js';
 import { commentsRoute } from './routes/comments.js';
 import { notificationsRoute } from './routes/notifications.js';
+import { feedbackRoute } from './routes/feedback.js';
 import { aiRoute } from './routes/ai.js';
 import { mcpRoute } from './routes/mcp.js';
 import { eventsRoute } from './routes/events.js';
@@ -72,6 +73,7 @@ app.route('/api/teams', teamsRoute);
 app.route('/api/activity', activityRoute);
 app.route('/api/comments', commentsRoute);
 app.route('/api/notifications', notificationsRoute);
+app.route('/api/feedback', feedbackRoute);
 app.route('/api/ai', aiRoute);
 app.route('/api/mcp', mcpRoute);
 app.route('/api/events', eventsRoute);
@@ -87,3 +89,9 @@ console.log(`   trustedOrigins=${trustedOrigins.join(', ')}`);
 console.log(`   initialAdmin=${process.env.INITIAL_ADMIN_EMAIL ?? '(none)'}`);
 
 serve({ fetch: app.fetch, hostname: host, port });
+
+// Daily-Digest-Scheduler. Single-Instance — wir haben einen Container.
+// Erste Iteration läuft 5s nach Startup (catch-up nach Container-Restart),
+// danach alle 5 Min ein Tick der prüft ob ein User digest-fällig ist.
+import { startDigestScheduler } from './lib/digest.js';
+startDigestScheduler();

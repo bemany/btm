@@ -3,9 +3,77 @@
    ========================================================= */
 
 .rel-page {
-  max-width: 920px;
-  margin: 0 auto;
-  padding: 32px 28px 80px;
+  /* Volle Breite — keine zentrale Spalten-Begrenzung mehr. Cards
+     füllen den verfügbaren Raum, der `auto-fit minmax`-Grid in
+     `.rel-cards` skaliert die Anzahl der Spalten dynamisch. */
+  max-width: none;
+  margin: 0;
+  padding: 32px 32px 80px;
+}
+
+/* Hauptlayout: Releases links (80%), Status-Sidebar rechts (20%, sticky) */
+.rel-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 4fr) minmax(280px, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+.rel-main {
+  min-width: 0;
+}
+.rel-aside {
+  /* Sticky entfernt — die Sidebar scrollt mit den Releases zusammen.
+     Sieht natürlicher aus bei langen Release-Historien und gibt mehr
+     Platz für lange Listen in „Bekannte Probleme" + „In Arbeit". */
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.rel-aside .rel-section { gap: 0; }
+.rel-aside .rel-section-head { margin-bottom: 8px; }
+.rel-aside .rel-section-head h2 {
+  font-size: 13px;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-700);
+  font-weight: 600;
+}
+.rel-aside-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.rel-aside .rel-card {
+  padding: 12px 14px;
+  gap: 4px;
+}
+.rel-aside .rel-card h3 {
+  font-size: 13px;
+  line-height: 1.35;
+}
+.rel-aside .rel-card p {
+  font-size: 12px;
+  line-height: 1.5;
+}
+.rel-aside .rel-card footer {
+  font-size: 10px;
+}
+.rel-aside .rel-workaround {
+  font-size: 11.5px;
+  padding: 6px 8px;
+}
+
+/* Auf engen Viewports: Status-Sidebar wandert unter die Releases */
+@media (max-width: 1100px) {
+  .rel-layout {
+    grid-template-columns: 1fr;
+  }
+  .rel-aside-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 12px;
+  }
 }
 
 .rel-header h1 {
@@ -57,13 +125,20 @@
   gap: 12px;
 }
 .rel-card {
-  background: var(--bg-panel, #FAF7F2);
-  border: 1px solid var(--border, var(--ink-200));
-  border-radius: 8px;
+  /* Frosted Glass auf allen Themes — fällt auf Solid in Light back, im
+     Glass-Modus schimmert der animierte Background durch. */
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(28, 26, 23, 0.08);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border-radius: 10px;
   padding: 14px 16px;
   display: flex;
   flex-direction: column;
   gap: 6px;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.6) inset,
+    0 4px 14px rgba(28, 26, 23, 0.04);
 }
 .rel-card header {
   display: flex;
@@ -101,18 +176,9 @@
   color: var(--ink-700);
 }
 
-.rel-card.issue {
-  border-left: 3px solid var(--ink-300);
-}
-.rel-card.issue.status-investigating {
-  border-left-color: #C8A04C;
-}
-.rel-card.issue.status-fix-pending {
-  border-left-color: var(--accent-500);
-}
-.rel-card.issue.status-external {
-  border-left-color: #7A9CC8;
-}
+/* Issue-Cards: keine farbigen Leisten links — die Status-Pill oben
+   reicht als visuelle Differenzierung. Sieht im Frosted-Glass-Container
+   sauberer aus. */
 
 .rel-status-pill {
   align-self: flex-start;
@@ -146,10 +212,15 @@
   gap: 18px;
 }
 .rel-release {
-  background: var(--bg-panel, #FAF7F2);
-  border: 1px solid var(--border, var(--ink-200));
-  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(28, 26, 23, 0.08);
+  backdrop-filter: blur(22px) saturate(160%);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+  border-radius: 12px;
   padding: 18px 20px;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.7) inset,
+    0 6px 18px rgba(28, 26, 23, 0.04);
 }
 .rel-release header {
   display: flex;
@@ -200,6 +271,21 @@
   color: var(--ink-800);
   flex: 1;
 }
+.rel-change-text strong,
+.rm-changes strong {
+  font-weight: 700;
+  color: var(--ink-900);
+}
+.rel-change-text code,
+.rm-changes code {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  background: var(--ink-50, rgba(0, 0, 0, 0.05));
+  border: 1px solid var(--ink-100);
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: var(--ink-900);
+}
 .rel-kind-pill {
   flex-shrink: 0;
   font-family: var(--font-mono);
@@ -210,6 +296,13 @@
   padding: 2px 7px;
   border-radius: 4px;
   margin-top: 2px;
+  /* Einheitliche Breite (NEU / FIX / GEÄNDERT / BREAKING),
+     damit der Text danach immer auf gleicher x-Position startet. */
+  min-width: 70px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 .rel-kind-pill.kind-feature {
   background: rgba(94, 127, 78, 0.16);
@@ -255,6 +348,9 @@ body[data-theme="glass-dark"] .rel-release,
 body[data-theme="default-dark"] .rel-release {
   background: rgba(255, 255, 255, 0.04);
   border-color: rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.04) inset,
+    0 6px 18px rgba(0, 0, 0, 0.18);
 }
 body[data-theme="glass-dark"] .rel-card p,
 body[data-theme="default-dark"] .rel-card p,

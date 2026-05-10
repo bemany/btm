@@ -14,9 +14,10 @@ export interface CommentComposerProps {
   subjectId: string;
   users: AppUser[];
   currentUserId: string | null;
+  onPosted?: () => void;
 }
 
-export function CommentComposer({ subjectType, subjectId, users, currentUserId }: CommentComposerProps) {
+export function CommentComposer({ subjectType, subjectId, users, currentUserId, onPosted }: CommentComposerProps) {
   const t = useT();
   const queryClient = useQueryClient();
   const [draft, setDraft] = useState('');
@@ -33,6 +34,7 @@ export function CommentComposer({ subjectType, subjectId, users, currentUserId }
         queryKey: [...SYNC_KEYS.COMMENTS, subjectType, subjectId],
       });
       await queryClient.invalidateQueries({ queryKey: SYNC_KEYS.NOTIFICATION_COUNT });
+      onPosted?.();
       showToast(t('comments.sent_toast'));
     } catch (e) {
       showToast(e instanceof Error ? e.message : t('comments.send_failed_toast'));

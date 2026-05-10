@@ -3,9 +3,11 @@ import { and, eq, asc, sql, isNull, or } from 'drizzle-orm';
 import { z } from 'zod';
 import { nanoid } from 'nanoid';
 import { db } from '../db/client.js';
-import { tasks, taskSessions, liveTimers, projects } from '../db/schema.js';
+import { tasks, taskSessions, liveTimers, projects, projectMembers } from '../db/schema.js';
 import { requireAuth, type Variables } from '../lib/context.js';
 import { logActivity } from '../lib/activity.js';
+import { createNotification } from '../lib/notifications.js';
+import { listVisibleProjectIds } from '../lib/project-visibility.js';
 
 const ColumnEnum = z.enum(['todo', 'planned', 'doing', 'review', 'done']);
 const PrioEnum = z.enum(['low', 'med', 'high']);
@@ -19,6 +21,7 @@ const createSchema = z.object({
   due: z.string().max(50).optional().nullable(),
   projectId: z.string().nullable().optional(),
   assigneeId: z.string().nullable().optional(),
+  parentTaskId: z.string().nullable().optional(),
 });
 
 const updateSchema = createSchema.partial();
@@ -27,9 +30,13 @@ export const tasksRoute = new Hono<{ Variables: Variables }>()
   .use('*', requireAuth)
   .get('/', async (c) => {
     const me = c.get('user')!;
-    // Filter: Tasks die zu einem fremden Privat-Projekt gehören NICHT zeigen.
-    // Tasks ohne Projekt + Tasks in nicht-privaten Projekten + Tasks im eigenen
-    // Privat-Projekt sind sichtbar.
+    // Sichtbarkeit gemäß Project-Membership: Tasks aus Projekten die der
+    // User nicht sehen darf werden ausgeblendet. Tasks ohne Projekt
+    // bleiben weiterhin sichtbar (z.B. ad-hoc-Aufgaben).
+    const { ids: visibleProjectIds, isAdmin } = await listVisibleProjectIds(
+      me.id,
+      me.role,
+    );
     const rows = await db
       .select({
         id: tasks.id,
@@ -44,20 +51,16 @@ export const tasksRoute = new Hono<{ Variables: Variables }>()
         assigneeId: tasks.assigneeId,
         createdById: tasks.createdById,
         sortOrder: tasks.sortOrder,
+        parentTaskId: tasks.parentTaskId,
         createdAt: tasks.createdAt,
         updatedAt: tasks.updatedAt,
       })
       .from(tasks)
-      .leftJoin(projects, eq(tasks.projectId, projects.id))
-      .where(
-        or(
-          isNull(tasks.projectId),
-          isNull(projects.privateOwnerId),
-          eq(projects.privateOwnerId, me.id),
-        ),
-      )
       .orderBy(asc(tasks.sortOrder), asc(tasks.createdAt));
-    return c.json({ tasks: rows });
+    const filtered = isAdmin
+      ? rows
+      : rows.filter((t) => !t.projectId || visibleProjectIds.includes(t.projectId));
+    return c.json({ tasks: filtered });
   })
   .post('/', async (c) => {
     const user = c.get('user')!;
@@ -86,21 +89,89 @@ export const tasksRoute = new Hono<{ Variables: Variables }>()
     const id = c.req.param('id');
     const body = updateSchema.parse(await c.req.json());
     const [before] = await db.select().from(tasks).where(eq(tasks.id, id)).limit(1);
+    if (!before) return c.json({ error: 'not found' }, 404);
+
+    // Permission-Check: Wechsel nach 'done' ist nur dem Projekt-Owner oder
+    // einem Admin erlaubt. Wenn das Projekt keinen Owner hat, darf jede:r.
+    if (body.column === 'done' && before.column !== 'done' && me.role !== 'admin') {
+      const projId = (body.projectId !== undefined ? body.projectId : before.projectId) as string | null;
+      if (projId) {
+        const [proj] = await db
+          .select({ ownerId: projects.ownerId })
+          .from(projects)
+          .where(eq(projects.id, projId))
+          .limit(1);
+        if (proj?.ownerId && proj.ownerId !== me.id) {
+          return c.json(
+            {
+              error: 'forbidden',
+              reason: 'only_owner_can_mark_done',
+              message: 'Nur der Projekt-Verantwortliche darf Aufgaben auf „Erledigt" setzen.',
+            },
+            403,
+          );
+        }
+      }
+    }
+
     const [row] = await db
       .update(tasks)
       .set({ ...body, updatedAt: new Date() })
       .where(eq(tasks.id, id))
       .returning();
     if (!row) return c.json({ error: 'not found' }, 404);
-    if (before && body.column && body.column !== before.column) {
+    if (body.column && body.column !== before.column) {
       logActivity({
         kind: body.column === 'done' ? 'task_done' : 'task_moved',
         actorId: me.id,
         target: id,
         meta: { title: row.title, from: before.column, to: body.column, who: row.assigneeId },
       });
+      // Wechsel nach 'review' → Inbox-Notification an Projekt-Owner.
+      // Self-Trigger filtern: wenn der Owner selbst verschoben hat, keine
+      // Notification (sonst wäre die Inbox voll).
+      if (body.column === 'review' && row.projectId) {
+        void notifyOwnerOnReview({
+          taskId: row.id,
+          taskTitle: row.title,
+          projectId: row.projectId,
+          actorId: me.id,
+        });
+      }
     } else if (Object.keys(body).length > 0) {
-      logActivity({ kind: 'task_updated', actorId: me.id, target: id, meta: { title: row.title } });
+      // Diff der relevanten Felder ins meta — UI rendert daraus einen
+      // Tooltip „Titel: alt → neu". Lange Strings clippen wir auf 80
+      // Zeichen, damit das jsonb nicht aufbläht.
+      const clip = (v: unknown): string => {
+        const s = v == null ? '' : String(v);
+        return s.length > 80 ? s.slice(0, 79) + '…' : s;
+      };
+      const changes: Record<string, { from: string; to: string }> = {};
+      const trackFields: Array<keyof typeof body> = [
+        'title',
+        'description',
+        'priority',
+        'estH',
+        'due',
+        'projectId',
+        'assigneeId',
+      ];
+      for (const f of trackFields) {
+        if (body[f] === undefined) continue;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const beforeVal = (before as any)[f];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const afterVal = (row as any)[f];
+        if (clip(beforeVal) !== clip(afterVal)) {
+          changes[f as string] = { from: clip(beforeVal), to: clip(afterVal) };
+        }
+      }
+      logActivity({
+        kind: 'task_updated',
+        actorId: me.id,
+        target: id,
+        meta: { title: row.title, changes },
+      });
     }
     return c.json({ task: row });
   })
@@ -313,4 +384,81 @@ export const tasksRoute = new Hono<{ Variables: Variables }>()
       .set({ loggedH: sql`GREATEST(0, ${tasks.loggedH} - ${s.hours})` })
       .where(eq(tasks.id, s.taskId));
     return c.json({ ok: true });
+  })
+  // Einzelne Session bearbeiten (Stunden und/oder Startzeitpunkt). Nur die
+  // eigenen Sessions sind editierbar — fremde geben 404. `hours` und/oder
+  // `fromAt` optional; `toAt` wird neu berechnet aus dem (ggf. neuen) From +
+  // (ggf. neuen) Hours, Logged-Counter wird per Delta nachgezogen.
+  .patch('/sessions/:sessionId', async (c) => {
+    const user = c.get('user')!;
+    const sessionId = c.req.param('sessionId');
+    const body = z
+      .object({
+        hours: z.number().min(0).max(24).optional(),
+        fromAt: z.string().optional(),
+      })
+      .parse(await c.req.json());
+    const [s] = await db
+      .select()
+      .from(taskSessions)
+      .where(and(eq(taskSessions.id, sessionId), eq(taskSessions.userId, user.id)))
+      .limit(1);
+    if (!s) return c.json({ error: 'not found' }, 404);
+    const newHours = body.hours ?? Number(s.hours);
+    const newFromAt = body.fromAt ? new Date(body.fromAt) : s.fromAt;
+    const newToAt = new Date(newFromAt.getTime() + newHours * 3_600_000);
+    const [updated] = await db
+      .update(taskSessions)
+      .set({ hours: newHours, fromAt: newFromAt, toAt: newToAt })
+      .where(eq(taskSessions.id, sessionId))
+      .returning();
+    const delta = newHours - Number(s.hours);
+    if (delta !== 0) {
+      await db
+        .update(tasks)
+        .set({ loggedH: sql`GREATEST(0, ${tasks.loggedH} + ${delta})` })
+        .where(eq(tasks.id, s.taskId));
+    }
+    return c.json({ session: updated });
   });
+
+// ── Helper: Owner-Notification beim Review-Wechsel ────────────────────
+// Schreibt einen Inbox-Eintrag (kind = 'review_request') für den Projekt-
+// Owner und triggert die existierende Notification-Mail-Pipeline (Mention-
+// Mail-Toggle wird hier ignoriert; Owner-Reviews sind wichtiger als der
+// allgemeine Mention-Setting-Toggle, sollen aber im Digest mitlaufen).
+
+async function notifyOwnerOnReview(opts: {
+  taskId: string;
+  taskTitle: string;
+  projectId: string;
+  actorId: string;
+}): Promise<void> {
+  try {
+    const [proj] = await db
+      .select({ ownerId: projects.ownerId, name: projects.name })
+      .from(projects)
+      .where(eq(projects.id, opts.projectId))
+      .limit(1);
+    if (!proj?.ownerId) return;
+    if (proj.ownerId === opts.actorId) return; // Self-Trigger filtern
+
+    void projectMembers; // referenziert; kein Member-Check nötig
+
+    await createNotification({
+      userId: proj.ownerId,
+      actorId: opts.actorId,
+      kind: 'review_request',
+      payload: {
+        taskId: opts.taskId,
+        subjectType: 'task',
+        subjectId: opts.taskId,
+        subjectTitle: opts.taskTitle,
+        excerpt: '',
+        projectName: proj.name,
+      },
+    });
+  } catch (e) {
+    console.warn('[tasks] notifyOwnerOnReview failed', e);
+  }
+}

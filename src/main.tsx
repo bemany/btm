@@ -28,6 +28,12 @@ import './styles/mobile-app.css';
 import './styles/settings.css';
 import './styles/comments.css';
 import './styles/inbox.css';
+import './styles/sessions.css';
+import './styles/datepicker.css';
+import './styles/backgrounds.css';
+import './styles/project-members.css';
+import './styles/subtasks.css';
+import './styles/feedback.css';
 
 // Theme früh setzen — sonst hat der Login-Screen kein Glass.
 const VALID_THEMES = ['default', 'glass', 'default-dark', 'glass-dark'] as const;

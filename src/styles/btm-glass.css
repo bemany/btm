@@ -23,9 +23,12 @@ body[data-theme="glass"] .app {
 
 /* ----------------------- SIDEBAR --------------------------- */
 body[data-theme="glass"] .app-sidebar {
-  background: rgba(250, 247, 242, 0.55);
-  backdrop-filter: blur(32px) saturate(180%);
-  -webkit-backdrop-filter: blur(32px) saturate(180%);
+  /* Transluzenter als vorher (0.55 → 0.36), damit der animierte
+     Background hindurchschimmert. Höherer Blur kompensiert die
+     reduzierte Opacity, Saturation hebt die Akzent-Farbe darunter an. */
+  background: rgba(250, 247, 242, 0.36);
+  backdrop-filter: blur(38px) saturate(180%);
+  -webkit-backdrop-filter: blur(38px) saturate(180%);
   border-right: 1px solid rgba(28, 26, 23, 0.06);
   color: var(--ink-900);
 }
@@ -44,18 +47,25 @@ body[data-theme="glass"] .app-sidebar .sb-section-label {
 body[data-theme="glass"] .app-sidebar .sb-item {
   color: var(--ink-700);
   background: transparent;
+  transition: background 140ms ease, color 140ms ease, box-shadow 140ms ease;
 }
+/* Hover: glasiger Tint mit subtiler weißer Highlight-Border —
+   Glass-feeling statt grauer Cream-Block. */
 body[data-theme="glass"] .app-sidebar .sb-item:hover {
-  background: rgba(28, 26, 23, 0.05);
+  background: rgba(255, 255, 255, 0.42);
   color: var(--ink-900);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.5);
 }
 body[data-theme="glass"] .app-sidebar .sb-item.active {
-  background: rgba(255, 255, 255, 0.85);
+  /* Aktiver Pill — heller Glass-Tint, klare aber dezent kontrastige
+     Border. Kein harter weißer Block mehr. */
+  background: rgba(255, 255, 255, 0.6);
   color: var(--ink-900);
   box-shadow:
-    0 0 0 0.5px rgba(28, 26, 23, 0.06),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.7),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
     0 1px 2px rgba(28, 26, 23, 0.06),
-    0 2px 6px rgba(28, 26, 23, 0.04);
+    0 4px 12px rgba(28, 26, 23, 0.04);
 }
 body[data-theme="glass"] .app-sidebar .sb-count {
   background: var(--accent-600);
@@ -70,8 +80,12 @@ body[data-theme="glass"] .app-sidebar .sb-foot {
 body[data-theme="glass"] .app-sidebar .sb-foot .who .name {
   color: var(--ink-900);
 }
+body[data-theme="glass"] .app-sidebar .sb-foot {
+  transition: background 140ms ease, box-shadow 140ms ease;
+}
 body[data-theme="glass"] .app-sidebar .sb-foot:hover {
-  background: rgba(28, 26, 23, 0.04);
+  background: rgba(255, 255, 255, 0.42);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.5);
 }
 
 /* ----------------------- TOPBAR ---------------------------- */
@@ -146,8 +160,7 @@ body[data-theme="glass"] .tb-icon-btn {
 /* ---------------- CARDS, KPIs, TASKS ----------------------- */
 body[data-theme="glass"] .kpi,
 body[data-theme="glass"] .task-card,
-body[data-theme="glass"] .proj-card,
-body[data-theme="glass"] .kanban-col {
+body[data-theme="glass"] .proj-card {
   background: rgba(255, 255, 255, 0.55);
   border: 1px solid rgba(28, 26, 23, 0.07);
   backdrop-filter: blur(18px) saturate(160%);
@@ -156,6 +169,31 @@ body[data-theme="glass"] .kanban-col {
     0 1px 0 rgba(255, 255, 255, 0.6) inset,
     0 1px 2px rgba(28, 26, 23, 0.04),
     0 8px 24px rgba(28, 26, 23, 0.05);
+}
+
+/* Kanban-Spalten: transluzenter Glass-Container.
+   Eigene Klassen-Selektoren — die Komponente nutzt `.k-col`, nicht
+   das veraltete `.kanban-col`. Der Header bekommt eine glassy Tönung
+   on top, damit er vom Body unterscheidbar ist. */
+body[data-theme="glass"] .k-col {
+  background: rgba(255, 255, 255, 0.42);
+  border: 1px solid rgba(28, 26, 23, 0.06);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.7) inset,
+    0 8px 28px rgba(28, 26, 23, 0.06);
+}
+body[data-theme="glass"] .k-col-head {
+  background: rgba(255, 255, 255, 0.35);
+  border-bottom: 1px solid rgba(28, 26, 23, 0.06);
+}
+body[data-theme="glass"] .k-col-body.drop-target {
+  background: rgba(224, 113, 64, 0.06);
+  box-shadow: inset 0 0 0 2px rgba(224, 113, 64, 0.35);
+}
+body[data-theme="glass"] .k-col-head .add {
+  border-color: rgba(28, 26, 23, 0.15);
 }
 body[data-theme="glass"] .task-card:hover {
   background: rgba(255, 255, 255, 0.78);

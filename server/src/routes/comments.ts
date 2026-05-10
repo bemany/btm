@@ -13,6 +13,9 @@ import { requireAuth, type Variables } from '../lib/context.js';
 import { logActivity } from '../lib/activity.js';
 import { createNotification } from '../lib/notifications.js';
 import { extractMentionedUserIds, renderForExcerpt } from '../lib/mentions.js';
+import { sendMail, mentionEmail, appIconAttachment } from '../lib/mailer.js';
+
+const APP_BASE_URL = process.env.BETTER_AUTH_URL ?? 'https://btm.bethesna.org';
 
 const SubjectEnum = z.enum(['task', 'project']);
 const createSchema = z.object({
@@ -54,7 +57,15 @@ async function fanoutMentions(opts: {
   const ids = opts.newMentionIds.filter((id) => id !== opts.authorId);
   if (ids.length === 0) return;
 
-  const valid = await db.select({ id: users.id }).from(users).where(inArray(users.id, ids));
+  const valid = await db
+    .select({
+      id: users.id,
+      email: users.email,
+      name: users.name,
+      notifyMentionsMail: users.notifyMentionsMail,
+    })
+    .from(users)
+    .where(inArray(users.id, ids));
   const validIds = valid.map((v) => v.id);
   if (validIds.length === 0) return;
 
@@ -79,6 +90,39 @@ async function fanoutMentions(opts: {
       }),
     ),
   );
+
+  // Sofort-Mail-Fanout (fire-and-forget). Nur an User mit notifyMentionsMail=true.
+  // Author-Name aus DB holen — der Empfänger sieht den im Mail-Header.
+  const [author] = await db.select({ name: users.name }).from(users).where(eq(users.id, opts.authorId)).limit(1);
+  const actorName = author?.name ?? 'Jemand';
+
+  const appUrl =
+    opts.subjectType === 'task'
+      ? `${APP_BASE_URL}/board?taskId=${opts.subjectId}`
+      : `${APP_BASE_URL}/projects?projectId=${opts.subjectId}`;
+  const inboxUrl = `${APP_BASE_URL}/inbox`;
+  const unsubscribeUrl = `${APP_BASE_URL}/?settings=notifications`;
+
+  for (const uid of notifyIds) {
+    const recipient = valid.find((v) => v.id === uid);
+    if (!recipient || !recipient.notifyMentionsMail) continue;
+    const mail = mentionEmail({
+      actorName,
+      recipientName: recipient.name,
+      subjectType: opts.subjectType,
+      subjectTitle: opts.subjectTitle,
+      excerpt: opts.excerpt,
+      appUrl,
+      inboxUrl,
+      unsubscribeUrl,
+    });
+    const icon = appIconAttachment();
+    void sendMail({
+      to: recipient.email,
+      ...mail,
+      attachments: icon ? [icon] : undefined,
+    });
+  }
 }
 
 export const commentsRoute = new Hono<{ Variables: Variables }>()

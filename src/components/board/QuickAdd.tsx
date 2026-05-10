@@ -13,10 +13,19 @@ export function QuickAdd({ col, onClose }: QuickAddProps) {
   const projects = useStore((s) => s.projects);
   const currentUser = useStore((s) => s.currentUser);
   const addTask = useStore((s) => s.addTask);
+  const filterProj = useStore((s) => s.filter.proj);
   const t = useT();
 
   const [title, setTitle] = useState('');
-  const [proj, setProj] = useState(projects[0]?.id ?? '');
+  // Wenn das Board auf ein bestimmtes Projekt gefiltert ist, soll der
+  // Quick-Add neue Aufgaben standardmäßig in diesem Projekt anlegen — sonst
+  // landet die Aufgabe im ersten Projekt der Liste und ist nach dem Create
+  // wegen des aktiven Filters unsichtbar.
+  const initialProj =
+    filterProj && filterProj !== 'all' && projects.some((p) => p.id === filterProj)
+      ? filterProj
+      : projects[0]?.id ?? '';
+  const [proj, setProj] = useState(initialProj);
   const [estH, setEstH] = useState(1.0);
   const inputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {

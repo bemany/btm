@@ -19,7 +19,17 @@ export interface SidebarProps {
   setCollapsed: (updater: boolean | ((v: boolean) => boolean)) => void;
   theme: ThemeMode;
   setTheme: (t: ThemeMode) => void;
-  onOpenSettings: (tab?: 'appearance' | 'language' | 'api_tokens' | 'data') => void;
+  onOpenSettings: (
+    tab?:
+      | 'profile'
+      | 'appearance'
+      | 'backgrounds'
+      | 'language'
+      | 'notifications'
+      | 'api_tokens'
+      | 'data',
+  ) => void;
+  onOpenFeedback?: () => void;
 }
 
 interface Item {
@@ -37,6 +47,7 @@ export function Sidebar({
   theme,
   setTheme,
   onOpenSettings,
+  onOpenFeedback,
 }: SidebarProps) {
   const tasks = useStore((s) => s.tasks);
   const currentUser = useStore((s) => s.currentUser);
@@ -346,6 +357,23 @@ export function Sidebar({
               </div>
               <span className="sb-profile-kbd">{t('settings.profile_settings_kbd')}</span>
             </button>
+
+            {onOpenFeedback && (
+              <button
+                className="sb-profile-item"
+                onClick={() => {
+                  setProfileOpen(false);
+                  onOpenFeedback();
+                }}
+              >
+                <span className="sb-profile-icon">
+                  <Icon name="message-square" size={14} style={{ color: 'var(--ink-500)' }} />
+                </span>
+                <div className="sb-profile-item-text">
+                  <div className="sb-profile-item-title">{t('feedback.trigger_label')}</div>
+                </div>
+              </button>
+            )}
 
             {user && (
               <button

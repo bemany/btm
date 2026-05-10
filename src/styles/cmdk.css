@@ -116,6 +116,68 @@
 
 .cmdk-item.accent.active { background: var(--accent-600); }
 
+/* ── Glass-Overrides ──────────────────────────────────────────────
+   Im Dark-Mode wird `--ink-900` zu Cream (~#F4EFE7) — der active-State
+   sah dann wie ein weißer Block aus. Wir ersetzen ihn durch einen
+   semi-transparenten Glass-Tint, der mit dem Panel-Blur harmoniert.
+   Light-Glass kriegt ebenfalls einen Glass-Look (statt harten Schwarz),
+   für Konsistenz mit dem Rest des Glass-Themes. */
+body[data-theme='glass'] .cmdk-item.active {
+  background: rgba(28, 26, 23, 0.08);
+  color: var(--ink-900);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: inset 0 0 0 1px rgba(28, 26, 23, 0.12);
+}
+body[data-theme='glass'] .cmdk-item.active .cmdk-subtitle { color: var(--ink-600); }
+body[data-theme='glass'] .cmdk-item.active .cmdk-kbd {
+  background: rgba(255, 255, 255, 0.6);
+  border-color: rgba(28, 26, 23, 0.12);
+  color: var(--ink-700);
+}
+body[data-theme='glass'] .cmdk-item.active .cmdk-icon {
+  background: rgba(28, 26, 23, 0.08);
+  color: var(--ink-700);
+}
+
+body[data-theme='glass-dark'] .cmdk-item.active,
+body[data-theme='default-dark'] .cmdk-item.active {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--ink-900); /* in Dark = hell, also gut lesbar */
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+}
+body[data-theme='glass-dark'] .cmdk-item.active .cmdk-subtitle,
+body[data-theme='default-dark'] .cmdk-item.active .cmdk-subtitle {
+  color: rgba(244, 239, 231, 0.7);
+}
+body[data-theme='glass-dark'] .cmdk-item.active .cmdk-kbd,
+body[data-theme='default-dark'] .cmdk-item.active .cmdk-kbd {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: var(--ink-800);
+}
+body[data-theme='glass-dark'] .cmdk-item.active .cmdk-icon,
+body[data-theme='default-dark'] .cmdk-item.active .cmdk-icon {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--ink-900);
+}
+
+/* Accent-Active im Dark-Mode: nicht mehr Vollton-Akzent, sondern
+   tonal mit Akzent-Tint */
+body[data-theme='glass-dark'] .cmdk-item.accent.active,
+body[data-theme='default-dark'] .cmdk-item.accent.active {
+  background: rgba(224, 113, 64, 0.18);
+  color: var(--ink-900);
+  box-shadow: inset 0 0 0 1px rgba(224, 113, 64, 0.4);
+}
+body[data-theme='glass-dark'] .cmdk-item.accent.active .cmdk-icon,
+body[data-theme='default-dark'] .cmdk-item.accent.active .cmdk-icon {
+  background: rgba(224, 113, 64, 0.25);
+  color: var(--accent-500);
+}
+
 .cmdk-icon {
   flex-shrink: 0;
   width: 28px; height: 28px;

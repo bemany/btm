@@ -1,0 +1,1056 @@
+/* ── Background-Layer ──────────────────────────────────────────────── */
+
+/* Pointer-Variablen kommen vom JS-Tracker in BackgroundLayer.tsx.
+   Default-Werte (Mitte) für den Initial-Render und für Touch-Geräte. */
+body {
+  --mx: 0.5;
+  --my: 0.5;
+  --mxp: 50%;
+  --myp: 50%;
+  --mxc: 0;  /* centered, -0.5..+0.5 */
+  --myc: 0;
+}
+
+.bg-layer {
+  position: fixed;
+  inset: 0;
+  /* z-index 0 (nicht -1!) — das Body bekommt im Glass-Theme einen
+     radial-gradient, der einen `z-index: -1`-Layer überdecken würde.
+     `.app` hat eigene Layout-Position, liegt natürlich darüber. */
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  contain: strict;
+}
+
+/* Wenn ein animierter Background aktiv ist, schalten wir den Glass-
+   Theme Ambient-Gradient am body aus — sonst wäre der Layer komplett
+   verdeckt. Der `.app`-Container liegt durch position-Default eh über
+   unserem fixed-Layer. */
+body[data-bg]:not([data-bg='none']) {
+  background: var(--bg-page) !important;
+}
+body[data-bg]:not([data-bg='none']) .app {
+  position: relative;
+  z-index: 1;
+}
+
+/* Im preview-Tile sind die Effekte auf den Container constrained,
+   nicht aufs gesamte Viewport */
+.is-preview {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+}
+
+/* ── Aurora ────────────────────────────────────────────────────────── */
+
+.bg-aurora {
+  position: absolute;
+  inset: 0;
+  filter: blur(50px) saturate(1.15);
+  opacity: 0.55;
+}
+.bg-aurora.is-preview {
+  filter: blur(14px) saturate(1.2);
+  opacity: 0.85;
+}
+.bg-aurora-blob {
+  position: absolute;
+  width: 60%;
+  height: 60%;
+  border-radius: 50%;
+  mix-blend-mode: screen;
+  will-change: transform;
+}
+/* Aurora-Blobs reagieren via Pointer-Variable: jede Blob driftet leicht
+   in eine andere Richtung (Parallax-artig). Die CSS-Animation läuft
+   weiter und addiert sich auf den Mouse-Tilt — fühlt sich lebendig an,
+   ohne dass das Bild "klebt". */
+.bg-aurora-blob-1 {
+  background: radial-gradient(circle, #f5b8a4 0%, transparent 65%);
+  top: -10%;
+  left: -10%;
+  animation: bg-aurora-drift-1 22s ease-in-out infinite;
+  transform: translate(calc(var(--mxc) * 8%), calc(var(--myc) * 6%));
+  transition: transform 0.6s ease-out;
+}
+.bg-aurora-blob-2 {
+  background: radial-gradient(circle, #c2c0e0 0%, transparent 65%);
+  top: 30%;
+  right: -15%;
+  animation: bg-aurora-drift-2 28s ease-in-out infinite;
+  transform: translate(calc(var(--mxc) * -10%), calc(var(--myc) * 8%));
+  transition: transform 0.7s ease-out;
+}
+.bg-aurora-blob-3 {
+  background: radial-gradient(circle, #e8d4a0 0%, transparent 65%);
+  bottom: -20%;
+  left: 20%;
+  animation: bg-aurora-drift-3 26s ease-in-out infinite;
+  transform: translate(calc(var(--mxc) * 6%), calc(var(--myc) * -10%));
+  transition: transform 0.65s ease-out;
+}
+/* Im Preview-Tile sind die Blobs auf den Container constrained und
+   reagieren nicht auf den globalen Pointer (sieht im Picker-Grid sonst
+   verwirrend aus, weil ALLE Tiles sich gleichzeitig bewegen). */
+.bg-aurora.is-preview .bg-aurora-blob {
+  transform: none !important;
+}
+/* Animations-Keyframes für die Auto-Drift bleiben aktiv und überlagern
+   den Mouse-Tilt (browsern komponieren mehrere transforms additiv über
+   Animation-Driving). Wir machen das hier Animation-only auf Skalierung,
+   damit Translate frei für unsere Maus-Variable bleibt. */
+@keyframes bg-aurora-drift-1 {
+  0%, 100% { scale: 1; }
+  50% { scale: 1.1; }
+}
+@keyframes bg-aurora-drift-2 {
+  0%, 100% { scale: 1; }
+  50% { scale: 1.15; }
+}
+@keyframes bg-aurora-drift-3 {
+  0%, 100% { scale: 1; }
+  50% { scale: 1.05; }
+}
+
+body[data-theme='glass-dark'] .bg-aurora {
+  opacity: 0.6;
+  filter: blur(60px) saturate(1.4);
+}
+body[data-theme='glass-dark'] .bg-aurora-blob-1 {
+  background: radial-gradient(circle, #6b3aa0 0%, transparent 65%);
+}
+body[data-theme='glass-dark'] .bg-aurora-blob-2 {
+  background: radial-gradient(circle, #2c5b8c 0%, transparent 65%);
+}
+body[data-theme='glass-dark'] .bg-aurora-blob-3 {
+  background: radial-gradient(circle, #8a4a3c 0%, transparent 65%);
+}
+
+/* ── Mesh-Gradient ─────────────────────────────────────────────────── */
+
+.bg-mesh {
+  position: absolute;
+  inset: 0;
+  filter: blur(80px);
+  opacity: 0.7;
+}
+.bg-mesh.is-preview { filter: blur(20px); opacity: 0.9; }
+.bg-mesh-pt {
+  position: absolute;
+  width: 50%;
+  height: 50%;
+  border-radius: 50%;
+  will-change: transform, opacity;
+}
+.bg-mesh-pt-1 {
+  background: radial-gradient(circle, #e8a890 0%, transparent 60%);
+  top: 10%; left: 10%;
+  animation: bg-mesh-pulse 18s ease-in-out infinite;
+  transform: translate(calc(var(--mxc) * 12%), calc(var(--myc) * 10%));
+  transition: transform 0.5s ease-out;
+}
+.bg-mesh-pt-2 {
+  background: radial-gradient(circle, #b3b8d8 0%, transparent 60%);
+  top: 50%; right: 5%;
+  animation: bg-mesh-pulse 22s ease-in-out infinite -6s;
+  transform: translate(calc(var(--mxc) * -10%), calc(var(--myc) * 12%));
+  transition: transform 0.55s ease-out;
+}
+.bg-mesh-pt-3 {
+  background: radial-gradient(circle, #d9c298 0%, transparent 60%);
+  bottom: 5%; left: 30%;
+  animation: bg-mesh-pulse 20s ease-in-out infinite -12s;
+  transform: translate(calc(var(--mxc) * 8%), calc(var(--myc) * -8%));
+  transition: transform 0.6s ease-out;
+}
+.bg-mesh-pt-4 {
+  background: radial-gradient(circle, #a8c7c0 0%, transparent 60%);
+  top: 20%; right: 30%;
+  animation: bg-mesh-pulse 24s ease-in-out infinite -18s;
+  transform: translate(calc(var(--mxc) * -8%), calc(var(--myc) * -10%));
+  transition: transform 0.5s ease-out;
+}
+.bg-mesh.is-preview .bg-mesh-pt {
+  transform: none !important;
+}
+/* Pulse nur noch Scale + Opacity, Translate gehört uns für Maus */
+@keyframes bg-mesh-pulse {
+  0%, 100% { scale: 1; opacity: 1; }
+  50% { scale: 1.2; opacity: 0.6; }
+}
+body[data-theme='glass-dark'] .bg-mesh { opacity: 0.7; }
+body[data-theme='glass-dark'] .bg-mesh-pt-1 {
+  background: radial-gradient(circle, #5a2f6e 0%, transparent 60%);
+}
+body[data-theme='glass-dark'] .bg-mesh-pt-2 {
+  background: radial-gradient(circle, #1f3960 0%, transparent 60%);
+}
+body[data-theme='glass-dark'] .bg-mesh-pt-3 {
+  background: radial-gradient(circle, #6a4523 0%, transparent 60%);
+}
+body[data-theme='glass-dark'] .bg-mesh-pt-4 {
+  background: radial-gradient(circle, #1f4a4a 0%, transparent 60%);
+}
+
+/* ── Glow ──────────────────────────────────────────────────────────── */
+
+.bg-glow {
+  position: absolute;
+  inset: 0;
+}
+/* Glow folgt direkt der Maus (klassischer Spotlight). top/left wandern
+   mit `--mxp/--myp`, der translate-Trick zentriert den Orb auf die
+   Cursor-Position. Übergang weich, damit's nicht zappelt. */
+.bg-glow-orb {
+  position: absolute;
+  top: var(--myp);
+  left: var(--mxp);
+  width: 80%;
+  height: 80%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, var(--accent-500) 0%, transparent 55%);
+  opacity: 0.18;
+  filter: blur(40px);
+  animation: bg-glow-breath 14s ease-in-out infinite;
+  will-change: top, left;
+  transition: top 0.4s ease-out, left 0.4s ease-out;
+}
+/* Im Preview-Tile ignorieren wir die Maus und packen den Orb mittig */
+.bg-glow.is-preview .bg-glow-orb {
+  top: 30%; left: 50%;
+  opacity: 0.5; filter: blur(12px);
+  transition: none;
+}
+@keyframes bg-glow-breath {
+  0%, 100% { opacity: 0.18; transform: translate(-50%, -50%) scale(1); }
+  50% { opacity: 0.32; transform: translate(-50%, -50%) scale(1.1); }
+}
+body[data-theme='glass-dark'] .bg-glow-orb { opacity: 0.4; }
+
+/* ── Beams ─────────────────────────────────────────────────────────── */
+
+.bg-beams {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+.bg-beam {
+  position: absolute;
+  top: -20%;
+  width: 200px;
+  height: 140%;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(245, 184, 164, 0.35) 30%,
+    rgba(245, 184, 164, 0.45) 50%,
+    rgba(245, 184, 164, 0.35) 70%,
+    transparent 100%
+  );
+  filter: blur(40px);
+  transform: rotate(15deg);
+  will-change: transform;
+}
+/* Beams: zusätzlich zum Auto-Drift schiebt die Maus die Säulen seitlich.
+   Wir overriden den Animations-translate mit `translate: calc(...)` —
+   beides wird vom Browser additiv komponiert. */
+.bg-beam-1 {
+  left: 15%;
+  animation: bg-beams-drift 24s ease-in-out infinite;
+  translate: calc(var(--mxc) * 15%) 0;
+  transition: translate 0.5s ease-out;
+}
+.bg-beam-2 {
+  left: 45%;
+  animation: bg-beams-drift 30s ease-in-out infinite -8s;
+  opacity: 0.7;
+  translate: calc(var(--mxc) * 22%) 0;
+  transition: translate 0.55s ease-out;
+}
+.bg-beam-3 {
+  left: 75%;
+  animation: bg-beams-drift 28s ease-in-out infinite -16s;
+  opacity: 0.85;
+  translate: calc(var(--mxc) * 18%) 0;
+  transition: translate 0.5s ease-out;
+}
+.bg-beams.is-preview .bg-beam {
+  filter: blur(8px);
+  width: 50px;
+  translate: 0 0 !important;
+}
+@keyframes bg-beams-drift {
+  0%, 100% { transform: rotate(15deg) translateX(0); }
+  50% { transform: rotate(15deg) translateX(40%); }
+}
+body[data-theme='glass-dark'] .bg-beam {
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(170, 140, 220, 0.32) 30%,
+    rgba(180, 200, 255, 0.42) 50%,
+    rgba(170, 140, 220, 0.32) 70%,
+    transparent 100%
+  );
+}
+
+/* ── Grain ─────────────────────────────────────────────────────────── */
+
+.bg-grain {
+  position: absolute;
+  inset: 0;
+}
+.bg-grain-tint {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at top right, rgba(245, 184, 164, 0.18), transparent 60%),
+    radial-gradient(ellipse at bottom left, rgba(195, 200, 220, 0.18), transparent 60%);
+}
+.bg-grain-noise {
+  position: absolute;
+  inset: -20%;
+  /* SVG fractalNoise als data-URI; baseFrequency 0.9 = feines Korn */
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.55'/></svg>");
+  opacity: 0.18;
+  mix-blend-mode: overlay;
+  animation: bg-grain-shift 8s steps(8) infinite;
+  will-change: transform;
+}
+.bg-grain.is-preview .bg-grain-noise { opacity: 0.4; }
+@keyframes bg-grain-shift {
+  0%   { transform: translate(0, 0); }
+  10%  { transform: translate(-2%, -3%); }
+  20%  { transform: translate(-5%, 2%); }
+  30%  { transform: translate(3%, -5%); }
+  40%  { transform: translate(-3%, 4%); }
+  50%  { transform: translate(2%, -2%); }
+  60%  { transform: translate(-4%, 3%); }
+  70%  { transform: translate(4%, 1%); }
+  80%  { transform: translate(-2%, -4%); }
+  90%  { transform: translate(3%, 2%); }
+  100% { transform: translate(0, 0); }
+}
+body[data-theme='glass-dark'] .bg-grain-noise { opacity: 0.22; }
+body[data-theme='glass-dark'] .bg-grain-tint {
+  background: radial-gradient(ellipse at top right, rgba(110, 80, 150, 0.22), transparent 60%),
+    radial-gradient(ellipse at bottom left, rgba(60, 100, 140, 0.22), transparent 60%);
+}
+
+/* ── Dotgrid ───────────────────────────────────────────────────────── */
+
+.bg-dotgrid {
+  position: absolute;
+  inset: 0;
+}
+.bg-dotgrid-pattern {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, var(--ink-300) 1px, transparent 1.5px);
+  background-size: 22px 22px;
+  opacity: 0.35;
+}
+.bg-dotgrid.is-preview .bg-dotgrid-pattern {
+  background-size: 10px 10px;
+  opacity: 0.5;
+}
+/* Dotgrid-Vignette folgt jetzt direkt der Maus statt der Animation —
+   so entsteht ein "spotlight"-Gefühl: das Punktraster ist überall, aber
+   die Akzent-Vignette beleuchtet, wo der Cursor ist. */
+.bg-dotgrid-vignette {
+  position: absolute;
+  top: var(--myp);
+  left: var(--mxp);
+  width: 80%; height: 80%;
+  background: radial-gradient(circle, var(--accent-500) 0%, transparent 50%);
+  transform: translate(-50%, -50%);
+  opacity: 0.12;
+  filter: blur(50px);
+  transition: top 0.35s ease-out, left 0.35s ease-out;
+  will-change: top, left;
+}
+.bg-dotgrid.is-preview .bg-dotgrid-vignette {
+  top: 30%; left: 50%;
+  opacity: 0.3; filter: blur(15px);
+  transition: none;
+}
+body[data-theme='glass-dark'] .bg-dotgrid-pattern {
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.28) 1px, transparent 1.5px);
+  opacity: 0.7;
+}
+body[data-theme='glass-dark'] .bg-dotgrid-vignette { opacity: 0.32; }
+
+/* ── Lines ─────────────────────────────────────────────────────────── */
+
+.bg-lines {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+.bg-lines-stripes {
+  position: absolute;
+  top: -20%; left: -50%;
+  width: 200%;
+  height: 140%;
+  background: repeating-linear-gradient(
+    115deg,
+    transparent 0,
+    transparent 70px,
+    rgba(245, 184, 164, 0.12) 70px,
+    rgba(245, 184, 164, 0.12) 71px
+  );
+  animation: bg-lines-slide 36s linear infinite;
+  /* Maus tilted die Stripes leicht — translate verstärkt den Slide */
+  translate: calc(var(--mxc) * 4%) calc(var(--myc) * 2%);
+  transition: translate 0.6s ease-out;
+  will-change: transform, translate;
+}
+.bg-lines.is-preview .bg-lines-stripes {
+  translate: 0 0 !important;
+}
+.bg-lines.is-preview .bg-lines-stripes {
+  background: repeating-linear-gradient(
+    115deg,
+    transparent 0,
+    transparent 18px,
+    rgba(245, 184, 164, 0.45) 18px,
+    rgba(245, 184, 164, 0.45) 19px
+  );
+}
+@keyframes bg-lines-slide {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-100px); }
+}
+body[data-theme='glass-dark'] .bg-lines-stripes {
+  background: repeating-linear-gradient(
+    115deg,
+    transparent 0,
+    transparent 70px,
+    rgba(180, 200, 255, 0.18) 70px,
+    rgba(180, 200, 255, 0.18) 71px
+  );
+}
+
+/* ── Waves ─────────────────────────────────────────────────────────── */
+
+.bg-waves {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+.bg-waves-svg {
+  position: absolute;
+  bottom: -10%;
+  left: -10%;
+  width: 120%;
+  height: 60%;
+}
+.bg-waves.is-preview .bg-waves-svg {
+  bottom: -20%;
+  height: 80%;
+}
+.bg-wave-path {
+  fill: var(--accent-500);
+  fill-opacity: 0.1;
+  will-change: transform;
+}
+/* Wellen-Pfade reagieren mit Parallax: vorderste Welle bewegt sich am
+   stärksten zur Maus, hintere weniger — Tiefenillusion. */
+.bg-wave-1 {
+  animation: bg-wave-flow 14s ease-in-out infinite;
+  transform-origin: center;
+  translate: calc(var(--mxc) * 6%) 0;
+  transition: translate 0.5s ease-out;
+}
+.bg-wave-2 {
+  animation: bg-wave-flow 18s ease-in-out infinite -3s;
+  fill-opacity: 0.08;
+  translate: calc(var(--mxc) * 4%) 0;
+  transition: translate 0.55s ease-out;
+}
+.bg-wave-3 {
+  animation: bg-wave-flow 22s ease-in-out infinite -7s;
+  fill-opacity: 0.06;
+  translate: calc(var(--mxc) * 2%) 0;
+  transition: translate 0.6s ease-out;
+}
+.bg-waves.is-preview .bg-wave-path {
+  translate: 0 0 !important;
+}
+.bg-waves.is-preview .bg-wave-path { fill-opacity: 0.45; }
+.bg-waves.is-preview .bg-wave-2 { fill-opacity: 0.3; }
+.bg-waves.is-preview .bg-wave-3 { fill-opacity: 0.18; }
+@keyframes bg-wave-flow {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(-3%); }
+}
+body[data-theme='glass-dark'] .bg-wave-path { fill: #6b8aff; fill-opacity: 0.25; }
+body[data-theme='glass-dark'] .bg-wave-2 { fill-opacity: 0.18; }
+body[data-theme='glass-dark'] .bg-wave-3 { fill-opacity: 0.12; }
+
+/* ── Hero-Preview (Settings) ────────────────────────────────────────── */
+
+.bg-hero {
+  position: relative;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--ink-100);
+  background: var(--cream-50);
+  margin: 14px 0 18px;
+  height: 240px;
+  isolation: isolate; /* Animations bleiben in der Box */
+}
+.bg-hero-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  overflow: hidden;
+}
+.bg-hero-mock {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  height: 100%;
+  padding: 0;
+  pointer-events: none;
+}
+.bg-hero-side {
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-right: 1px solid rgba(0, 0, 0, 0.06);
+  padding: 12px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.bg-hero-side-brand {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.bg-hero-side-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  background: var(--ink-900);
+}
+.bg-hero-side-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--ink-900);
+}
+.bg-hero-side-item {
+  font-size: 10.5px;
+  color: var(--ink-700);
+  padding: 4px 6px;
+  border-radius: 4px;
+}
+.bg-hero-side-item.is-active {
+  background: rgba(224, 113, 64, 0.12);
+  color: var(--accent-500);
+  font-weight: 600;
+}
+.bg-hero-main {
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.bg-hero-topbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 8px;
+  padding: 6px 10px;
+}
+.bg-hero-crumb {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 11.5px;
+  color: var(--ink-900);
+}
+.bg-hero-meta {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--ink-500);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.bg-hero-spacer { flex: 1; }
+.bg-hero-pill {
+  background: var(--accent-500);
+  color: var(--cream-50);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+.bg-hero-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.bg-hero-card {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 8px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.bg-hero-card-tag {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--accent-500);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.bg-hero-card-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-900);
+  line-height: 1.35;
+}
+.bg-hero-card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 2px;
+}
+.bg-hero-card-time {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--ink-500);
+}
+.bg-hero-card-avatar {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f5b8a4, #c85a2c);
+}
+.bg-hero-label {
+  position: absolute;
+  bottom: 10px;
+  right: 12px;
+  z-index: 2;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: var(--cream-50);
+  border-radius: 8px;
+  padding: 6px 10px;
+  display: flex;
+  flex-direction: column;
+  max-width: 220px;
+}
+.bg-hero-label-name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 12px;
+}
+.bg-hero-label-desc {
+  font-size: 10.5px;
+  opacity: 0.85;
+  line-height: 1.4;
+}
+
+/* Dark-Theme: Mock-Strips bleiben bewusst hell, damit das Layout-Muster
+   erkennbar bleibt — der animierte Background dahinter macht die Stimmung */
+body[data-theme='glass-dark'] .bg-hero,
+body[data-theme='default-dark'] .bg-hero {
+  background: rgba(28, 28, 32, 0.4);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+body[data-theme='glass-dark'] .bg-hero-side,
+body[data-theme='glass-dark'] .bg-hero-topbar,
+body[data-theme='glass-dark'] .bg-hero-card,
+body[data-theme='default-dark'] .bg-hero-side,
+body[data-theme='default-dark'] .bg-hero-topbar,
+body[data-theme='default-dark'] .bg-hero-card {
+  background: rgba(20, 18, 16, 0.55);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+body[data-theme='glass-dark'] .bg-hero-side-title,
+body[data-theme='glass-dark'] .bg-hero-crumb,
+body[data-theme='glass-dark'] .bg-hero-card-title,
+body[data-theme='default-dark'] .bg-hero-side-title,
+body[data-theme='default-dark'] .bg-hero-crumb,
+body[data-theme='default-dark'] .bg-hero-card-title {
+  color: #f5f0e8;
+}
+body[data-theme='glass-dark'] .bg-hero-side-item,
+body[data-theme='default-dark'] .bg-hero-side-item {
+  color: rgba(245, 240, 232, 0.7);
+}
+body[data-theme='glass-dark'] .bg-hero-side-dot,
+body[data-theme='default-dark'] .bg-hero-side-dot {
+  background: #f5f0e8;
+}
+
+/* ── Picker-Tile (Settings) ────────────────────────────────────────── */
+
+.bg-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 6px;
+}
+.bg-picker-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  border: 1.5px solid var(--ink-100);
+  overflow: hidden;
+  background: var(--cream-100);
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+  transition: border-color 0.15s ease, transform 0.1s ease;
+  font-family: inherit;
+}
+.bg-picker-tile:hover:not(:disabled) {
+  border-color: var(--ink-300);
+  transform: translateY(-1px);
+}
+.bg-picker-tile.is-active {
+  border-color: var(--accent-500);
+  box-shadow: 0 0 0 2px rgba(224, 113, 64, 0.18);
+}
+.bg-picker-tile:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.bg-picker-preview {
+  position: relative;
+  height: 120px;
+  background: var(--cream-50);
+  border-bottom: 1px solid var(--ink-100);
+  overflow: hidden;
+}
+.bg-picker-preview-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-400);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.bg-picker-label {
+  padding: 8px 10px 9px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-900);
+  border-top: 1px solid var(--ink-100);
+}
+.bg-picker-check {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--accent-500);
+  color: var(--cream-50);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+body[data-theme='glass-dark'] .bg-picker-tile,
+body[data-theme='default-dark'] .bg-picker-tile {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+body[data-theme='glass-dark'] .bg-picker-tile:hover,
+body[data-theme='default-dark'] .bg-picker-tile:hover {
+  border-color: rgba(255, 255, 255, 0.25);
+}
+body[data-theme='glass-dark'] .bg-picker-preview,
+body[data-theme='default-dark'] .bg-picker-preview {
+  background: rgba(0, 0, 0, 0.2);
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+body[data-theme='glass-dark'] .bg-picker-label,
+body[data-theme='default-dark'] .bg-picker-label {
+  border-top-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Wenn ein Solid-Theme aktiv ist, zeigen wir einen Hinweis statt Picker-Grid */
+.bg-picker-disabled {
+  padding: 16px 18px;
+  background: var(--cream-100);
+  border: 1px dashed var(--ink-200);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--ink-700);
+  line-height: 1.55;
+}
+body[data-theme='glass-dark'] .bg-picker-disabled,
+body[data-theme='default-dark'] .bg-picker-disabled {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: var(--ink-700);
+}
+
+/* Reduce-Motion Respekt — Animationen UND Pointer-Tilts aus */
+@media (prefers-reduced-motion: reduce) {
+  .bg-aurora-blob,
+  .bg-mesh-pt,
+  .bg-glow-orb,
+  .bg-beam,
+  .bg-grain-noise,
+  .bg-dotgrid-vignette,
+  .bg-lines-stripes,
+  .bg-wave-path {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+    translate: 0 0 !important;
+  }
+  /* Glow + Dotgrid Vignette zentriert lassen statt Maus folgen */
+  .bg-glow-orb,
+  .bg-dotgrid-vignette {
+    top: 30% !important;
+    left: 50% !important;
+  }
+}
+
+/* ── Soft Aurora ──────────────────────────────────────────────── */
+.bg-soft-aurora { position: absolute; inset: 0; overflow: hidden; opacity: 0.55; }
+.bg-soft-aurora.is-preview { opacity: 0.85; }
+.bg-sa-band {
+  position: absolute;
+  left: -20%;
+  width: 140%;
+  height: 70%;
+  filter: blur(60px);
+  border-radius: 50%;
+  will-change: transform;
+}
+.bg-soft-aurora.is-preview .bg-sa-band { filter: blur(18px); }
+.bg-sa-band-1 {
+  top: -20%;
+  background: radial-gradient(ellipse at center, rgba(245, 184, 164, 0.6) 0%, transparent 70%);
+  animation: bg-sa-drift 26s ease-in-out infinite;
+  transform: translate(calc(var(--mxc) * 6%), calc(var(--myc) * 4%));
+  transition: transform 0.6s ease-out;
+}
+.bg-sa-band-2 {
+  top: 30%;
+  background: radial-gradient(ellipse at center, rgba(195, 200, 220, 0.55) 0%, transparent 70%);
+  animation: bg-sa-drift 32s ease-in-out infinite -8s;
+  transform: translate(calc(var(--mxc) * -8%), calc(var(--myc) * 5%));
+  transition: transform 0.65s ease-out;
+}
+.bg-sa-band-3 {
+  bottom: -30%;
+  background: radial-gradient(ellipse at center, rgba(232, 212, 160, 0.5) 0%, transparent 70%);
+  animation: bg-sa-drift 28s ease-in-out infinite -16s;
+  transform: translate(calc(var(--mxc) * 5%), calc(var(--myc) * -6%));
+  transition: transform 0.6s ease-out;
+}
+.bg-soft-aurora.is-preview .bg-sa-band { transform: none !important; }
+@keyframes bg-sa-drift {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 6% 0; }
+}
+body[data-theme='glass-dark'] .bg-soft-aurora { opacity: 0.55; }
+body[data-theme='glass-dark'] .bg-sa-band-1 {
+  background: radial-gradient(ellipse at center, rgba(110, 70, 160, 0.5) 0%, transparent 70%);
+}
+body[data-theme='glass-dark'] .bg-sa-band-2 {
+  background: radial-gradient(ellipse at center, rgba(50, 80, 160, 0.5) 0%, transparent 70%);
+}
+body[data-theme='glass-dark'] .bg-sa-band-3 {
+  background: radial-gradient(ellipse at center, rgba(150, 80, 60, 0.5) 0%, transparent 70%);
+}
+
+/* ── Light Pillar ─────────────────────────────────────────────── */
+.bg-light-pillar { position: absolute; inset: 0; overflow: hidden; }
+.bg-lp-pillar {
+  position: absolute;
+  top: -20%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 38%;
+  height: 140%;
+  background: linear-gradient(180deg,
+    transparent 0%,
+    rgba(245, 184, 164, 0.0) 5%,
+    rgba(245, 184, 164, 0.32) 35%,
+    rgba(245, 184, 164, 0.42) 50%,
+    rgba(245, 184, 164, 0.32) 65%,
+    transparent 95%);
+  filter: blur(40px);
+  animation: bg-lp-breath 14s ease-in-out infinite;
+  translate: calc(var(--mxc) * 10%) 0;
+  transition: translate 0.5s ease-out;
+}
+.bg-light-pillar.is-preview .bg-lp-pillar { filter: blur(12px); width: 60%; translate: 0 0 !important; }
+.bg-lp-glow {
+  position: absolute;
+  top: 30%; left: 50%;
+  width: 70%; height: 70%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(245, 184, 164, 0.18) 0%, transparent 55%);
+  filter: blur(30px);
+  animation: bg-lp-pulse 16s ease-in-out infinite;
+}
+@keyframes bg-lp-breath {
+  0%, 100% { opacity: 0.85; transform: translateX(-50%) scaleY(1); }
+  50% { opacity: 1; transform: translateX(-50%) scaleY(1.05); }
+}
+@keyframes bg-lp-pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 0.95; }
+}
+body[data-theme='glass-dark'] .bg-lp-pillar {
+  background: linear-gradient(180deg,
+    transparent 0%,
+    rgba(180, 200, 255, 0) 5%,
+    rgba(180, 200, 255, 0.18) 35%,
+    rgba(180, 200, 255, 0.28) 50%,
+    rgba(180, 200, 255, 0.18) 65%,
+    transparent 95%);
+}
+body[data-theme='glass-dark'] .bg-lp-glow {
+  background: radial-gradient(circle, rgba(180, 200, 255, 0.18) 0%, transparent 55%);
+}
+
+/* ── Prism (rotierender Conic-Rainbow) ───────────────────────── */
+.bg-prism { position: absolute; inset: 0; overflow: hidden; opacity: 0.32; }
+.bg-prism.is-preview { opacity: 0.7; }
+.bg-prism-conic {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 200%;
+  height: 200%;
+  transform: translate(-50%, -50%);
+  background: conic-gradient(from 0deg,
+    #ff6b6b 0deg,
+    #f5b8a4 60deg,
+    #c2c0e0 120deg,
+    #a8c7c0 180deg,
+    #d9c298 240deg,
+    #e8a890 300deg,
+    #ff6b6b 360deg);
+  filter: blur(80px);
+  animation: bg-prism-spin 40s linear infinite;
+  will-change: transform;
+}
+.bg-prism.is-preview .bg-prism-conic { filter: blur(20px); }
+@keyframes bg-prism-spin {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+body[data-theme='glass-dark'] .bg-prism { opacity: 0.5; }
+
+/* ── Dark Veil ────────────────────────────────────────────────── */
+.bg-dark-veil { position: absolute; inset: 0; overflow: hidden; }
+.bg-dv-base {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(30, 25, 35, 0.4) 0%, rgba(15, 12, 20, 0.6) 100%);
+}
+.bg-dv-vignette {
+  position: absolute;
+  top: var(--myp);
+  left: var(--mxp);
+  width: 80%; height: 80%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(150, 120, 200, 0.25) 0%, transparent 60%);
+  filter: blur(60px);
+  transition: top 0.4s ease-out, left 0.4s ease-out;
+  animation: bg-dv-pulse 18s ease-in-out infinite;
+}
+.bg-dark-veil.is-preview .bg-dv-base {
+  background: linear-gradient(180deg, rgba(30, 25, 35, 0.7) 0%, rgba(15, 12, 20, 0.9) 100%);
+}
+.bg-dark-veil.is-preview .bg-dv-vignette {
+  top: 30%; left: 50%; opacity: 1; filter: blur(15px);
+  transition: none;
+}
+@keyframes bg-dv-pulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 0.8; }
+}
+body[data-theme='glass'] .bg-dv-base {
+  background: linear-gradient(180deg, rgba(80, 60, 100, 0.18) 0%, rgba(50, 35, 70, 0.28) 100%);
+}
+
+/* ── Grainient ───────────────────────────────────────────────── */
+.bg-grainient { position: absolute; inset: 0; overflow: hidden; }
+.bg-grainient-color {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 25% 20%, rgba(245, 184, 164, 0.5) 0%, transparent 50%),
+    radial-gradient(ellipse at 75% 80%, rgba(180, 150, 220, 0.45) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(232, 200, 130, 0.35) 0%, transparent 55%),
+    radial-gradient(ellipse at 20% 80%, rgba(140, 200, 200, 0.4) 0%, transparent 55%);
+  animation: bg-grainient-drift 30s ease-in-out infinite;
+  translate: calc(var(--mxc) * 4%) calc(var(--myc) * 4%);
+  transition: translate 0.6s ease-out;
+}
+.bg-grainient-noise {
+  position: absolute;
+  inset: -20%;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.7'/></svg>");
+  opacity: 0.28;
+  mix-blend-mode: overlay;
+  animation: bg-grain-shift 8s steps(8) infinite;
+}
+.bg-grainient.is-preview .bg-grainient-color { translate: 0 0 !important; }
+@keyframes bg-grainient-drift {
+  0%, 100% { background-position: 0% 0%, 100% 100%, 100% 0%, 0% 100%; }
+  50% { background-position: 20% 10%, 80% 90%, 80% 10%, 20% 90%; }
+}
+body[data-theme='glass-dark'] .bg-grainient-color {
+  background:
+    radial-gradient(ellipse at 25% 20%, rgba(110, 70, 160, 0.45) 0%, transparent 50%),
+    radial-gradient(ellipse at 75% 80%, rgba(50, 80, 160, 0.45) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(150, 80, 60, 0.4) 0%, transparent 55%),
+    radial-gradient(ellipse at 20% 80%, rgba(40, 100, 100, 0.4) 0%, transparent 55%);
+}
+body[data-theme='glass-dark'] .bg-grainient-noise { opacity: 0.18; }
+
+/* "NEU"-Chip im Picker */
+.bg-picker-tile-new {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  background: var(--accent-500);
+  color: var(--cream-50);
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 2px 6px;
+  border-radius: 3px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
+  z-index: 2;
+}

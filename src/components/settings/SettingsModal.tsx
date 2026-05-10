@@ -6,14 +6,27 @@ import { AppearanceTab } from './AppearanceTab';
 import { LanguageTab } from './LanguageTab';
 import { ApiTokensTab } from './ApiTokensTab';
 import { DataTab } from './DataTab';
+import { NotificationsTab } from './NotificationsTab';
+import { BackgroundsTab } from './BackgroundsTab';
+import { ProfileTab } from './ProfileTab';
+import type { BackgroundId } from '../backgrounds/catalog';
 
-export type SettingsTabId = 'appearance' | 'language' | 'api_tokens' | 'data';
+export type SettingsTabId =
+  | 'profile'
+  | 'appearance'
+  | 'backgrounds'
+  | 'language'
+  | 'notifications'
+  | 'api_tokens'
+  | 'data';
 
 export interface SettingsModalProps {
   onClose: () => void;
   initialTab?: SettingsTabId;
   theme: ThemeMode;
   setTheme: (t: ThemeMode) => void;
+  background: BackgroundId;
+  setBackground: (id: BackgroundId) => void;
   onReplayTour?: () => void;
 }
 
@@ -22,6 +35,8 @@ export function SettingsModal({
   initialTab = 'appearance',
   theme,
   setTheme,
+  background,
+  setBackground,
   onReplayTour,
 }: SettingsModalProps) {
   const t = useT();
@@ -39,8 +54,11 @@ export function SettingsModal({
   }, [onClose]);
 
   const tabs: Array<{ id: SettingsTabId; label: string; icon: string }> = [
+    { id: 'profile', label: t('settings.tab_profile'), icon: 'user' },
     { id: 'appearance', label: t('settings.tab_appearance'), icon: 'palette' },
+    { id: 'backgrounds', label: t('settings.tab_backgrounds'), icon: 'sparkles' },
     { id: 'language', label: t('settings.tab_language'), icon: 'globe' },
+    { id: 'notifications', label: t('settings.tab_notifications'), icon: 'bell' },
     { id: 'api_tokens', label: t('settings.tab_api_tokens'), icon: 'key-round' },
     { id: 'data', label: t('settings.tab_data'), icon: 'database' },
   ];
@@ -77,8 +95,13 @@ export function SettingsModal({
             ))}
           </nav>
           <div className="set-content">
+            {tab === 'profile' && <ProfileTab />}
             {tab === 'appearance' && <AppearanceTab theme={theme} setTheme={setTheme} />}
+            {tab === 'backgrounds' && (
+              <BackgroundsTab theme={theme} background={background} setBackground={setBackground} />
+            )}
             {tab === 'language' && <LanguageTab />}
+            {tab === 'notifications' && <NotificationsTab />}
             {tab === 'api_tokens' && <ApiTokensTab />}
             {tab === 'data' && <DataTab onReplayTour={onReplayTour} onClose={onClose} />}
           </div>

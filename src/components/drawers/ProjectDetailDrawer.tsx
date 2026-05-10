@@ -6,6 +6,7 @@ import { ProjTag } from '../shared/ProjTag';
 import { useT, useLocale } from '../../i18n';
 import { CommentsSection } from '../comments/CommentsSection';
 import { NewProjectModal } from '../screens/NewProjectModal';
+import { ProjectMembersSection } from '../projects/ProjectMembersSection';
 
 export interface ProjectDetailDrawerProps {
   id: string;
@@ -18,6 +19,7 @@ export function ProjectDetailDrawer({ id }: ProjectDetailDrawerProps) {
   const tasks = useStore((s) => s.tasks);
   const setUI = useStore((s) => s.setUI);
   const setFilter = useStore((s) => s.setFilter);
+  const updateProject = useStore((s) => s.updateProject);
   const [editing, setEditing] = useState(false);
 
   const project = projects.find((p) => p.id === id);
@@ -157,6 +159,14 @@ export function ProjectDetailDrawer({ id }: ProjectDetailDrawerProps) {
                 </div>
               ))
             )}
+          </div>
+
+          <div style={{ marginTop: 18, marginBottom: 18 }}>
+            <ProjectMembersSection
+              projectId={project.id}
+              ownerId={project.ownerId ?? null}
+              onOwnerChange={(newOwnerId) => updateProject(project.id, { ownerId: newOwnerId })}
+            />
           </div>
 
           <CommentsSection subjectType="project" subjectId={project.id} />

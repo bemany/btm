@@ -10,16 +10,18 @@ const querySchema = z.object({
   before: z.string().optional(), // ISO-Date für Pagination
   kind: z.string().optional(),
   actorId: z.string().optional(), // Filter nach User-ID (Bearbeiter)
+  target: z.string().optional(), // Filter nach Subject-ID (z.B. taskId, projectId)
 });
 
 export const activityRoute = new Hono<{ Variables: Variables }>()
   .use('*', requireAuth)
   .get('/', async (c) => {
-    const { limit, before, kind, actorId } = querySchema.parse(c.req.query());
+    const { limit, before, kind, actorId, target } = querySchema.parse(c.req.query());
     const filters = [];
     if (before) filters.push(lt(activityLog.createdAt, new Date(before)));
     if (kind) filters.push(eq(activityLog.kind, kind));
     if (actorId) filters.push(eq(activityLog.actorId, actorId));
+    if (target) filters.push(eq(activityLog.target, target));
     const where = filters.length === 0
       ? undefined
       : filters.length === 1

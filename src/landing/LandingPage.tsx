@@ -1,7 +1,14 @@
-import { useEffect, useRef, useState } from 'react';
+import { Suspense, lazy, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Icon } from '../components/shared/Icon';
 import { useT, useLocale } from '../i18n';
+
+// Animierter Background für die Landing — Punktraster mit Mausverfolgender
+// Akzent-Vignette. Funktioniert visuell ruhig in Hell und Dunkel und
+// drückt nicht den Vordergrund-Text ins Unleserliche.
+const LandingBackground = lazy(() =>
+  import('../components/backgrounds/effects/Dotgrid').then((m) => ({ default: m.Dotgrid })),
+);
 
 const TASKS = [
   { id: 't1', titleKey: 'landing.preview_card_done_title', hours: '2h', who: 'AB', color: '#4a6f8a' },
@@ -40,14 +47,73 @@ export function LandingPage({ onLogin }: LandingPageProps) {
   const [enteringId, setEnteringId] = useState<string | null>(null);
   const [clock, setClock] = useState(24 * 60 + 18);
   const tickRef = useRef(0);
+  // Landing nutzt immer ein Glass-Theme — User kann nur zwischen
+  // Hell/Dunkel umschalten. Wahl in localStorage gespeichert, damit der
+  // nächste Besuch gleich richtig kommt.
+  const [landingMode, setLandingMode] = useState<'light' | 'dark'>(() => {
+    try {
+      const v = localStorage.getItem('btm.landing.mode');
+      if (v === 'dark' || v === 'light') return v;
+    } catch {
+      /* ignore */
+    }
+    // Initial: System-Präferenz respektieren
+    return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  });
 
   useEffect(() => {
     document.body.classList.add('is-landing');
     document.documentElement.classList.add('is-landing');
+    // Original-Theme merken und nach Verlassen wiederherstellen
+    const prevTheme = document.body.dataset.theme;
     return () => {
       document.body.classList.remove('is-landing');
       document.documentElement.classList.remove('is-landing');
+      if (prevTheme) document.body.dataset.theme = prevTheme;
     };
+  }, []);
+
+  // Landing-Theme separat setzen — wird beim Verlassen vom obigen Effect
+  // wiederhergestellt. Persistieren der Wahl.
+  useEffect(() => {
+    document.body.dataset.theme = landingMode === 'dark' ? 'glass-dark' : 'glass';
+    try {
+      localStorage.setItem('btm.landing.mode', landingMode);
+    } catch {
+      /* ignore */
+    }
+  }, [landingMode]);
+
+  // Pointer-Tracker für die Background-Effekte (--mxc/--myc-Variablen).
+  // Sonst stehen die Effekte nur auf Default-Werten. Touch-Geräte und
+  // reduce-motion respektieren wir, identisch zum App-BackgroundLayer.
+  useEffect(() => {
+    if (window.matchMedia?.('(pointer: coarse)').matches) return;
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+    let queued = false;
+    let lastX = 0.5;
+    let lastY = 0.5;
+    const update = () => {
+      queued = false;
+      const root = document.body.style;
+      root.setProperty('--mx', lastX.toFixed(4));
+      root.setProperty('--my', lastY.toFixed(4));
+      root.setProperty('--mxp', (lastX * 100).toFixed(2) + '%');
+      root.setProperty('--myp', (lastY * 100).toFixed(2) + '%');
+      root.setProperty('--mxc', (lastX - 0.5).toFixed(4));
+      root.setProperty('--myc', (lastY - 0.5).toFixed(4));
+    };
+    const onMove = (e: MouseEvent) => {
+      lastX = e.clientX / window.innerWidth;
+      lastY = e.clientY / window.innerHeight;
+      if (!queued) {
+        queued = true;
+        requestAnimationFrame(update);
+      }
+    };
+    update();
+    window.addEventListener('mousemove', onMove, { passive: true });
+    return () => window.removeEventListener('mousemove', onMove);
   }, []);
 
   useEffect(() => {
@@ -176,6 +242,14 @@ export function LandingPage({ onLogin }: LandingPageProps) {
 
   return (
     <div className="lp-root">
+      {/* Animierter Background hinter allen Sections — Punktraster
+          mit dezenter Akzent-Vignette, ruhig genug um Text nicht zu
+          schlucken, in beiden Modi gleich gut. */}
+      <div className="lp-bg" aria-hidden>
+        <Suspense fallback={null}>
+          <LandingBackground />
+        </Suspense>
+      </div>
       <header className="lp-top">
         <div className="lp-top-inner">
           <div className="lp-logo">
@@ -203,6 +277,23 @@ export function LandingPage({ onLogin }: LandingPageProps) {
           <a href="#preview" className="lp-top-link">
             {t('landing.nav_preview')}
           </a>
+          <button
+            type="button"
+            className="lp-theme-toggle"
+            onClick={() => setLandingMode((m) => (m === 'dark' ? 'light' : 'dark'))}
+            title={
+              landingMode === 'dark'
+                ? t('landing.theme_to_light')
+                : t('landing.theme_to_dark')
+            }
+            aria-label={
+              landingMode === 'dark'
+                ? t('landing.theme_to_light')
+                : t('landing.theme_to_dark')
+            }
+          >
+            <Icon name={landingMode === 'dark' ? 'sun' : 'moon'} size={14} />
+          </button>
           <a href="#login" onClick={onLoginClick} className="lp-btn">
             <Icon name="log-in" size={14} />
             {t('landing.nav_login')}

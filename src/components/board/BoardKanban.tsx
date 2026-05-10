@@ -88,8 +88,20 @@ export interface BoardKanbanProps {
 
 export function BoardKanban({ tasks }: BoardKanbanProps) {
   const moveTask = useStore((s) => s.moveTask);
+  const projects = useStore((s) => s.projects);
+  const currentUser = useStore((s) => s.currentUser);
+  const users = useStore((s) => s.users);
   const setUI = useStore((s) => s.setUI);
   const t = useT();
+  // Berechtigung: nur der Projekt-Owner oder ein Admin darf Aufgaben auf
+  // 'done' setzen. Wenn das Projekt keinen Owner hat → alle dürfen.
+  const meIsAdmin = users.find((u) => u.id === currentUser)?.role === 'admin';
+  const canMarkDone = (task: Task): boolean => {
+    if (meIsAdmin) return true;
+    const proj = projects.find((p) => p.id === task.proj);
+    if (!proj?.ownerId) return true;
+    return proj.ownerId === currentUser;
+  };
   const [dragTask, setDragTask] = useState<Task | null>(null);
   const [dragOverCol, setDragOverCol] = useState<ColumnId | null>(null);
 
@@ -111,6 +123,13 @@ export function BoardKanban({ tasks }: BoardKanbanProps) {
   const onDrop = (col: ColumnId) => {
     if (!dragTask) return;
     if (dragTask.col !== col) {
+      // Permission-Check für 'done'
+      if (col === 'done' && !canMarkDone(dragTask)) {
+        showToast(t('toast.only_owner_can_mark_done'));
+        setDragTask(null);
+        setDragOverCol(null);
+        return;
+      }
       moveTask(dragTask.id, col);
       showToast(t('toast.moved_to', { col: t(`column.${col}` as 'column.todo') }));
     }

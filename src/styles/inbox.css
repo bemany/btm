@@ -18,12 +18,13 @@
   padding: 12px 14px;
   background: var(--cream-50);
   border: 1px solid var(--ink-100);
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
   text-align: left;
   font-family: var(--font-body);
-  transition: background 100ms ease, border-color 100ms ease;
+  transition: background 100ms ease, border-color 100ms ease, box-shadow 100ms ease;
   width: 100%;
+  box-sizing: border-box;
 }
 .inbox-item:hover {
   background: var(--cream-100);
@@ -33,10 +34,46 @@
   background: rgba(200, 90, 44, 0.05);
   border-color: rgba(200, 90, 44, 0.2);
 }
+
+/* Glass-Mode: frosted Inbox-Items, gleicher Look wie Kanban-Buckets +
+   Release-Cards. Korrekter Border-Radius (10px) für konsistente Ecken. */
+body[data-theme="glass"] .inbox-item {
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(28, 26, 23, 0.07);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.6) inset,
+    0 4px 14px rgba(28, 26, 23, 0.04);
+}
+body[data-theme="glass"] .inbox-item:hover {
+  background: rgba(255, 255, 255, 0.68);
+  border-color: rgba(28, 26, 23, 0.12);
+}
+body[data-theme="glass"] .inbox-item.is-unread {
+  background: rgba(224, 113, 64, 0.1);
+  border-color: rgba(224, 113, 64, 0.28);
+}
+
+body[data-theme="glass-dark"] .inbox-item,
+body[data-theme="default-dark"] .inbox-item {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(22px) saturate(160%);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.04) inset,
+    0 4px 14px rgba(0, 0, 0, 0.18);
+}
+body[data-theme="glass-dark"] .inbox-item:hover,
+body[data-theme="default-dark"] .inbox-item:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.14);
+}
 body[data-theme="default-dark"] .inbox-item.is-unread,
 body[data-theme="glass-dark"]   .inbox-item.is-unread {
-  background: rgba(224, 113, 64, 0.1);
-  border-color: rgba(224, 113, 64, 0.25);
+  background: rgba(224, 113, 64, 0.12);
+  border-color: rgba(224, 113, 64, 0.3);
 }
 
 .inbox-item-body {

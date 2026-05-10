@@ -9,6 +9,14 @@ import { useIsMobile } from './components/shared/hooks';
 // Eager geladen (Initial-Render): Shell + Haupt-Routes
 import { Sidebar } from './components/shell/Sidebar';
 import { Topbar } from './components/shell/Topbar';
+import { BackgroundLayer } from './components/backgrounds/BackgroundLayer';
+import {
+  loadBackground,
+  saveBackground,
+  isValidBackgroundId,
+  type BackgroundId,
+} from './components/backgrounds/catalog';
+import * as api from './data/api';
 import { MyWeekScreen } from './components/screens/MyWeekScreen';
 import { BoardScreen } from './components/board/BoardScreen';
 import { ChatBubble } from './components/chat-bubble/ChatBubble';
@@ -59,7 +67,17 @@ const CommandPalette = lazy(() =>
 const SettingsModal = lazy(() =>
   import('./components/settings/SettingsModal').then((m) => ({ default: m.SettingsModal })),
 );
-type SettingsTabId = 'appearance' | 'language' | 'api_tokens' | 'data';
+const FeedbackModal = lazy(() =>
+  import('./components/feedback/FeedbackModal').then((m) => ({ default: m.FeedbackModal })),
+);
+type SettingsTabId =
+  | 'profile'
+  | 'appearance'
+  | 'backgrounds'
+  | 'language'
+  | 'notifications'
+  | 'api_tokens'
+  | 'data';
 
 function ScreenFallback() {
   return (
@@ -100,8 +118,31 @@ export function App() {
   const [collapsed, setCollapsed] = useState(false);
   const [cmdkOpen, setCmdkOpen] = useState(false);
   const [settingsTab, setSettingsTab] = useState<SettingsTabId | null>(null);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [theme, setThemeState] = useState<ThemeMode>(loadTheme);
   const [tourReplay, setTourReplay] = useState(0);
+  const [background, setBackgroundState] = useState<BackgroundId>(loadBackground);
+  // setBackground: lokaler State sofort, localStorage als Cache fürs nächste
+  // Initial-Render, dann fire-and-forget Server-PATCH. Bei Server-Fehler
+  // bleibt der lokale Wert trotzdem aktiv — nicht kritisch genug für Toast.
+  const setBackground = useCallback((id: BackgroundId) => {
+    setBackgroundState(id);
+    saveBackground(id);
+    void api.updateUserPrefs({ backgroundChoice: id }).catch((e) => {
+      console.warn('background save failed', e);
+    });
+  }, []);
+  // AuthUser ist die Source-of-Truth: sobald `me` geladen ist, ggf. den
+  // lokalen State auf den Server-Wert ziehen (z.B. nach Login auf einem
+  // anderen Gerät, wo localStorage den alten Wert hatte).
+  useEffect(() => {
+    const serverBg = authUser?.backgroundChoice;
+    if (serverBg && isValidBackgroundId(serverBg) && serverBg !== background) {
+      setBackgroundState(serverBg);
+      saveBackground(serverBg);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authUser?.backgroundChoice]);
   const isMobile = useIsMobile(768);
 
   const setTheme = useCallback((t: ThemeMode) => {
@@ -161,6 +202,7 @@ export function App() {
   if (isMobile && authUser) {
     return (
       <>
+        <BackgroundLayer theme={theme} id={background} />
         <MobileApp />
         <Suspense fallback={null}>
           {drawer === 'ai' && <AIDrawer setActive={setActive} />}
@@ -175,6 +217,7 @@ export function App() {
 
   return (
     <>
+      <BackgroundLayer theme={theme} id={background} />
       <div
         className={`app ${collapsed ? 'sidebar-collapsed' : ''} density-comfortable`}
         onClick={(e) => {
@@ -195,6 +238,7 @@ export function App() {
           theme={theme}
           setTheme={setTheme}
           onOpenSettings={(tab) => setSettingsTab(tab ?? 'appearance')}
+          onOpenFeedback={() => setFeedbackOpen(true)}
         />
         <Topbar active={active} setActive={setActive} collapsed={collapsed} setCollapsed={setCollapsed} />
         <main className="app-main">
@@ -232,10 +276,13 @@ export function App() {
             initialTab={settingsTab}
             theme={theme}
             setTheme={setTheme}
+            background={background}
+            setBackground={setBackground}
             onReplayTour={() => setTourReplay((n) => n + 1)}
             onClose={() => setSettingsTab(null)}
           />
         )}
+        {feedbackOpen && <FeedbackModal onClose={() => setFeedbackOpen(false)} />}
       </Suspense>
 
       <OnboardingTour replayKey={tourReplay} theme={theme} setTheme={setTheme} />

@@ -1,215 +1,293 @@
-import type { CSSProperties } from 'react';
+// Wochenboard → Timeline-Ansicht.
+//
+// Pro Person eine Zeile, pro Wochentag (Mo-Fr) eine Spalte + „Ohne Frist".
+// Tasks lassen sich zwischen Tagen (= Frist verschieben) und zwischen
+// Personen (= Bearbeiter wechseln) draggen. Die Timeline kann zwischen
+// Wochen navigieren — der Wochenanker bestimmt nur das Mapping „Frist
+// → Tag-Index", die Task-Liste selbst bleibt dieselbe.
+//
+// Status-Chip pro Karte zeigt die aktuelle Spalte (Backlog/In Arbeit/…).
+
+import { useState, type CSSProperties, type DragEvent } from 'react';
 import type { Task } from '../../store/types';
 import { useStore } from '../../store/store';
 import { Avatar } from '../shared/Avatar';
-import { DEMO_TODAY } from '../../lib/format';
+import { Icon } from '../shared/Icon';
 import { useT, useLocale } from '../../i18n';
 
 export interface BoardTimelineProps {
   tasks: Task[];
 }
 
-// Wochenstart (Montag) — alle Day-Indizes relativ dazu.
-const WEEK_START = new Date(DEMO_TODAY);
-WEEK_START.setHours(0, 0, 0, 0);
-
-// Liefert den Tag-Index 0-4 (Mo-Fr) für eine Task, oder -1 wenn keine
-// Frist gesetzt / Frist außerhalb der Woche / ungültiges Format.
-function dueDayIndex(due: string | null | undefined): number {
+// Liefert den Tag-Index 0-4 (Mo-Fr) für eine Task relativ zu einem
+// Wochenanker, oder -1 wenn keine Frist gesetzt / Frist außerhalb der
+// Woche / ungültiges Format.
+function dueDayIndex(due: string | null | undefined, weekStart: Date): number {
   if (!due) return -1;
-  if (due === 'today') return 0; // DEMO_TODAY = Mo 04.05
+  // 'today'/'tomorrow' nur sinnvoll bei „aktueller" Woche — wir mappen sie
+  // immer auf den ersten/zweiten Tag des aktuell sichtbaren Anker-Wochenstarts.
+  if (due === 'today') return 0;
   if (due === 'tomorrow') return 1;
-  // ISO-Datum 'YYYY-MM-DD'
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(due);
   if (!m) return -1;
   const target = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
-  const days = Math.round((target.getTime() - WEEK_START.getTime()) / 86400000);
+  const days = Math.round((target.getTime() - weekStart.getTime()) / 86400000);
   if (days < 0 || days > 4) return -1;
   return days;
 }
+
+function mondayOfDate(d: Date): Date {
+  const out = new Date(d);
+  out.setHours(0, 0, 0, 0);
+  const dow = (out.getDay() || 7) - 1;
+  out.setDate(out.getDate() - dow);
+  return out;
+}
+
+function isoDate(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function isoWeek(d: Date): number {
+  const target = new Date(d.valueOf());
+  const dayNr = (d.getDay() + 6) % 7;
+  target.setDate(target.getDate() - dayNr + 3);
+  const firstThursday = target.valueOf();
+  target.setMonth(0, 1);
+  if (target.getDay() !== 4) {
+    target.setMonth(0, 1 + ((4 - target.getDay() + 7) % 7));
+  }
+  return 1 + Math.ceil((firstThursday - target.valueOf()) / 604800000);
+}
+
+const COLUMN_TONE: Record<string, string> = {
+  todo: 'var(--ink-500)',
+  planned: '#7A9CC8',
+  doing: 'var(--accent-500)',
+  review: '#C8A04C',
+  done: '#5E7F4E',
+};
 
 export function BoardTimeline({ tasks }: BoardTimelineProps) {
   const projects = useStore((s) => s.projects);
   const users = useStore((s) => s.users);
   const setUI = useStore((s) => s.setUI);
+  const updateTask = useStore((s) => s.updateTask);
   const t = useT();
   const [locale] = useLocale();
   const fmtNum = (h: number) => h.toFixed(1).replace('.', locale === 'en' ? '.' : ',');
 
-  const days = [
+  // Wochenanker — Default: aktuelle Woche (Lokal)
+  const [weekStart, setWeekStart] = useState<Date>(() => mondayOfDate(new Date()));
+  const shiftWeek = (delta: number) => {
+    const d = new Date(weekStart);
+    d.setDate(d.getDate() + delta);
+    setWeekStart(d);
+  };
+  const goToday = () => setWeekStart(mondayOfDate(new Date()));
+  const fmtDay = (d: Date) =>
+    d.toLocaleDateString(locale === 'en' ? 'en-US' : 'de-DE', { day: '2-digit', month: '2-digit' });
+  const friday = new Date(weekStart);
+  friday.setDate(friday.getDate() + 4);
+  const kw = isoWeek(weekStart);
+
+  const dayDates = Array.from({ length: 5 }, (_, i) => {
+    const d = new Date(weekStart);
+    d.setDate(d.getDate() + i);
+    return d;
+  });
+  const dayLabels = [
     t('board.timeline_day_mo'),
     t('board.timeline_day_di'),
     t('board.timeline_day_mi'),
     t('board.timeline_day_do'),
     t('board.timeline_day_fr'),
   ];
+
+  // Drag-State
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [dragOverCell, setDragOverCell] = useState<string | null>(null);
+
+  const onDragStart = (e: DragEvent<HTMLDivElement>, taskId: string) => {
+    setDragId(taskId);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', taskId);
+  };
+  const onDragEnd = () => {
+    setDragId(null);
+    setDragOverCell(null);
+  };
+  const onCellDragOver = (e: DragEvent<HTMLDivElement>, cellKey: string) => {
+    if (!dragId) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (cellKey !== dragOverCell) setDragOverCell(cellKey);
+  };
+  const onCellDrop = (
+    e: DragEvent<HTMLDivElement>,
+    targetPersonId: string,
+    targetDayIdx: number, // -1 = "Ohne Frist"
+  ) => {
+    e.preventDefault();
+    if (!dragId) return;
+    const tk = tasks.find((x) => x.id === dragId);
+    if (!tk) return;
+    const patch: Partial<Task> = {};
+    if (tk.who !== targetPersonId) patch.who = targetPersonId;
+    let newDue: string | null;
+    if (targetDayIdx === -1) {
+      newDue = null;
+    } else {
+      newDue = isoDate(dayDates[targetDayIdx]);
+    }
+    if (tk.due !== newDue && (tk.due ?? null) !== newDue) {
+      patch.due = newDue;
+    }
+    if (Object.keys(patch).length > 0) {
+      void updateTask(tk.id, patch);
+    }
+    setDragId(null);
+    setDragOverCell(null);
+  };
+
   const byPerson: Record<string, Task[]> = {};
   tasks.forEach((tk) => {
     if (!byPerson[tk.who]) byPerson[tk.who] = [];
     byPerson[tk.who].push(tk);
   });
 
-  return (
-    <div
-      style={{
-        background: 'var(--cream-50)',
-        border: '1px solid var(--ink-100)',
-        borderRadius: 8,
-        overflow: 'hidden',
-      }}
-    >
+  const renderCard = (tk: Task) => {
+    const projColor = projects.find((p) => p.id === tk.proj)?.color ?? 'var(--ink-300)';
+    const tone = COLUMN_TONE[tk.col] ?? 'var(--ink-500)';
+    return (
       <div
+        key={tk.id}
+        className={`tl-card ${dragId === tk.id ? 'is-dragging' : ''}`}
+        draggable
+        onDragStart={(e) => onDragStart(e, tk.id)}
+        onDragEnd={onDragEnd}
+        onClick={() => setUI({ taskDetailId: tk.id })}
         style={{
-          display: 'grid',
-          gridTemplateColumns: '160px repeat(5, 1fr) 1.2fr',
-          borderBottom: '1px solid var(--ink-100)',
-          background: 'var(--cream-100)',
-        }}
+          ['--proj-color' as keyof CSSProperties]: projColor,
+          ['--col-tone' as keyof CSSProperties]: tone,
+        } as CSSProperties}
       >
-        <div
-          style={{
-            padding: '10px 14px',
-            fontFamily: 'var(--font-mono)',
-            fontSize: 10,
-            textTransform: 'uppercase',
-            letterSpacing: '0.06em',
-            color: 'var(--ink-500)',
-            fontWeight: 600,
-          }}
-        >
-          {t('board.timeline_person')}
+        <div className="tl-card-head">
+          <span className="tl-card-status" style={{ background: tone }}>
+            {t(`column.${tk.col}` as 'column.todo')}
+          </span>
+          <span className="tl-card-hours">{fmtNum(tk.estH)}h</span>
         </div>
-        {days.map((d) => (
-          <div
-            key={d}
-            style={{
-              padding: '10px 14px',
-              fontFamily: 'var(--font-mono)',
-              fontSize: 10,
-              textTransform: 'uppercase',
-              letterSpacing: '0.06em',
-              color: 'var(--ink-700)',
-              fontWeight: 600,
-              textAlign: 'center',
-              borderLeft: '1px solid var(--ink-100)',
-            }}
-          >
-            {d}
-          </div>
-        ))}
-        <div
-          style={{
-            padding: '10px 14px',
-            fontFamily: 'var(--font-mono)',
-            fontSize: 10,
-            textTransform: 'uppercase',
-            letterSpacing: '0.06em',
-            color: 'var(--ink-500)',
-            fontWeight: 600,
-            textAlign: 'center',
-            borderLeft: '1px solid var(--ink-100)',
-            background: 'var(--cream-200, var(--cream-100))',
-          }}
-        >
-          {t('board.timeline_no_due')}
+        <div className="tl-card-title">
+          {tk.title.slice(0, 50)}
+          {tk.title.length > 50 ? '…' : ''}
         </div>
       </div>
-      {Object.keys(byPerson).map((personId) => {
-        const person = users.find((u) => u.id === personId);
-        const list = byPerson[personId];
-        return (
-          <div
-            key={personId}
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '160px repeat(5, 1fr) 1.2fr',
-              borderTop: '1px solid var(--ink-100)',
-              minHeight: 80,
-              alignItems: 'stretch',
-            }}
+    );
+  };
+
+  return (
+    <div className="tl-wrap">
+      <div className="tl-toolbar">
+        <div className="tl-nav">
+          <button
+            type="button"
+            className="tl-nav-btn"
+            onClick={() => shiftWeek(-7)}
+            title={t('times.prev_week')}
+            aria-label={t('times.prev_week')}
           >
-            <div
-              style={{
-                padding: 10,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                background: 'var(--cream-100)',
-              }}
-            >
-              <Avatar id={personId} size={24} />
-              <div>
-                <div style={{ fontSize: 12, fontWeight: 600 }}>{person?.name}</div>
-                <div className="mono" style={{ fontSize: 10, color: 'var(--ink-500)' }}>
-                  {t('board.timeline_cap_per_week', { cap: person?.cap ?? 0 })}
+            <Icon name="chevron-left" size={14} />
+          </button>
+          <div className="tl-nav-label">
+            <span className="tl-nav-kw">KW {kw}</span>
+            <span className="tl-nav-range">
+              {fmtDay(weekStart)} – {fmtDay(friday)}
+            </span>
+          </div>
+          <button
+            type="button"
+            className="tl-nav-btn"
+            onClick={() => shiftWeek(7)}
+            title={t('times.next_week')}
+            aria-label={t('times.next_week')}
+          >
+            <Icon name="chevron-right" size={14} />
+          </button>
+          <button type="button" className="tl-nav-today" onClick={goToday}>
+            {t('common.today')}
+          </button>
+        </div>
+        <div style={{ flex: 1 }} />
+        <div className="tl-hint">{t('board.timeline_drag_hint')}</div>
+      </div>
+
+      <div className="tl-grid">
+        <div className="tl-grid-head">
+          <div className="tl-grid-head-cell">{t('board.timeline_person')}</div>
+          {dayLabels.map((d, i) => (
+            <div key={d} className="tl-grid-head-cell">
+              <div className="tl-grid-head-day">{d}</div>
+              <div className="tl-grid-head-date">{fmtDay(dayDates[i])}</div>
+            </div>
+          ))}
+          <div className="tl-grid-head-cell tl-no-due">{t('board.timeline_no_due')}</div>
+        </div>
+
+        {Object.keys(byPerson).map((personId) => {
+          const person = users.find((u) => u.id === personId);
+          const list = byPerson[personId];
+          const buckets: Task[][] = [[], [], [], [], [], []];
+          for (const tk of list) {
+            const di = dueDayIndex(tk.due, weekStart);
+            buckets[di < 0 ? 5 : di].push(tk);
+          }
+          return (
+            <div key={personId} className="tl-row">
+              <div className="tl-row-person">
+                <Avatar id={personId} size={24} />
+                <div>
+                  <div className="tl-row-name">{person?.name ?? '—'}</div>
+                  <div className="tl-row-cap">
+                    {t('board.timeline_cap_per_week', { cap: person?.cap ?? 0 })}
+                  </div>
                 </div>
               </div>
-            </div>
-            {(() => {
-              // Tasks per due-Field auf Tag-Index oder „Ohne Frist" (-1) bucketen
-              const buckets: Task[][] = [[], [], [], [], [], []]; // Mo, Di, Mi, Do, Fr, OhneFrist
-              for (const tk of list) {
-                const di = dueDayIndex(tk.due);
-                buckets[di < 0 ? 5 : di].push(tk);
-              }
-              const renderTask = (tk: Task) => (
-                <div
-                  key={tk.id}
-                  onClick={() => setUI({ taskDetailId: tk.id })}
-                  style={{
-                    background: 'var(--cream-100)',
-                    borderLeft: '3px solid var(--proj-color)',
-                    ['--proj-color' as keyof CSSProperties]: projects.find((p) => p.id === tk.proj)?.color,
-                    padding: '5px 7px',
-                    borderRadius: 3,
-                    fontSize: 11,
-                    lineHeight: 1.3,
-                    cursor: 'pointer',
-                  } as CSSProperties}
-                >
-                  <div style={{ fontWeight: 500, color: 'var(--ink-900)' }}>
-                    {tk.title.slice(0, 30)}
-                    {tk.title.length > 30 ? '…' : ''}
-                  </div>
-                  <div className="mono" style={{ fontSize: 9, color: 'var(--ink-500)' }}>
-                    {fmtNum(tk.estH)}h
-                  </div>
-                </div>
-              );
-              return (
-                <>
-                  {days.map((d, di) => (
-                    <div
-                      key={d}
-                      style={{
-                        padding: 6,
-                        borderLeft: '1px solid var(--ink-100)',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: 4,
-                      }}
-                    >
-                      {buckets[di].map(renderTask)}
-                    </div>
-                  ))}
+              {dayLabels.map((d, i) => {
+                const cellKey = `${personId}-${i}`;
+                return (
                   <div
-                    style={{
-                      padding: 6,
-                      borderLeft: '1px solid var(--ink-100)',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: 4,
-                      background: buckets[5].length > 0 ? 'rgba(0,0,0,0.015)' : 'transparent',
+                    key={d}
+                    className={`tl-cell ${dragOverCell === cellKey ? 'is-drop-target' : ''}`}
+                    onDragOver={(e) => onCellDragOver(e, cellKey)}
+                    onDragLeave={() => {
+                      if (dragOverCell === cellKey) setDragOverCell(null);
                     }}
+                    onDrop={(e) => onCellDrop(e, personId, i)}
                   >
-                    {buckets[5].map(renderTask)}
+                    {buckets[i].map(renderCard)}
                   </div>
-                </>
-              );
-            })()}
-          </div>
-        );
-      })}
+                );
+              })}
+              {(() => {
+                const cellKey = `${personId}-nodue`;
+                return (
+                  <div
+                    className={`tl-cell tl-cell-nodue ${dragOverCell === cellKey ? 'is-drop-target' : ''}`}
+                    onDragOver={(e) => onCellDragOver(e, cellKey)}
+                    onDragLeave={() => {
+                      if (dragOverCell === cellKey) setDragOverCell(null);
+                    }}
+                    onDrop={(e) => onCellDrop(e, personId, -1)}
+                  >
+                    {buckets[5].map(renderCard)}
+                  </div>
+                );
+              })()}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

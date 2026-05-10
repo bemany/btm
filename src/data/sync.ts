@@ -17,6 +17,8 @@ const USERS_KEY = ['btm', 'users'] as const;
 const TEAMS_KEY = ['btm', 'teams'] as const;
 const INVITATIONS_KEY = ['btm', 'invitations'] as const;
 const WEEK_SESSIONS_KEY = ['btm', 'weekSessions'] as const;
+const TASK_SESSIONS_KEY = ['btm', 'taskSessions'] as const;
+const PROJECT_MEMBERS_KEY = ['btm', 'projectMembers'] as const;
 const COMMENTS_KEY = ['btm', 'comments'] as const;
 const NOTIFICATIONS_KEY = ['btm', 'notifications'] as const;
 const NOTIFICATION_COUNT_KEY = ['btm', 'notifications', 'count'] as const;
@@ -112,6 +114,8 @@ export const SYNC_KEYS = {
   TEAMS: TEAMS_KEY,
   INVITATIONS: INVITATIONS_KEY,
   WEEK_SESSIONS: WEEK_SESSIONS_KEY,
+  TASK_SESSIONS: TASK_SESSIONS_KEY,
+  PROJECT_MEMBERS: PROJECT_MEMBERS_KEY,
   COMMENTS: COMMENTS_KEY,
   NOTIFICATIONS: NOTIFICATIONS_KEY,
   NOTIFICATION_COUNT: NOTIFICATION_COUNT_KEY,

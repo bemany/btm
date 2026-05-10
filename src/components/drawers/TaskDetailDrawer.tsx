@@ -7,7 +7,10 @@ import { Icon } from '../shared/Icon';
 import { ProjTag } from '../shared/ProjTag';
 import { showToast } from '../shared/Toast';
 import { useT, useLocale } from '../../i18n';
-import { CommentsSection } from '../comments/CommentsSection';
+import { SessionsSection } from '../sessions/SessionsSection';
+import { TaskTimeline } from '../sessions/TaskTimeline';
+import { DatePicker } from '../shared/DatePicker';
+import { SubtasksSection } from './SubtasksSection';
 
 export interface TaskDetailDrawerProps {
   id: string;
@@ -32,12 +35,23 @@ export function TaskDetailDrawer({ id }: TaskDetailDrawerProps) {
 
   const t = tasks.find((x) => x.id === id);
 
+  // Permission: nur Projekt-Owner oder Admin darf auf 'done' setzen.
+  // Wenn das Projekt keinen Owner hat → niemand wird blockiert.
+  const currentUserId = useStore.getState().currentUser;
+  const meIsAdmin = users.find((u) => u.id === currentUserId)?.role === 'admin';
+  const projOfTask = t ? projects.find((p) => p.id === t.proj) : null;
+  const canMarkDone = meIsAdmin || !projOfTask?.ownerId || projOfTask.ownerId === currentUserId;
+
   // Lokale Text-Drafts für Title + Description: KEIN Auto-Save während des
   // Tippens (sonst ruckelt's Buchstabe-für-Buchstabe weil jeder PATCH +
   // Sync einen Re-Render auslöst). Erst onBlur und beim Schließen wird
   // zum Server geschrieben.
   const [titleDraft, setTitleDraft] = useState(t?.title ?? '');
   const [descDraft, setDescDraft] = useState(t?.desc ?? '');
+  // Inline-Edit für „geplante Zeit". Klick auf das `/ Xh geplant`-Label
+  // öffnet einen Number-Input. Enter/Blur speichert, Escape verwirft.
+  const [editingEst, setEditingEst] = useState(false);
+  const [estDraft, setEstDraft] = useState('');
 
   // Beim Wechsel der Task (anderer Drawer-Aufruf) Draft initial füllen.
   // Gegen Server-Updates DURING typing schützen wir uns mit einem ref:
@@ -141,10 +155,34 @@ export function TaskDetailDrawer({ id }: TaskDetailDrawerProps) {
             }}
           />
 
+          {t.parentTaskId && (() => {
+            const parent = tasks.find((x) => x.id === t.parentTaskId);
+            if (!parent) return null;
+            return (
+              <button
+                type="button"
+                className="parent-task-pill"
+                onClick={() => setUI({ taskDetailId: parent.id })}
+                title={tr('subtasks.parent_link_title')}
+              >
+                <Icon name="corner-up-left" size={11} />
+                <span className="parent-task-pill-label">{tr('subtasks.parent_label')}</span>
+                <span className="parent-task-pill-title">{parent.title}</span>
+              </button>
+            );
+          })()}
+
           <div style={{ display: 'flex', gap: 8, marginBottom: 18, flexWrap: 'wrap' }}>
             <select
               value={t.col}
-              onChange={(e) => updateTask(t.id, { col: e.target.value as ColumnId })}
+              onChange={(e) => {
+                const newCol = e.target.value as ColumnId;
+                if (newCol === 'done' && !canMarkDone) {
+                  showToast(tr('toast.only_owner_can_mark_done'));
+                  return;
+                }
+                updateTask(t.id, { col: newCol });
+              }}
               style={{
                 background: 'var(--cream-50)',
                 border: '1px solid var(--ink-200)',
@@ -154,7 +192,7 @@ export function TaskDetailDrawer({ id }: TaskDetailDrawerProps) {
               }}
             >
               {COLUMNS.map((c) => (
-                <option key={c.id} value={c.id}>
+                <option key={c.id} value={c.id} disabled={c.id === 'done' && !canMarkDone && t.col !== 'done'}>
                   {tr(`column.${c.id}` as 'column.todo')}
                 </option>
               ))}
@@ -212,57 +250,17 @@ export function TaskDetailDrawer({ id }: TaskDetailDrawerProps) {
               <option value="med">{tr('task_detail.prio_med')}</option>
               <option value="high">{tr('task_detail.prio_high')}</option>
             </select>
-            <label
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                background: 'var(--cream-50)',
-                border: '1px solid var(--ink-200)',
-                borderRadius: 6,
-                padding: '4px 10px',
-                fontSize: 12,
-              }}
-            >
-              <Icon name="calendar" size={12} style={{ color: 'var(--ink-500)' }} />
-              <span className="mono" style={{ fontSize: 10, color: 'var(--ink-500)' }}>
-                {tr('task_detail.due')}
-              </span>
-              <input
-                type="date"
-                value={
-                  t.due && t.due !== 'today' && t.due !== 'tomorrow'
-                    ? t.due
-                    : ''
-                }
-                onChange={(e) => updateTask(t.id, { due: e.target.value || null })}
-                style={{
-                  border: 0,
-                  background: 'transparent',
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 12,
-                  color: 'var(--ink-700)',
-                  padding: 0,
-                  cursor: 'pointer',
-                }}
-              />
-              {t.due && (
-                <button
-                  onClick={() => updateTask(t.id, { due: null })}
-                  style={{
-                    border: 0,
-                    background: 'transparent',
-                    color: 'var(--ink-400)',
-                    cursor: 'pointer',
-                    padding: 0,
-                    display: 'inline-flex',
-                  }}
-                  title={tr('task_detail.due_clear_title')}
-                >
-                  <Icon name="x" size={11} />
-                </button>
-              )}
-            </label>
+            <DatePicker
+              mode="date"
+              value={
+                t.due && t.due !== 'today' && t.due !== 'tomorrow'
+                  ? t.due
+                  : null
+              }
+              onChange={(v) => updateTask(t.id, { due: v })}
+              placeholder={tr('task_detail.due')}
+              mono
+            />
           </div>
 
           <div
@@ -316,9 +314,86 @@ export function TaskDetailDrawer({ id }: TaskDetailDrawerProps) {
               >
                 {fmtNum(liveLog)}
               </span>
-              <span style={{ fontSize: 14, color: 'var(--ink-500)' }}>
-                {tr('task_detail.estimate_planned_suffix', { h: fmtNum(t.estH) })}
-              </span>
+              {editingEst ? (
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'baseline',
+                    gap: 4,
+                    fontSize: 14,
+                    color: 'var(--ink-500)',
+                  }}
+                >
+                  /
+                  <input
+                    type="number"
+                    autoFocus
+                    step={0.5}
+                    min={0}
+                    max={200}
+                    value={estDraft}
+                    onChange={(e) => setEstDraft(e.target.value)}
+                    onBlur={() => {
+                      const v = parseFloat(estDraft.replace(',', '.'));
+                      if (!Number.isNaN(v) && v >= 0 && v !== t.estH) {
+                        updateTask(t.id, { estH: Math.round(v * 100) / 100 });
+                      }
+                      setEditingEst(false);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        (e.currentTarget as HTMLInputElement).blur();
+                      } else if (e.key === 'Escape') {
+                        e.preventDefault();
+                        setEditingEst(false);
+                      }
+                    }}
+                    style={{
+                      width: 60,
+                      padding: '2px 6px',
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: 13,
+                      fontVariantNumeric: 'tabular-nums',
+                      border: '1px solid var(--ink-300)',
+                      borderRadius: 4,
+                      background: 'var(--cream-50)',
+                      color: 'var(--ink-900)',
+                    }}
+                  />
+                  {tr('task_detail.estimate_planned_inline_suffix')}
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEstDraft(String(t.estH));
+                    setEditingEst(true);
+                  }}
+                  title={tr('task_detail.estimate_edit_tooltip')}
+                  style={{
+                    fontSize: 14,
+                    color: 'var(--ink-500)',
+                    background: 'transparent',
+                    border: 'none',
+                    padding: '2px 4px',
+                    margin: 0,
+                    cursor: 'pointer',
+                    borderRadius: 4,
+                    fontFamily: 'inherit',
+                  }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLElement).style.background = 'var(--ink-50, rgba(0,0,0,0.05))';
+                    (e.currentTarget as HTMLElement).style.color = 'var(--ink-700)';
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLElement).style.background = 'transparent';
+                    (e.currentTarget as HTMLElement).style.color = 'var(--ink-500)';
+                  }}
+                >
+                  {tr('task_detail.estimate_planned_suffix', { h: fmtNum(t.estH) })}
+                </button>
+              )}
             </div>
             <div className="mini-bar" style={{ marginTop: 10 }}>
               <span style={{ width: pct + '%' }} />
@@ -337,49 +412,6 @@ export function TaskDetailDrawer({ id }: TaskDetailDrawerProps) {
           </div>
 
           <div className="eyebrow" style={{ marginTop: 18, marginBottom: 8 }}>
-            {tr('task_detail.sessions', { count: (t.sessions || []).length })}
-          </div>
-          {(!t.sessions || t.sessions.length === 0) && (
-            <div style={{ fontSize: 12, color: 'var(--ink-500)', fontStyle: 'italic' }}>
-              {tr('task_detail.sessions_empty')}
-            </div>
-          )}
-          {(t.sessions || []).map((sess, i) => (
-            <div
-              key={i}
-              style={{
-                display: 'flex',
-                gap: 10,
-                padding: '8px 10px',
-                borderTop: '1px solid var(--ink-100)',
-                alignItems: 'center',
-                fontSize: 12,
-              }}
-            >
-              <Icon
-                name={sess.source === 'manual' ? 'edit-3' : 'timer'}
-                size={12}
-                style={{ color: 'var(--ink-500)' }}
-              />
-              <span className="mono" style={{ color: 'var(--ink-700)' }}>
-                {new Date(sess.from).toLocaleString(locale === 'en' ? 'en-US' : 'de-DE', {
-                  weekday: 'short',
-                  day: '2-digit',
-                  month: '2-digit',
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}
-              </span>
-              <div style={{ flex: 1 }} />
-              <span className="mono" style={{ fontWeight: 600 }}>
-                {sess.h.toFixed(2).replace('.', locale === 'en' ? '.' : ',')}h
-              </span>
-            </div>
-          ))}
-
-          <CommentsSection subjectType="task" subjectId={t.id} />
-
-          <div className="eyebrow" style={{ marginTop: 18, marginBottom: 8 }}>
             {tr('task_detail.attachments')}
           </div>
           <div
@@ -390,10 +422,23 @@ export function TaskDetailDrawer({ id }: TaskDetailDrawerProps) {
               textAlign: 'center',
               fontSize: 12,
               color: 'var(--ink-500)',
+              marginBottom: 18,
             }}
           >
             <Icon name="paperclip" size={16} style={{ color: 'var(--ink-400)', marginRight: 6 }} />
             {tr('task_detail.attachments_dropzone')}
+          </div>
+
+          <div style={{ marginTop: 18, marginBottom: 18 }}>
+            <SubtasksSection parent={t} />
+          </div>
+
+          <div style={{ marginTop: 4 }}>
+            <SessionsSection taskId={t.id} />
+          </div>
+
+          <div style={{ marginTop: 18 }}>
+            <TaskTimeline taskId={t.id} />
           </div>
         </div>
       </div>

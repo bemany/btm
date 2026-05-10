@@ -58,7 +58,7 @@ export function InboxScreen() {
         queryClient.invalidateQueries({ queryKey: SYNC_KEYS.NOTIFICATIONS });
       }
     }
-    if (n.kind === 'mention' && n.payload.subjectType && n.payload.subjectId) {
+    if ((n.kind === 'mention' || n.kind === 'review_request') && n.payload.subjectType && n.payload.subjectId) {
       if (n.payload.subjectType === 'task') {
         setUI({ taskDetailId: n.payload.subjectId });
       } else {
@@ -153,7 +153,9 @@ function NotifItem({ n, users, onOpen, fmtRel, unread }: NotifItemProps) {
   const text =
     n.kind === 'mention'
       ? t('inbox.mention_text', { actor: actorName, subject })
-      : `${actorName} · ${n.kind}`;
+      : n.kind === 'review_request'
+        ? t('inbox.review_request_text', { actor: actorName, subject })
+        : `${actorName} · ${n.kind}`;
 
   return (
     <button

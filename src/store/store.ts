@@ -86,6 +86,7 @@ function mapPatchToServer(patch: Partial<Task>): api.UpdateTaskInput {
   if ('proj' in patch) out.projectId = patch.proj ?? null;
   if ('who' in patch) out.assigneeId = patch.who || null;
   if ('due' in patch) out.due = (patch.due as string | null | undefined) ?? null;
+  if ('parentTaskId' in patch) out.parentTaskId = patch.parentTaskId ?? null;
   return out;
 }
 
@@ -132,6 +133,7 @@ export const useStore = create<BTMStore>()(
             due: (partial.due as string | null | undefined) ?? null,
             projectId: partial.proj ?? null,
             assigneeId: partial.who ?? get().currentUser ?? null,
+            parentTaskId: partial.parentTaskId ?? null,
           });
           const t = api.fromServerTask(created, []);
           set((s) => ({ tasks: [...s.tasks, t] }));
@@ -215,6 +217,7 @@ export const useStore = create<BTMStore>()(
             color: partial.color ?? '#6B6359',
             client: partial.client ?? null,
             due: partial.due ?? null,
+            ownerId: partial.ownerId ?? null,
           });
           const p = api.fromServerProject(created);
           set((s) => ({ projects: [...s.projects, p] }));
@@ -235,6 +238,7 @@ export const useStore = create<BTMStore>()(
             color: patch.color,
             client: patch.client,
             due: patch.due,
+            ownerId: patch.ownerId,
           });
           set((s) => ({
             projects: s.projects.map((p) => (p.id === id ? api.fromServerProject(updated) : p)),

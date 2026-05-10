@@ -323,6 +323,25 @@ export function UserDrawer({ id, onClose }: Props) {
               {existing.status === 'inactive' ? t('admin.btn_reactivate') : t('admin.btn_deactivate')}
             </button>
           )}
+          {!isNew && existing && (
+            <button
+              className="admin-btn ghost"
+              onClick={async () => {
+                try {
+                  const res = await api.adminMagicLink(existing.id);
+                  const text = `${res.email}\nCode: ${res.code}\n${res.url}`;
+                  await navigator.clipboard.writeText(text);
+                  showToast(t('admin.magic_link_copied', { email: res.email }));
+                } catch {
+                  showToast(t('common.error_generic'));
+                }
+              }}
+              title={t('admin.magic_link_title')}
+            >
+              <Icon name="key-round" size={12} />
+              {t('admin.magic_link_btn')}
+            </button>
+          )}
           <div style={{ flex: 1 }} />
           <button className="admin-btn ghost" onClick={onClose} disabled={saving}>
             {t('common.cancel')}

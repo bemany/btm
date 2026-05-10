@@ -44,6 +44,15 @@ export function TaskCard({ task, dragging, onDragStart, onDragEnd, onClick }: Ta
       <div className="meta-row">
         <ProjTag id={task.proj} />
         <PrioDot p={task.prio} />
+        {task.parentTaskId && (
+          <span
+            className="subtask-pill"
+            title={t('subtasks.is_subtask_indicator')}
+          >
+            <Icon name="corner-up-left" size={9} />
+            {t('subtasks.subtask_label')}
+          </span>
+        )}
         {isLive && (
           <span className="pill doing">
             <span

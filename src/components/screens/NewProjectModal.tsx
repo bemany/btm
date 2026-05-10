@@ -4,6 +4,7 @@ import { useStore } from '../../store/store';
 import { Icon } from '../shared/Icon';
 import { showToast } from '../shared/Toast';
 import { useT, useLocale } from '../../i18n';
+import { DatePicker } from '../shared/DatePicker';
 
 const PALETTE = [
   '#C85A2C',
@@ -25,6 +26,7 @@ export function NewProjectModal({ onClose, existing }: NewProjectModalProps) {
   const addProject = useStore((s) => s.addProject);
   const updateProject = useStore((s) => s.updateProject);
   const deleteProject = useStore((s) => s.deleteProject);
+  const users = useStore((s) => s.users);
   const t = useT();
   const [locale] = useLocale();
 
@@ -34,6 +36,7 @@ export function NewProjectModal({ onClose, existing }: NewProjectModalProps) {
   const [client, setClient] = useState(existing?.client || 'Mein Driver');
   const [due, setDue] = useState(existing?.due || '');
   const [color, setColor] = useState(existing?.color || PALETTE[0]);
+  const [ownerId, setOwnerId] = useState<string | null>(existing?.ownerId ?? null);
 
   const canSave = code.trim().length > 0 && name.trim().length > 0;
 
@@ -48,6 +51,7 @@ export function NewProjectModal({ onClose, existing }: NewProjectModalProps) {
         client: client.trim(),
         due: due || null,
         color,
+        ownerId,
       });
       showToast(t('projects.saved_toast', { code: codeUp }));
     } else {
@@ -57,6 +61,7 @@ export function NewProjectModal({ onClose, existing }: NewProjectModalProps) {
         client: client.trim(),
         due: due || null,
         color,
+        ownerId,
       });
       showToast(p ? t('projects.created_toast', { code: p.code }) : t('projects.create_failed'));
     }
@@ -109,7 +114,12 @@ export function NewProjectModal({ onClose, existing }: NewProjectModalProps) {
             </div>
             <div className="form-row">
               <label>{t('projects.due_label')}</label>
-              <input type="date" value={due ?? ''} onChange={(e) => setDue(e.target.value)} />
+              <DatePicker
+                mode="date"
+                value={due || null}
+                onChange={(v) => setDue(v ?? '')}
+                placeholder={t('projects.due_label')}
+              />
               <div className="hint">{t('projects.due_hint')}</div>
             </div>
           </div>
@@ -130,6 +140,32 @@ export function NewProjectModal({ onClose, existing }: NewProjectModalProps) {
               onChange={(e) => setClient(e.target.value)}
               placeholder={t('projects.client_placeholder')}
             />
+          </div>
+          <div className="form-row">
+            <label>{t('projects.owner_label')}</label>
+            <select
+              value={ownerId ?? ''}
+              onChange={(e) => setOwnerId(e.target.value || null)}
+              style={{
+                width: '100%',
+                padding: '8px 10px',
+                borderRadius: 6,
+                border: '1px solid var(--ink-200)',
+                background: 'var(--cream-50)',
+                fontSize: 13,
+                color: 'var(--ink-900)',
+              }}
+            >
+              <option value="">{t('projects.owner_placeholder')}</option>
+              {users
+                .filter((u) => u.status === 'active')
+                .map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.name}
+                  </option>
+                ))}
+            </select>
+            <div className="hint">{t('projects.owner_hint')}</div>
           </div>
           <div className="form-row">
             <label>{t('projects.color')}</label>
