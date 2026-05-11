@@ -153,7 +153,8 @@ export function TVDashboardScreen() {
   const overdueCount = dueAndOverdue.filter((t) => t._overdue).length;
 
   const inReview = publicTasks.filter((t) => t.col === 'review');
-  const doneToday = publicTasks.filter((t) => t.col === 'done');
+  // Heute-erledigt-Bucket entfernt — Platz reserviert für künftige Kalender-Ansicht
+  // (Feedback FqJLc2Cel2Y, 2026-05-11).
 
   // Stats (ebenfalls nur öffentliche Aufgaben)
   const totalEst = publicTasks.reduce((a, t) => a + (t.estH || 0), 0);
@@ -167,7 +168,6 @@ export function TVDashboardScreen() {
   const progressPaged = usePagedRotation(inProgress, PAGE_SIZE);
   const duePaged = usePagedRotation(dueAndOverdue, PAGE_SIZE);
   const reviewPaged = usePagedRotation(inReview, PAGE_SIZE);
-  const donePaged = usePagedRotation(doneToday, PAGE_SIZE);
 
   const PageBadge = ({ pageIndex, pageCount }: { pageIndex: number; pageCount: number }) =>
     pageCount > 1 ? (
@@ -332,35 +332,21 @@ export function TVDashboardScreen() {
           </div>
         </section>
 
-        {/* Heute erledigt */}
-        <section className="tv-col tv-col-done">
+        {/* Platzhalter für künftige Kalender-Ansicht (siehe Feedback FqJLc2Cel2Y).
+            Wir behalten die Grid-Zelle und das visuelle Frame, damit das Layout
+            ausgewogen bleibt und User schon mal sehen wo es hin will. */}
+        <section className="tv-col tv-col-calendar tv-col-placeholder">
           <div className="tv-col-head">
-            <div className="tv-col-eyebrow">Geschafft</div>
-            <h2>Heute erledigt</h2>
-            <PageBadge pageIndex={donePaged.pageIndex} pageCount={donePaged.pageCount} />
-            <div className="tv-col-count">{doneToday.length}</div>
+            <div className="tv-col-eyebrow">Ausblick</div>
+            <h2>Kalender</h2>
+            <span className="tv-page-badge">bald</span>
           </div>
           <div className="tv-list">
-            {doneToday.length === 0 && <div className="tv-empty">Heute noch nichts erledigt.</div>}
-            {donePaged.page.map((t) => {
-              const p = personaById(t.who);
-              const proj = projectById(t.proj);
-              return (
-                <div key={t.id} className="tv-row tv-row-done">
-                  <div className="tv-done-flag">
-                    <Icon name="check" size={16} />
-                  </div>
-                  <div className="tv-row-title tv-row-title-done">{t.title}</div>
-                  <div className="tv-row-trail">
-                    <span className="tv-chip" style={{ borderColor: proj?.color, color: proj?.color }}>
-                      {proj?.code || '—'}
-                    </span>
-                    <span className="tv-row-progmeta">{t.loggedH.toFixed(1)}h</span>
-                    {renderAvatar(p, { sm: true, tone: '#5E7F4E' })}
-                  </div>
-                </div>
-              );
-            })}
+            <div className="tv-placeholder">
+              <Icon name="calendar-days" size={36} />
+              <div className="tv-placeholder-title">Tages- &amp; Wochenkalender</div>
+              <div className="tv-placeholder-sub">Termine, Fristen und Sessions auf einen Blick — kommt in einem der nächsten Releases.</div>
+            </div>
           </div>
         </section>
       </main>
@@ -377,10 +363,6 @@ export function TVDashboardScreen() {
         <div className="tv-foot-stat">
           <div className="tv-foot-label">Im Review</div>
           <div className="tv-foot-val">{inReview.length}</div>
-        </div>
-        <div className="tv-foot-stat">
-          <div className="tv-foot-label">Erledigt heute</div>
-          <div className="tv-foot-val">{doneToday.length}</div>
         </div>
 
         <div className="tv-foot-bar">
