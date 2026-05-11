@@ -8,7 +8,7 @@ import { db } from '../db/client.js';
 import { notifications } from '../db/schema.js';
 import { emit } from './events.js';
 
-export type NotificationKind = 'mention' | 'review_request';
+export type NotificationKind = 'mention' | 'review_request' | 'feedback_resolved';
 
 export interface MentionPayload {
   commentId: string;
@@ -16,6 +16,13 @@ export interface MentionPayload {
   subjectId: string;
   subjectTitle: string; // snapshot, überlebt Rename
   excerpt: string;      // erste 140 chars vom Body, Tokens als @Name gerendert
+}
+
+export interface FeedbackResolvedPayload {
+  feedbackId: string;
+  feedbackType: 'bug' | 'feature';
+  feedbackTitle: string;      // snapshot
+  resolutionNote: string | null; // optionaler Admin-Kommentar
 }
 
 export interface CreateNotificationArgs {

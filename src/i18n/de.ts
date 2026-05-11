@@ -1012,6 +1012,8 @@ export const de = {
     read_section_title: 'Gelesen ({count})',
     mention_text: '{actor} hat dich in „{subject}" erwähnt',
     review_request_text: '{actor} hat „{subject}" zur Review gestellt',
+    feedback_bug_resolved_text: '{actor} hat deinen Bug „{subject}" behoben',
+    feedback_feature_resolved_text: '{actor} hat deinen Feature-Wunsch „{subject}" umgesetzt',
     unknown_actor: 'Jemand',
   },
   toast: {

@@ -219,6 +219,101 @@ ${opts.unsubscribeUrl}
   return { subject, text, html };
 }
 
+// ── Feedback-Resolved-Mail ──────────────────────────────────────────────
+// Wird beim Auflösen eines Feedback-Eintrags an den Reporter geschickt.
+// Optionaler resolutionNote = was wurde gemacht / Lösung.
+export function feedbackResolvedEmail(opts: {
+  recipientName: string;
+  feedbackType: 'bug' | 'feature';
+  feedbackTitle: string;
+  resolutionNote: string | null;
+  resolverName: string;
+  inboxUrl: string;
+  unsubscribeUrl: string;
+}): { subject: string; text: string; html: string } {
+  const typeLabel = opts.feedbackType === 'bug' ? 'Bug-Report' : 'Feature-Wunsch';
+  const verbDe = opts.feedbackType === 'bug' ? 'wurde behoben' : 'wurde umgesetzt';
+  const subject = `Dein ${typeLabel} „${opts.feedbackTitle}" ${verbDe}`;
+  const greeting = opts.recipientName ? `Hi ${opts.recipientName.split(' ')[0]},` : 'Hi,';
+  const noteBlock = opts.resolutionNote
+    ? `\nNotiz von ${opts.resolverName}:\n\n  ${opts.resolutionNote}\n`
+    : '';
+  const text = `${greeting}
+
+dein ${typeLabel} „${opts.feedbackTitle}" ${verbDe}.
+${noteBlock}
+Inbox:
+${opts.inboxUrl}
+
+— BTM
+Du kannst diese Mails in den Einstellungen ausschalten:
+${opts.unsubscribeUrl}
+`;
+
+  const noteHtml = opts.resolutionNote
+    ? `<div style="background:#F4EFE7;border-left:3px solid #5E7F4E;padding:14px 18px;border-radius:6px;margin:0 0 22px;">
+        <div style="font-family:Menlo,Consolas,'SF Mono',monospace;font-size:10px;color:#5E7F4E;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">
+          Notiz von ${escapeHtml(opts.resolverName)}
+        </div>
+        <div style="font-size:14px;line-height:1.6;color:#3D3833;white-space:pre-wrap;">${escapeHtml(opts.resolutionNote)}</div>
+      </div>`
+    : '';
+
+  const html = `<!doctype html>
+<html lang="de"><body style="margin:0;padding:0;background:#FAF7F2;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:#1C1A17;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#FAF7F2;padding:40px 16px;">
+  <tr><td align="center">
+    <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;">
+      <tr>
+        <td style="padding:0 0 18px;">
+          <table role="presentation" cellpadding="0" cellspacing="0">
+            <tr>
+              <td style="padding-right:10px;vertical-align:middle;">
+                <img src="cid:${APP_ICON_CID}" width="36" height="36" alt="BTM" style="display:block;width:36px;height:36px;border-radius:8px;border:0;" />
+              </td>
+              <td style="vertical-align:middle;">
+                <div style="font-family:'Archivo',-apple-system,sans-serif;font-weight:700;font-size:17px;letter-spacing:-0.01em;color:#1C1A17;">BTM</div>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+
+      <tr><td style="background:#fff;border:1px solid #E3DCCE;border-radius:14px;padding:28px 30px 22px;box-shadow:0 18px 40px -20px rgba(28,26,23,0.08);">
+        <div style="font-family:Menlo,Consolas,'SF Mono',monospace;font-size:10.5px;color:#5E7F4E;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:10px;">
+          ${typeLabel} · Erledigt
+        </div>
+
+        <h1 style="font-family:'Archivo',-apple-system,sans-serif;font-size:22px;line-height:1.25;letter-spacing:-0.01em;font-weight:700;margin:0 0 14px;color:#1C1A17;">
+          „${escapeHtml(opts.feedbackTitle)}" ${verbDe}.
+        </h1>
+
+        ${noteHtml}
+
+        <table role="presentation" cellpadding="0" cellspacing="0">
+          <tr>
+            <td style="background:#1C1A17;border-radius:8px;">
+              <a href="${opts.inboxUrl}" style="display:inline-block;padding:11px 22px;color:#FAF7F2;font-weight:600;font-size:14px;text-decoration:none;">
+                Inbox öffnen →
+              </a>
+            </td>
+          </tr>
+        </table>
+      </td></tr>
+
+      <tr><td style="padding:18px 8px 0;text-align:center;">
+        <div style="font-size:11px;color:#A8A097;line-height:1.55;">
+          Du bekommst diese Mail weil du diesen ${typeLabel} eingereicht hast.<br/>
+          <a href="${opts.unsubscribeUrl}" style="color:#6B6359;text-decoration:underline;">Benachrichtigungen verwalten</a> · btm.bethesna.org
+        </div>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>
+</body></html>`;
+  return { subject, text, html };
+}
+
 // ── Daily-Digest-Mail ───────────────────────────────────────────────────
 // Sammelt alles, was der User in den letzten 24h verpasst hat. Wird vom
 // Scheduler (server/src/lib/digest.ts) gerufen.

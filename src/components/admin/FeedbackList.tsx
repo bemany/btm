@@ -65,11 +65,16 @@ export function FeedbackList() {
   const buildPrompt = (item: FeedbackEntry): string => {
     const submitter = users.find((u) => u.id === item.submitterId);
     const submitterName = submitter?.name ?? 'Unbekannt';
+    const submitterEmail = submitter?.email ?? '—';
+    const typeLabel = item.type === 'bug' ? 'Bug-Report' : 'Feature-Request';
+    const verbDe = item.type === 'bug' ? 'behoben' : 'umgesetzt';
     const lines: string[] = [];
-    lines.push(`# ${item.type === 'bug' ? 'Bug-Report' : 'Feature-Request'} aus BTM`);
+    lines.push(`# ${typeLabel} aus BTM`);
     lines.push('');
+    lines.push(`**Feedback-ID:** \`${item.id}\``);
+    lines.push(`**Typ:** ${item.type}`);
     lines.push(`**Titel:** ${item.title}`);
-    lines.push(`**Eingereicht von:** ${submitterName}`);
+    lines.push(`**Eingereicht von:** ${submitterName} (\`${item.submitterId ?? '—'}\`, ${submitterEmail})`);
     lines.push(`**Datum:** ${new Date(item.createdAt).toLocaleString('de-DE')}`);
     if (item.contextPath) lines.push(`**War auf Seite:** \`${item.contextPath}\``);
     if (item.contextTheme) lines.push(`**Aktives Theme:** \`${item.contextTheme}\``);
@@ -90,11 +95,45 @@ export function FeedbackList() {
     lines.push('- Live-URL: https://btm.bethesna.org');
     lines.push('- Setup-Doku: ~/Documents/GitHub/btm/CLAUDE.md');
     lines.push('');
+    lines.push('## DB-Zugriff falls du nachschauen willst');
+    lines.push('');
+    lines.push('```bash');
+    lines.push(`ssh -i ~/.ssh/id_ed25519 root@142.93.172.15 "docker exec -i btm-postgres psql -U btm -d btm" \\`);
+    lines.push(`  -c "SELECT * FROM feedback WHERE id = '${item.id}';"`);
+    lines.push('```');
+    lines.push('');
+    lines.push('## Aufgabe');
+    lines.push('');
     lines.push(
       item.type === 'bug'
-        ? '## Aufgabe\n\nBitte analysiere das Problem, finde die Ursache im Code, schlage einen Fix vor und implementiere ihn falls möglich.'
-        : '## Aufgabe\n\nBitte schlage eine Implementierung vor und setze das Feature um, wenn der Scope klar ist.',
+        ? 'Analysiere das Problem, finde die Ursache im Code, implementiere einen Fix, baue + deploye nach DO-VPS (siehe CLAUDE.md → Deploy-Workflow), pushe nach `main`.'
+        : 'Schlage eine Implementierung vor und setze das Feature um. Baue + deploye nach DO-VPS, pushe nach `main`.',
     );
+    lines.push('');
+    lines.push('## Abschluss — Reporter benachrichtigen + Status setzen');
+    lines.push('');
+    lines.push(`Sobald die Änderung live ist, markiere das Feedback als erledigt — das schreibt:`);
+    lines.push(`  1. \`feedback.status = 'done'\` (mit kurzer Resolution-Note in \`adminNote\`)`);
+    lines.push(`  2. In-App-Notification an ${submitterName} (taucht in seiner/ihrer Inbox auf)`);
+    lines.push(`  3. E-Mail an ${submitterEmail} mit Hinweis dass es ${verbDe} wurde`);
+    lines.push('');
+    lines.push(`Brauchst dafür einen Admin-API-Token (Einstellungen → API-Tokens, mit Scope \`write\`):`);
+    lines.push('');
+    lines.push('```bash');
+    lines.push(`curl -X POST https://btm.bethesna.org/api/feedback/${item.id}/resolve \\`);
+    lines.push(`  -H "Authorization: Bearer btm_DEIN_ADMIN_TOKEN" \\`);
+    lines.push(`  -H "Content-Type: application/json" \\`);
+    lines.push(`  -d '{"resolutionNote": "Kurz erklären was du gemacht hast (1-2 Sätze) — landet als Notiz in der Inbox-Notification + Mail beim User."}'`);
+    lines.push('```');
+    lines.push('');
+    lines.push(`Wenn du den Reporter nicht benachrichtigen willst (z.B. wontfix/duplikat), nutze stattdessen PATCH mit dem gewünschten Status:`);
+    lines.push('');
+    lines.push('```bash');
+    lines.push(`curl -X PATCH https://btm.bethesna.org/api/feedback/${item.id} \\`);
+    lines.push(`  -H "Authorization: Bearer btm_DEIN_ADMIN_TOKEN" \\`);
+    lines.push(`  -H "Content-Type: application/json" \\`);
+    lines.push(`  -d '{"status": "wontfix", "adminNote": "Grund kurz erklären"}'`);
+    lines.push('```');
     return lines.join('\n');
   };
 

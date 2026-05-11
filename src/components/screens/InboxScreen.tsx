@@ -149,13 +149,18 @@ function NotifItem({ n, users, onOpen, fmtRel, unread }: NotifItemProps) {
   const actor = users.find((u) => u.id === n.actorId);
   const actorName = actor?.name ?? t('inbox.unknown_actor');
 
-  const subject = n.payload.subjectTitle ?? '—';
+  const subject = n.payload.subjectTitle ?? n.payload.feedbackTitle ?? '—';
   const text =
     n.kind === 'mention'
       ? t('inbox.mention_text', { actor: actorName, subject })
       : n.kind === 'review_request'
         ? t('inbox.review_request_text', { actor: actorName, subject })
-        : `${actorName} · ${n.kind}`;
+        : n.kind === 'feedback_resolved'
+          ? t(
+              n.payload.feedbackType === 'bug' ? 'inbox.feedback_bug_resolved_text' : 'inbox.feedback_feature_resolved_text',
+              { actor: actorName, subject },
+            )
+          : `${actorName} · ${n.kind}`;
 
   return (
     <button

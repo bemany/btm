@@ -601,14 +601,20 @@ export async function deleteComment(id: string): Promise<void> {
 export interface AppNotification {
   id: string;
   userId: string;
-  kind: 'mention'; // erweiterbar
+  kind: 'mention' | 'review_request' | 'feedback_resolved';
   actorId: string | null;
   payload: {
+    // mention / review_request
     commentId?: string;
     subjectType?: CommentSubjectType;
     subjectId?: string;
     subjectTitle?: string;
     excerpt?: string;
+    // feedback_resolved
+    feedbackId?: string;
+    feedbackType?: 'bug' | 'feature';
+    feedbackTitle?: string;
+    resolutionNote?: string | null;
   };
   seenAt: string | null;
   createdAt: string;

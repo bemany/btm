@@ -1010,6 +1010,8 @@ export const en: Translations = {
     read_section_title: 'Read ({count})',
     mention_text: '{actor} mentioned you in "{subject}"',
     review_request_text: '{actor} submitted "{subject}" for review',
+    feedback_bug_resolved_text: '{actor} fixed your bug "{subject}"',
+    feedback_feature_resolved_text: '{actor} shipped your feature request "{subject}"',
     unknown_actor: 'Someone',
   },
   toast: {
