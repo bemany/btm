@@ -31,6 +31,9 @@ export interface Project {
   client: string;
   due: string | null;
   ownerId?: string | null;
+  /** Wenn gesetzt: privates Projekt — nur für diesen User sichtbar. Tasks
+   *  daraus dürfen NICHT auf öffentlichen Flächen (TV-Dashboard etc) erscheinen. */
+  privateOwnerId?: string | null;
 }
 
 export interface Column {

@@ -47,6 +47,7 @@ export interface ServerProject {
   due: string | null;
   createdById: string | null;
   ownerId: string | null;
+  privateOwnerId: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -111,6 +112,7 @@ export function fromServerProject(s: ServerProject): Project {
     client: s.client ?? '',
     due: s.due,
     ownerId: s.ownerId,
+    privateOwnerId: s.privateOwnerId,
   };
 }
 
