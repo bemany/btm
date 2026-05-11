@@ -34,6 +34,8 @@ export interface Project {
   /** Wenn gesetzt: privates Projekt — nur für diesen User sichtbar. Tasks
    *  daraus dürfen NICHT auf öffentlichen Flächen (TV-Dashboard etc) erscheinen. */
   privateOwnerId?: string | null;
+  /** Vom aktuellen User als Favorit markiert. Komplett user-spezifisch. */
+  isFavorite?: boolean;
 }
 
 export interface Column {

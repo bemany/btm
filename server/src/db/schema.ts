@@ -128,6 +128,21 @@ export const projectMembers = pgTable(
   ],
 );
 
+// Persönliche Projekt-Favoriten — komplett user-spezifisch, kein Sharing.
+// PK ist (userId, projectId). Beim Löschen von User oder Projekt cascading.
+export const projectFavorites = pgTable(
+  'project_favorites',
+  {
+    userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    projectId: text('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
+    addedAt: timestamp('added_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index('project_favorites_user_idx').on(t.userId),
+    index('project_favorites_proj_idx').on(t.projectId),
+  ],
+);
+
 export const tasks = pgTable(
   'tasks',
   {

@@ -48,6 +48,7 @@ export interface ServerProject {
   createdById: string | null;
   ownerId: string | null;
   privateOwnerId: string | null;
+  isFavorite?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -113,6 +114,7 @@ export function fromServerProject(s: ServerProject): Project {
     due: s.due,
     ownerId: s.ownerId,
     privateOwnerId: s.privateOwnerId,
+    isFavorite: s.isFavorite ?? false,
   };
 }
 
@@ -245,6 +247,10 @@ export async function removeProjectMember(projectId: string, userId: string): Pr
 
 export async function deleteProject(id: string): Promise<void> {
   await apiFetch(`/projects/${id}`, { method: 'DELETE' });
+}
+
+export async function setProjectFavorite(id: string, isFavorite: boolean): Promise<void> {
+  await apiFetch(`/projects/${id}/favorite`, { method: isFavorite ? 'POST' : 'DELETE' });
 }
 
 // ── Timer ──────────────────────────────────────────────────────────────

@@ -2017,6 +2017,156 @@ body[data-theme="glass-dark"] .cap-row:hover { background: rgba(255, 255, 255, 0
   display: block; height: 100%; background: var(--accent-500);
 }
 
+/* Projects: Favoriten + Privat-Toggle ------------------------ */
+.proj-card.is-favorite {
+  border-color: rgba(232, 175, 84, 0.55);
+  box-shadow: 0 0 0 1px rgba(232, 175, 84, 0.18);
+}
+.proj-card.is-foreign-private {
+  opacity: 0.85;
+  border-style: dashed;
+}
+
+.proj-card-star {
+  color: var(--ink-400);
+}
+.proj-card-star:hover {
+  color: rgba(232, 175, 84, 1);
+  border-color: rgba(232, 175, 84, 0.4);
+}
+.proj-card-star.is-on {
+  color: rgba(232, 175, 84, 1);
+  border-color: rgba(232, 175, 84, 0.4);
+  background: rgba(232, 175, 84, 0.1);
+}
+.proj-card-star.is-on svg {
+  fill: rgba(232, 175, 84, 1);
+}
+
+.proj-priv-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: rgba(120, 100, 180, 0.12);
+  border: 1px solid rgba(120, 100, 180, 0.3);
+  color: rgba(140, 120, 200, 1);
+  border-radius: 4px;
+  padding: 1px 6px;
+}
+.proj-priv-pill.inline {
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+.proj-priv-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid var(--ink-200);
+  background: var(--cream-50);
+  color: var(--ink-600);
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.proj-priv-toggle:hover {
+  background: var(--cream-100);
+  border-color: var(--ink-300);
+  color: var(--ink-900);
+}
+.proj-priv-toggle.is-on {
+  background: rgba(120, 100, 180, 0.1);
+  border-color: rgba(120, 100, 180, 0.4);
+  color: rgba(140, 120, 200, 1);
+}
+
+/* Favoriten-Sektion oben in der Card-View */
+.proj-fav-section {
+  margin-bottom: 18px;
+  padding: 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(232, 175, 84, 0.25);
+  background: linear-gradient(180deg, rgba(232, 175, 84, 0.06), rgba(232, 175, 84, 0.02));
+}
+.proj-fav-head {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(184, 138, 46, 1);
+  margin-bottom: 10px;
+}
+.proj-fav-head svg { fill: rgba(232, 175, 84, 1); }
+.proj-fav-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+/* Tabellen-Variante */
+.proj-table tr.is-favorite td:first-child {
+  position: relative;
+}
+.proj-table-star {
+  width: 26px;
+  height: 26px;
+  border: 0;
+  background: transparent;
+  color: var(--ink-300);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 5px;
+}
+.proj-table-star:hover {
+  color: rgba(232, 175, 84, 1);
+  background: rgba(232, 175, 84, 0.08);
+}
+.proj-table-star.is-on {
+  color: rgba(232, 175, 84, 1);
+}
+.proj-table-star.is-on svg {
+  fill: rgba(232, 175, 84, 1);
+}
+.proj-table .col-fav,
+.proj-table th.col-fav {
+  width: 36px;
+  padding-left: 12px;
+  padding-right: 4px;
+}
+
+/* Dark + glass overrides für die Favoriten-Sektion */
+body[data-theme='default-dark'] .proj-fav-section,
+body[data-theme='glass-dark'] .proj-fav-section {
+  background: linear-gradient(180deg, rgba(232, 175, 84, 0.1), rgba(232, 175, 84, 0.02));
+  border-color: rgba(232, 175, 84, 0.3);
+}
+
+body[data-theme='default-dark'] .proj-priv-toggle,
+body[data-theme='glass-dark'] .proj-priv-toggle {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: rgba(250, 247, 242, 0.7);
+}
+body[data-theme='default-dark'] .proj-priv-toggle:hover,
+body[data-theme='glass-dark'] .proj-priv-toggle:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(250, 247, 242, 0.9);
+}
+
 /* Projects List/Table View ---------------------------------- */
 .proj-table-wrap {
   background: var(--cream-50);

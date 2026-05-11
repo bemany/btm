@@ -3,7 +3,7 @@ import { and, eq, asc, isNull, or, inArray } from 'drizzle-orm';
 import { z } from 'zod';
 import { nanoid } from 'nanoid';
 import { db } from '../db/client.js';
-import { projects, projectMembers, users } from '../db/schema.js';
+import { projects, projectMembers, projectFavorites, users } from '../db/schema.js';
 import { requireAuth, type Variables } from '../lib/context.js';
 import { logActivity } from '../lib/activity.js';
 import { listVisibleProjectIds } from '../lib/project-visibility.js';
@@ -40,7 +40,14 @@ export const projectsRoute = new Hono<{ Variables: Variables }>()
       .from(projects)
       .where(inArray(projects.id, ids))
       .orderBy(asc(projects.code));
-    return c.json({ projects: list });
+    // Favoriten für aktuellen User anreichern (für isFavorite-Flag pro Projekt)
+    const favRows = await db
+      .select({ projectId: projectFavorites.projectId })
+      .from(projectFavorites)
+      .where(eq(projectFavorites.userId, me.id));
+    const favSet = new Set(favRows.map((r) => r.projectId));
+    const enriched = list.map((p) => ({ ...p, isFavorite: favSet.has(p.id) }));
+    return c.json({ projects: enriched });
   })
   .post('/', async (c) => {
     const user = c.get('user')!;
@@ -152,6 +159,30 @@ export const projectsRoute = new Hono<{ Variables: Variables }>()
       .delete(projectMembers)
       .where(and(eq(projectMembers.projectId, id), eq(projectMembers.userId, userId)));
     return c.json({ ok: true });
+  })
+
+  // ── Favoriten ──────────────────────────────────────────────────────
+  // Markiert/Entfernt das Projekt als persönlichen Favoriten des Users.
+  // ON CONFLICT DO NOTHING um Idempotenz zu gewährleisten.
+  .post('/:id/favorite', async (c) => {
+    const me = c.get('user')!;
+    const id = c.req.param('id');
+    // Existiert das Projekt überhaupt?
+    const [proj] = await db.select({ id: projects.id }).from(projects).where(eq(projects.id, id)).limit(1);
+    if (!proj) return c.json({ error: 'not found' }, 404);
+    await db
+      .insert(projectFavorites)
+      .values({ userId: me.id, projectId: id })
+      .onConflictDoNothing();
+    return c.json({ ok: true, isFavorite: true });
+  })
+  .delete('/:id/favorite', async (c) => {
+    const me = c.get('user')!;
+    const id = c.req.param('id');
+    await db
+      .delete(projectFavorites)
+      .where(and(eq(projectFavorites.userId, me.id), eq(projectFavorites.projectId, id)));
+    return c.json({ ok: true, isFavorite: false });
   });
 
 /**
