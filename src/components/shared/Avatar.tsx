@@ -21,23 +21,48 @@ export function Avatar({ id, user, size = 24, title }: AvatarProps) {
   const label = u ? initials(u.name || u.email.split('@')[0]) : id ? id.slice(0, 2).toUpperCase() : '??';
   const color = u?.color ?? '#6B6359';
   const tooltip = title ?? u?.name ?? id ?? '';
+  const image = u?.image ?? null;
+
+  const baseStyle = {
+    width: size,
+    height: size,
+    borderRadius: '50%',
+    display: 'inline-grid' as const,
+    placeItems: 'center' as const,
+    flexShrink: 0,
+    overflow: 'hidden' as const,
+  };
+
+  if (image) {
+    return (
+      <span className="av av-img" title={tooltip} style={baseStyle}>
+        <img
+          src={image}
+          alt={tooltip || 'Avatar'}
+          loading="lazy"
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            display: 'block',
+            borderRadius: '50%',
+          }}
+        />
+      </span>
+    );
+  }
 
   return (
     <span
       className="av"
       title={tooltip}
       style={{
-        width: size,
-        height: size,
-        borderRadius: '50%',
-        display: 'inline-grid',
-        placeItems: 'center',
+        ...baseStyle,
         background: color,
         color: '#FAF7F2',
         fontFamily: 'var(--font-mono)',
         fontSize: Math.round(size * 0.42),
         fontWeight: 700,
-        flexShrink: 0,
       }}
     >
       {label}

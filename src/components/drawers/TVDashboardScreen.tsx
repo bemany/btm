@@ -94,9 +94,32 @@ export function TVDashboardScreen() {
     const u = users.find((x) => x.id === id);
     if (!u) return undefined;
     const initials = (u.name || u.email).slice(0, 2).toUpperCase();
-    return { id: initials, full: u.name, color: u.color };
+    return { id: initials, full: u.name, color: u.color, image: u.image };
   };
   const projectById = (id: string | null) => (id ? projects.find((p) => p.id === id) : undefined);
+
+  // Renderer für Avatar-Bereich in TV-Rows — wenn ein Profilbild hochgeladen
+  // ist, zeigen wir es. Sonst die Initialen mit Akzent-Farbe als Fallback.
+  // Größen: regular 26px, small 20px (synchron zu CSS-Klassen tv-row-avatar).
+  function renderAvatar(p: ReturnType<typeof personaById>, opts: { sm?: boolean; tone?: string } = {}) {
+    const cls = opts.sm ? 'tv-row-avatar sm' : 'tv-row-avatar';
+    if (p?.image) {
+      return (
+        <span className={`${cls} has-image`} title={p.full}>
+          <img src={p.image} alt={p.full} />
+        </span>
+      );
+    }
+    return (
+      <div
+        className={cls}
+        style={{ background: opts.tone ?? 'var(--accent-500)' }}
+        title={p?.full}
+      >
+        {p?.id ?? '??'}
+      </div>
+    );
+  }
 
   // ── Sichtbarkeits-Filter: keine Privat-Projekte auf TV ────────────────
   const privateProjectIds = useMemo(
@@ -208,9 +231,7 @@ export function TVDashboardScreen() {
               const pct = t.estH ? Math.min(100, Math.round((t.loggedH / t.estH) * 100)) : 0;
               return (
                 <div key={t.id} className={`tv-row ${isLive ? 'is-live' : ''}`}>
-                  <div className="tv-row-avatar" style={{ background: 'var(--accent-500)' }}>
-                    {p?.id || '??'}
-                  </div>
+                  {renderAvatar(p)}
                   <div className="tv-row-title">{t.title}</div>
                   <div className="tv-row-trail">
                     <span className="tv-chip" style={{ borderColor: proj?.color, color: proj?.color }}>
@@ -269,9 +290,7 @@ export function TVDashboardScreen() {
                     {t._overdue && <span className="tv-overdue-pill">Überfällig</span>}
                     <span className={`tv-status-pill status-${t.col}`}>{statusLabel}</span>
                     {t.prio === 'high' && <span className="tv-prio-pill">Hoch</span>}
-                    <div className="tv-row-avatar sm" style={{ background: 'var(--accent-500)' }} title={p?.full}>
-                      {p?.id}
-                    </div>
+                    {renderAvatar(p, { sm: true })}
                   </div>
                 </div>
               );
@@ -305,9 +324,7 @@ export function TVDashboardScreen() {
                     {isDueToday(t.due, today) && <span className="tv-due-tag">heute fällig</span>}
                     {isOverdue(t.due, today) && <span className="tv-overdue-pill">Überfällig</span>}
                     <span className="tv-row-progmeta">{t.loggedH.toFixed(1)}h</span>
-                    <div className="tv-row-avatar sm" style={{ background: 'var(--accent-500)' }} title={p?.full}>
-                      {p?.id}
-                    </div>
+                    {renderAvatar(p, { sm: true })}
                   </div>
                 </div>
               );
@@ -339,9 +356,7 @@ export function TVDashboardScreen() {
                       {proj?.code || '—'}
                     </span>
                     <span className="tv-row-progmeta">{t.loggedH.toFixed(1)}h</span>
-                    <div className="tv-row-avatar sm" style={{ background: '#5E7F4E' }} title={p?.full}>
-                      {p?.id}
-                    </div>
+                    {renderAvatar(p, { sm: true, tone: '#5E7F4E' })}
                   </div>
                 </div>
               );
