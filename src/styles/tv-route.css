@@ -55,3 +55,38 @@ body[data-theme='glass-dark'].tv-fullscreen .tv-dashboard,
 body[data-theme='default-dark'].tv-fullscreen .tv-dashboard {
   background: #0F0E0C;
 }
+
+/* Reconnect-Banner — schwebt oben rechts während transiente API-Fehler,
+   blockiert nicht und lässt das letzte bekannte Dashboard sichtbar. */
+.tv-reconnect-banner {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 10000;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: rgba(184, 65, 45, 0.18);
+  border: 1px solid rgba(184, 65, 45, 0.45);
+  color: #FFB39E;
+  border-radius: 100px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+.tv-reconnect-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #FF7C5C;
+  animation: tv-reconnect-pulse 1.4s ease-in-out infinite;
+}
+@keyframes tv-reconnect-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.7); }
+}

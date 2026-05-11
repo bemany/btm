@@ -3,13 +3,26 @@
 
 import { useEffect } from 'react';
 import { useStore } from '../store/store';
-import { setApiTokenOverride } from '../lib/api';
+import { setApiTokenOverride, ApiError } from '../lib/api';
 import { TVDashboardScreen } from '../components/drawers/TVDashboardScreen';
 import * as api from '../data/api';
 import { useQuery } from '@tanstack/react-query';
 
 interface Props {
   token: string | null;
+}
+
+// Aggressives Retry-Profil für TV-Queries — der Bildschirm soll
+// nicht bei einem kurzen API-Hick-up den Token-Error-Screen zeigen.
+// 8 Versuche mit Exponential-Backoff (1s, 2s, 4s, … gecappt auf 30s).
+const TV_RETRY = 8;
+const TV_RETRY_DELAY = (attemptIndex: number) =>
+  Math.min(1000 * 2 ** attemptIndex, 30_000);
+
+// Auth-Fehler erkennen — nur dann fatal-Screen zeigen, alles andere
+// (Netzwerk, 5xx, Timeout) ist transient und auto-heilt sich.
+function isAuthError(err: unknown): boolean {
+  return err instanceof ApiError && (err.status === 401 || err.status === 403);
 }
 
 export function TVRoute({ token }: Props) {
@@ -46,24 +59,32 @@ export function TVRoute({ token }: Props) {
     enabled: !!token,
     refetchInterval: 15_000,
     refetchOnWindowFocus: true,
+    retry: TV_RETRY,
+    retryDelay: TV_RETRY_DELAY,
   });
   const projectsQ = useQuery({
     queryKey: ['btm', 'tv', 'projects'],
     queryFn: api.listProjects,
     enabled: !!token,
     refetchInterval: 60_000,
+    retry: TV_RETRY,
+    retryDelay: TV_RETRY_DELAY,
   });
   const timerQ = useQuery({
     queryKey: ['btm', 'tv', 'timer'],
     queryFn: api.getLiveTimer,
     enabled: !!token,
     refetchInterval: 10_000,
+    retry: TV_RETRY,
+    retryDelay: TV_RETRY_DELAY,
   });
   const usersQ = useQuery({
     queryKey: ['btm', 'tv', 'users'],
     queryFn: api.listUsers,
     enabled: !!token,
     refetchInterval: 60_000,
+    retry: TV_RETRY,
+    retryDelay: TV_RETRY_DELAY,
   });
 
   useEffect(() => {
@@ -98,7 +119,12 @@ export function TVRoute({ token }: Props) {
     );
   }
 
-  if (tasksQ.isError || usersQ.isError) {
+  // Echte Auth-Fehler (401/403) → fataler Token-ungültig-Screen.
+  // Transiente Fehler (Netzwerk, 5xx, Container-Restart) → wir zeigen das
+  // letzte bekannte Dashboard weiter, plus kleinen Reconnect-Banner falls
+  // alles fehlschlägt. React Query refetcht selbständig alle 10–60s.
+  const authFailed = isAuthError(tasksQ.error) || isAuthError(usersQ.error);
+  if (authFailed) {
     return (
       <div className="tv-token-missing">
         <div className="tv-token-card">
@@ -114,5 +140,32 @@ export function TVRoute({ token }: Props) {
     );
   }
 
-  return <TVDashboardScreen />;
+  // Noch keine Daten und kein Auth-Error → Initial-Load-Spinner (kurz)
+  if (!tasksQ.data && !usersQ.data) {
+    return (
+      <div className="tv-token-missing">
+        <div className="tv-token-card">
+          <h1>Verbinde …</h1>
+          <p>Hole aktuelle Daten vom Server. Sollte in wenigen Sekunden bereit sein.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Transient-Fehler-Indikator: Dashboard rendert mit Last-Known-Daten,
+  // oben rechts schwebt ein kleiner Banner bis der nächste Refetch klappt.
+  const reconnecting =
+    (tasksQ.isError || usersQ.isError || projectsQ.isError) && !authFailed;
+
+  return (
+    <>
+      <TVDashboardScreen />
+      {reconnecting && (
+        <div className="tv-reconnect-banner">
+          <span className="tv-reconnect-dot" />
+          Server nicht erreichbar — versuche neu zu verbinden …
+        </div>
+      )}
+    </>
+  );
 }
