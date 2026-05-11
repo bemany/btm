@@ -13,6 +13,7 @@ COPY tsconfig.json ./
 COPY drizzle ./drizzle
 COPY drizzle.config.ts ./
 COPY src ./src
+COPY assets ./assets
 RUN npm run build
 
 # Production-Deps separat installieren (kleineres Image)
@@ -32,6 +33,7 @@ ENV NODE_ENV=production \
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/drizzle ./drizzle
+COPY --from=build /app/assets ./assets
 COPY package.json ./
 
 EXPOSE 3001

@@ -54,7 +54,11 @@ import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 function findAppIcon(): string | null {
+  // Im Docker-Image liegt es unter /app/assets (siehe Dockerfile). Lokal beim
+  // Dev-Server im server/-Subdir ebenfalls. Die anderen Pfade decken Legacy-
+  // Setups (alter LXC, monorepo-cwd) ab.
   const candidates = [
+    resolve(process.cwd(), 'assets/app-icon-192.png'),
     '/opt/apps/btm/dist/app-icon-192.png',
     resolve(process.cwd(), 'dist/app-icon-192.png'),
     resolve(process.cwd(), '../dist/app-icon-192.png'),
