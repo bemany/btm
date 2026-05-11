@@ -177,6 +177,17 @@ export function AdminScreen() {
               ))}
             </div>
           </div>
+
+          {/* Feedback-Sektion (Bugs + Feature-Requests).
+              Liegt jetzt INNERHALB von .admin-main, damit sie mit dem Rest
+              scrollt — .admin-screen hat overflow: hidden, sonst clipped. */}
+          <section className="admin-section admin-feedback-section">
+            <div className="admin-section-head">
+              <Icon name="message-square" size={14} />
+              <h3>{t('feedback.admin_heading')}</h3>
+            </div>
+            <FeedbackList />
+          </section>
         </div>
 
         <aside className="admin-side">
@@ -187,14 +198,6 @@ export function AdminScreen() {
           <ActivitySidebar users={users} />
         </aside>
       </div>
-
-      <section className="admin-section admin-feedback-section">
-        <div className="admin-section-head">
-          <Icon name="message-square" size={14} />
-          <h3>{t('feedback.admin_heading')}</h3>
-        </div>
-        <FeedbackList />
-      </section>
 
       {userDrawerId && <UserDrawer id={userDrawerId} onClose={() => setUserDrawerId(null)} />}
       {teamsDrawerOpen && <TeamsDrawer onClose={() => setTeamsDrawerOpen(false)} />}
