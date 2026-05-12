@@ -717,7 +717,7 @@ export const en: Translations = {
     btn_send_invite: 'Send invitation',
     magic_link_btn: 'Copy login link',
     magic_link_title: 'Generates a 15-min login code for this user. You can sign in as them (support tool).',
-    magic_link_copied: 'Login info for {email} in clipboard. Valid for 15 min.',
+    magic_link_copied: 'Login link for {email} copied · valid 15 min · opening signs in directly.',
     err_name_email: 'Name & email required',
     invite_sent: 'Invitation sent to {email}',
     profile_updated: 'Profile updated',

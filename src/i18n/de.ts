@@ -719,7 +719,7 @@ export const de = {
     btn_send_invite: 'Einladung senden',
     magic_link_btn: 'Login-Link kopieren',
     magic_link_title: 'Generiert einen 15 Min gültigen Login-Code für diesen User. Du kannst dich damit als der User einloggen (Support-Tool).',
-    magic_link_copied: 'Login-Daten für {email} in der Zwischenablage. 15 Min gültig.',
+    magic_link_copied: 'Login-Link für {email} kopiert · 15 Min gültig · Öffnen loggt direkt ein.',
     err_name_email: 'Name & E-Mail nötig',
     invite_sent: 'Einladung an {email} gesendet',
     profile_updated: 'Profil aktualisiert',

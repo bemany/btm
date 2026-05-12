@@ -329,8 +329,10 @@ export function UserDrawer({ id, onClose }: Props) {
               onClick={async () => {
                 try {
                   const res = await api.adminMagicLink(existing.id);
-                  const text = `${res.email}\nCode: ${res.code}\n${res.url}`;
-                  await navigator.clipboard.writeText(text);
+                  // Pre-signed Link: ?as=email&code=… → LoginScreen verifiziert
+                  // automatisch beim Öffnen. Nur die URL kopieren — Email + Code
+                  // sind in den Query-Params schon enthalten.
+                  await navigator.clipboard.writeText(res.url);
                   showToast(t('admin.magic_link_copied', { email: res.email }));
                 } catch {
                   showToast(t('common.error_generic'));
