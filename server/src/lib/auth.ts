@@ -92,7 +92,13 @@ export const auth = betterAuth({
   session: {
     expiresIn: 60 * 60 * 24 * 30, // 30 days
     updateAge: 60 * 60 * 24, // refresh every 24 h
-    cookieCache: { enabled: true, maxAge: 60 * 5 },
+    // cookieCache war problematisch: Better-Auth packt das gesamte User-Objekt
+    // INKLUSIVE user.image (base64-JPEG-Avatar, 5-15 KB) als signiertes Cookie
+    // 'session_data' in den Browser. Mit anderen Cookies + Headern überstieg
+    // das Node's default max-http-header-size von 16 KB → HTTP 431
+    // (Request Header Fields Too Large). DB-Lookup pro authentifiziertem
+    // Request kostet bei lokalem Postgres <1 ms — vernachlässigbar.
+    cookieCache: { enabled: false },
   },
 });
 

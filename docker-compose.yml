@@ -46,6 +46,10 @@ services:
         condition: service_healthy
     environment:
       NODE_ENV: production
+      # Node's Default-Limit für HTTP-Header ist 16 KB. Bei Better-Auth +
+      # Avatar-Cookies + Standard-Browser-Headern kommt man schnell darüber
+      # (HTTP 431). 32 KB Defense-in-Depth — cookieCache ist trotzdem aus.
+      NODE_OPTIONS: --max-http-header-size=32768
       PORT: 3001
       HOST: 0.0.0.0
       DATABASE_URL: postgres://btm:${DB_PASSWORD}@btm-postgres:5432/btm
