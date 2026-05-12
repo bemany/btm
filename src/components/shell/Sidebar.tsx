@@ -380,9 +380,16 @@ export function Sidebar({
                 className="sb-profile-item"
                 onClick={async () => {
                   setProfileOpen(false);
-                  await signOut();
-                  navigate('/', { replace: true });
-                  showToast(t('toast.logged_out'));
+                  try {
+                    await signOut();
+                    navigate('/', { replace: true });
+                    showToast(t('toast.logged_out'));
+                  } catch {
+                    // signOut wirft jetzt bei echtem Fehler (Netzwerk/5xx) statt
+                    // still lokalen State zu kappen. User bleibt eingeloggt
+                    // und sieht einen Hinweis.
+                    showToast(t('toast.logout_failed'));
+                  }
                 }}
               >
                 <span className="sb-profile-icon">

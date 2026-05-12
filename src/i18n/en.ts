@@ -1030,6 +1030,7 @@ export const en: Translations = {
     copied: 'Copied',
     state_reset: 'Local state reset',
     logged_out: 'Signed out',
+    logout_failed: 'Sign-out failed — please try again.',
     in_freitext_loaded: 'Loaded into free-text tab',
     no_permission: 'No permission',
     api_unreachable: 'AI unavailable',

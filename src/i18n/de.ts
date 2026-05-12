@@ -1032,6 +1032,7 @@ export const de = {
     copied: 'Kopiert',
     state_reset: 'Lokaler State zurückgesetzt',
     logged_out: 'Abgemeldet',
+    logout_failed: 'Abmeldung fehlgeschlagen — bitte erneut versuchen.',
     in_freitext_loaded: 'In Freitext-Tab übernommen',
     no_permission: 'Keine Berechtigung',
     api_unreachable: 'KI nicht erreichbar',
