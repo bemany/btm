@@ -16,6 +16,7 @@ import { activityRoute } from './routes/activity.js';
 import { commentsRoute } from './routes/comments.js';
 import { notificationsRoute } from './routes/notifications.js';
 import { feedbackRoute } from './routes/feedback.js';
+import { calendarRoute } from './routes/calendar.js';
 import { aiRoute } from './routes/ai.js';
 import { mcpRoute } from './routes/mcp.js';
 import { eventsRoute } from './routes/events.js';
@@ -74,6 +75,7 @@ app.route('/api/activity', activityRoute);
 app.route('/api/comments', commentsRoute);
 app.route('/api/notifications', notificationsRoute);
 app.route('/api/feedback', feedbackRoute);
+app.route('/api/calendar', calendarRoute);
 app.route('/api/ai', aiRoute);
 app.route('/api/mcp', mcpRoute);
 app.route('/api/events', eventsRoute);
@@ -95,3 +97,8 @@ serve({ fetch: app.fetch, hostname: host, port });
 // danach alle 5 Min ein Tick der prüft ob ein User digest-fällig ist.
 import { startDigestScheduler } from './lib/digest.js';
 startDigestScheduler();
+
+// Calendar-Sync-Scheduler — pollt Odoo alle 5 Min für jeden User mit
+// aktivem Sync. Errors werden per User isoliert; Loop läuft weiter.
+import { startCalendarSyncScheduler } from './lib/calendar-sync.js';
+startCalendarSyncScheduler();

@@ -22,6 +22,8 @@ const PROJECT_MEMBERS_KEY = ['btm', 'projectMembers'] as const;
 const COMMENTS_KEY = ['btm', 'comments'] as const;
 const NOTIFICATIONS_KEY = ['btm', 'notifications'] as const;
 const NOTIFICATION_COUNT_KEY = ['btm', 'notifications', 'count'] as const;
+const CALENDAR_MY_KEY = ['btm', 'calendar', 'my'] as const;
+const CALENDAR_ALL_KEY = ['btm', 'calendar', 'all'] as const;
 
 export function useServerSync(): void {
   const setTasks = useStore((s) => s.setTasks);
@@ -119,4 +121,6 @@ export const SYNC_KEYS = {
   COMMENTS: COMMENTS_KEY,
   NOTIFICATIONS: NOTIFICATIONS_KEY,
   NOTIFICATION_COUNT: NOTIFICATION_COUNT_KEY,
+  CALENDAR_MY: CALENDAR_MY_KEY,
+  CALENDAR_ALL: CALENDAR_ALL_KEY,
 } as const;

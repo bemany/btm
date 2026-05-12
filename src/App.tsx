@@ -196,6 +196,17 @@ export function App() {
     return () => window.removeEventListener('keydown', onKey);
   }, [setUI]);
 
+  // Event-Hook für andere Components die das Settings-Modal öffnen wollen
+  // (z.B. CalendarWidget mit gewünschtem Tab).
+  useEffect(() => {
+    const onOpen = (e: Event) => {
+      const detail = (e as CustomEvent<{ tab?: SettingsTabId }>).detail;
+      setSettingsTab(detail?.tab ?? 'appearance');
+    };
+    window.addEventListener('btm:open-settings', onOpen);
+    return () => window.removeEventListener('btm:open-settings', onOpen);
+  }, []);
+
   // Mobile-Layout: ersetzt Desktop-Sidebar/Topbar komplett durch ein
   // fokussiertes 3-Screen-Setup (Heute · Timer · KI). Drawer + Onboarding
   // bleiben aber verfügbar.

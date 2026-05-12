@@ -14,6 +14,14 @@ export interface AuthUser {
   notifyMentionsMail?: boolean;
   notifyDigestMail?: boolean;
   backgroundChoice?: string;
+  // Odoo-Calendar-Sync-State (kein API-Key, nur Anzeige-Felder)
+  odooUrl?: string | null;
+  odooDatabase?: string | null;
+  odooUsername?: string | null;
+  odooHasApiKey?: boolean;
+  odooSyncEnabled?: boolean;
+  odooLastSyncAt?: string | null;
+  odooLastSyncError?: string | null;
 }
 
 export type AuthMode = 'session' | 'apiToken' | null;

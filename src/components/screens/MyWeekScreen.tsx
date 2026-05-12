@@ -7,6 +7,7 @@ import { showToast } from '../shared/Toast';
 import { fmtHMS, fmtMS } from '../../lib/format';
 import { computePomo } from '../../lib/pomodoro';
 import { useT, useLocale } from '../../i18n';
+import { CalendarWidget } from './CalendarWidget';
 
 export interface MyWeekScreenProps {
   setActive: (id: ScreenId) => void;
@@ -296,6 +297,12 @@ export function MyWeekScreen({ setActive }: MyWeekScreenProps) {
           </button>
         </div>
       </div>
+
+      <CalendarWidget
+        onOpenSettings={() => {
+          window.dispatchEvent(new CustomEvent('btm:open-settings', { detail: { tab: 'calendar' } }));
+        }}
+      />
     </div>
   );
 }

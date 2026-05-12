@@ -3,7 +3,7 @@
 // nutzen kann. Domain-Tabellen (projects, tasks, task_sessions, invitations,
 // api_tokens) sind eigen.
 
-import { pgTable, text, timestamp, integer, real, boolean, jsonb, index } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, integer, real, boolean, jsonb, index, uniqueIndex } from 'drizzle-orm/pg-core';
 
 // ── Better-Auth Tabellen ──────────────────────────────────────────────
 
@@ -38,6 +38,21 @@ export const users = pgTable('users', {
   // Animierter Hintergrund (Glass-Modus). Frontend hat den Catalog,
   // Server speichert nur den ID-String — Validierung im Endpoint.
   backgroundChoice: text('background_choice').notNull().default('none'),
+  // Odoo-Calendar-Sync (per-user Credentials, MVP read-only).
+  // odooApiKey wird AES-256-GCM-verschlüsselt gespeichert (Key aus
+  // BETTER_AUTH_SECRET via scrypt) — IV pro Record. odooUid + odooPartnerId
+  // werden beim ersten erfolgreichen Sync gecacht. odooLastSyncError ist
+  // ein Code-String ('auth_failed' | 'network' | 'server_error') für UI.
+  odooUrl: text('odoo_url'),
+  odooDatabase: text('odoo_database'),
+  odooUsername: text('odoo_username'),
+  odooApiKeyEnc: text('odoo_api_key_enc'),
+  odooApiKeyIv: text('odoo_api_key_iv'),
+  odooUid: integer('odoo_uid'),
+  odooPartnerId: integer('odoo_partner_id'),
+  odooSyncEnabled: boolean('odoo_sync_enabled').notNull().default(false),
+  odooLastSyncAt: timestamp('odoo_last_sync_at', { withTimezone: true }),
+  odooLastSyncError: text('odoo_last_sync_error'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
@@ -389,6 +404,32 @@ export const feedback = pgTable(
   ],
 );
 
+// Cache für Odoo-Calendar-Events. Wird vom Sync-Scheduler (alle 5 Min)
+// upserted und außerhalb des [today, +7d]-Fensters gelöscht. odooEventId
+// ist Odoo's interner Event-ID (Integer, als Text gespeichert für
+// Konsistenz mit anderen Tabellen).
+export const calendarEvents = pgTable(
+  'calendar_events',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    odooEventId: text('odoo_event_id').notNull(),
+    title: text('title').notNull(),
+    location: text('location'),
+    startAt: timestamp('start_at', { withTimezone: true }).notNull(),
+    endAt: timestamp('end_at', { withTimezone: true }).notNull(),
+    allDay: boolean('all_day').notNull().default(false),
+    attendeeCount: integer('attendee_count').notNull().default(0),
+    organizerName: text('organizer_name'),
+    syncedAt: timestamp('synced_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index('cal_events_user_start_idx').on(t.userId, t.startAt),
+    index('cal_events_start_idx').on(t.startAt),
+    uniqueIndex('cal_events_user_odoo_uid').on(t.userId, t.odooEventId),
+  ],
+);
+
 // ── Type-Exports für Frontend / Routes ────────────────────────────────
 
 export type User = typeof users.$inferSelect;
@@ -412,3 +453,5 @@ export type Notification = typeof notifications.$inferSelect;
 export type NewNotification = typeof notifications.$inferInsert;
 export type Feedback = typeof feedback.$inferSelect;
 export type NewFeedback = typeof feedback.$inferInsert;
+export type CalendarEvent = typeof calendarEvents.$inferSelect;
+export type NewCalendarEvent = typeof calendarEvents.$inferInsert;

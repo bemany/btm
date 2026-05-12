@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useStore } from '../../store/store';
 import { useTick } from '../shared/hooks';
 import { Icon } from '../shared/Icon';
 import { fmtHMS } from '../../lib/format';
 import type { Task } from '../../store/types';
+import * as api from '../../data/api';
+import type { CalendarEventDTO } from '../../data/api';
 
 // ── Date-Helper ────────────────────────────────────────────────────────
 // task.due ist im Frontend `string | 'today' | 'tomorrow' | null` — historisch
@@ -169,6 +172,31 @@ export function TVDashboardScreen() {
   const duePaged = usePagedRotation(dueAndOverdue, PAGE_SIZE);
   const reviewPaged = usePagedRotation(inReview, PAGE_SIZE);
 
+  // ── Team-Kalender (Odoo) ──────────────────────────────────────────────
+  // Holt alle Events aller User mit aktivem Sync für heute.
+  // Refetch 5 Min — gleicher Rhythmus wie Server-Sync.
+  const calendarStart = useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }, [today]); // today als string, ändert sich nur bei Datums-Wechsel
+  const calendarEnd = useMemo(() => {
+    const d = new Date(calendarStart);
+    d.setDate(d.getDate() + 1);
+    return d;
+  }, [calendarStart]);
+  const calendarQ = useQuery({
+    queryKey: ['btm', 'tv', 'calendar', today],
+    queryFn: () => api.listAllCalendar({ from: calendarStart.toISOString(), to: calendarEnd.toISOString() }),
+    staleTime: 60_000,
+    refetchInterval: 5 * 60_000,
+    refetchOnWindowFocus: true,
+    retry: 5,
+    retryDelay: (i) => Math.min(1000 * 2 ** i, 30_000),
+  });
+  const calendarEvents: CalendarEventDTO[] = calendarQ.data ?? [];
+  const calendarPaged = usePagedRotation(calendarEvents, PAGE_SIZE);
+
   const PageBadge = ({ pageIndex, pageCount }: { pageIndex: number; pageCount: number }) =>
     pageCount > 1 ? (
       <span className="tv-page-badge">
@@ -332,21 +360,52 @@ export function TVDashboardScreen() {
           </div>
         </section>
 
-        {/* Platzhalter für künftige Kalender-Ansicht (siehe Feedback FqJLc2Cel2Y).
-            Wir behalten die Grid-Zelle und das visuelle Frame, damit das Layout
-            ausgewogen bleibt und User schon mal sehen wo es hin will. */}
-        <section className="tv-col tv-col-calendar tv-col-placeholder">
+        {/* Team-Kalender — alle Termine aller User mit aktivem Odoo-Sync für heute. */}
+        <section className="tv-col tv-col-calendar">
           <div className="tv-col-head">
-            <div className="tv-col-eyebrow">Ausblick</div>
+            <div className="tv-col-eyebrow">Heute</div>
             <h2>Kalender</h2>
-            <span className="tv-page-badge">bald</span>
+            <PageBadge pageIndex={calendarPaged.pageIndex} pageCount={calendarPaged.pageCount} />
+            <div className="tv-col-count">{calendarEvents.length}</div>
           </div>
           <div className="tv-list">
-            <div className="tv-placeholder">
-              <Icon name="calendar-days" size={36} />
-              <div className="tv-placeholder-title">Tages- &amp; Wochenkalender</div>
-              <div className="tv-placeholder-sub">Termine, Fristen und Sessions auf einen Blick — kommt in einem der nächsten Releases.</div>
-            </div>
+            {calendarEvents.length === 0 && (
+              <div className="tv-empty">Heute keine Termine im Team.</div>
+            )}
+            {calendarPaged.page.map((ev) => {
+              const startTime = new Date(ev.startAt).toLocaleTimeString('de-DE', {
+                hour: '2-digit',
+                minute: '2-digit',
+              });
+              const endTime = new Date(ev.endAt).toLocaleTimeString('de-DE', {
+                hour: '2-digit',
+                minute: '2-digit',
+              });
+              const timeLabel = ev.allDay ? 'Ganztägig' : `${startTime}–${endTime}`;
+              const initials = (ev.userName ?? '??').slice(0, 2).toUpperCase();
+              return (
+                <div key={ev.id} className="tv-row tv-cal-row">
+                  <span className="tv-cal-time">{timeLabel}</span>
+                  <div className="tv-row-title">{ev.title}</div>
+                  <div className="tv-row-trail">
+                    {ev.location && (
+                      <span className="tv-cal-location" title={ev.location}>
+                        <Icon name="map-pin" size={10} /> {ev.location.length > 20 ? ev.location.slice(0, 20) + '…' : ev.location}
+                      </span>
+                    )}
+                    {ev.userImage ? (
+                      <span className="tv-row-avatar sm has-image" title={ev.userName}>
+                        <img src={ev.userImage} alt={ev.userName ?? ''} />
+                      </span>
+                    ) : (
+                      <div className="tv-row-avatar sm" style={{ background: ev.userColor ?? '#6B6359' }} title={ev.userName}>
+                        {initials}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </section>
       </main>

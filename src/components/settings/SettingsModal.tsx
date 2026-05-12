@@ -9,6 +9,7 @@ import { DataTab } from './DataTab';
 import { NotificationsTab } from './NotificationsTab';
 import { BackgroundsTab } from './BackgroundsTab';
 import { ProfileTab } from './ProfileTab';
+import { CalendarTab } from './CalendarTab';
 import type { BackgroundId } from '../backgrounds/catalog';
 
 export type SettingsTabId =
@@ -17,6 +18,7 @@ export type SettingsTabId =
   | 'backgrounds'
   | 'language'
   | 'notifications'
+  | 'calendar'
   | 'api_tokens'
   | 'data';
 
@@ -59,6 +61,7 @@ export function SettingsModal({
     { id: 'backgrounds', label: t('settings.tab_backgrounds'), icon: 'sparkles' },
     { id: 'language', label: t('settings.tab_language'), icon: 'globe' },
     { id: 'notifications', label: t('settings.tab_notifications'), icon: 'bell' },
+    { id: 'calendar', label: t('settings.tab_calendar'), icon: 'calendar' },
     { id: 'api_tokens', label: t('settings.tab_api_tokens'), icon: 'key-round' },
     { id: 'data', label: t('settings.tab_data'), icon: 'database' },
   ];
@@ -102,6 +105,7 @@ export function SettingsModal({
             )}
             {tab === 'language' && <LanguageTab />}
             {tab === 'notifications' && <NotificationsTab />}
+            {tab === 'calendar' && <CalendarTab />}
             {tab === 'api_tokens' && <ApiTokensTab />}
             {tab === 'data' && <DataTab onReplayTour={onReplayTour} onClose={onClose} />}
           </div>

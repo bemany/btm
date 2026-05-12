@@ -2,9 +2,12 @@ import { Hono } from 'hono';
 import { and, eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '../db/client.js';
-import { users, taskSessions } from '../db/schema.js';
+import { users, calendarEvents, taskSessions } from '../db/schema.js';
 import { requireAuth, type Variables } from '../lib/context.js';
 import { sendDigestForUser } from '../lib/digest.js';
+import { encryptSecret } from '../lib/secrets.js';
+import { syncUserCalendar } from '../lib/calendar-sync.js';
+import { authenticate, readUserInfo, OdooError } from '../lib/odoo-client.js';
 
 export const meRoute = new Hono<{ Variables: Variables }>()
   .get('/', async (c) => {
@@ -36,6 +39,14 @@ export const meRoute = new Hono<{ Variables: Variables }>()
         notifyMentionsMail: user.notifyMentionsMail,
         notifyDigestMail: user.notifyDigestMail,
         backgroundChoice: user.backgroundChoice,
+        // Odoo-Calendar-Sync-State (kein API-Key, nur Anzeige-Felder)
+        odooUrl: user.odooUrl,
+        odooDatabase: user.odooDatabase,
+        odooUsername: user.odooUsername,
+        odooHasApiKey: !!user.odooApiKeyEnc,
+        odooSyncEnabled: user.odooSyncEnabled,
+        odooLastSyncAt: user.odooLastSyncAt,
+        odooLastSyncError: user.odooLastSyncError,
       },
       authMode: mode,
     });
@@ -199,4 +210,150 @@ export const meRoute = new Hono<{ Variables: Variables }>()
       else agg.set(key, { taskId: r.taskId, day, hours: Number(r.hours) });
     }
     return c.json({ sessions: Array.from(agg.values()) });
+  })
+
+  // ── Odoo-Calendar-Config ────────────────────────────────────────────
+  // PATCH: speichert Credentials (apiKey optional — wenn nicht im Body,
+  //        bleibt bestehender Wert), kann Sync aktivieren/deaktivieren.
+  //        Bei URL/DB/Username-Change: odooUid + odooPartnerId reset
+  //        damit nächster Sync sich neu authentifiziert.
+  .patch('/calendar', requireAuth, async (c) => {
+    const me = c.get('user')!;
+    const body = z
+      .object({
+        odooUrl: z.string().url().nullable().optional(),
+        odooDatabase: z.string().min(1).max(200).nullable().optional(),
+        odooUsername: z.string().min(1).max(200).nullable().optional(),
+        odooApiKey: z.string().min(1).max(1000).nullable().optional(),
+        odooSyncEnabled: z.boolean().optional(),
+      })
+      .parse(await c.req.json());
+
+    const patch: Record<string, unknown> = { updatedAt: new Date() };
+    const credsChanged =
+      body.odooUrl !== undefined ||
+      body.odooDatabase !== undefined ||
+      body.odooUsername !== undefined ||
+      body.odooApiKey !== undefined;
+
+    if (body.odooUrl !== undefined) patch.odooUrl = body.odooUrl;
+    if (body.odooDatabase !== undefined) patch.odooDatabase = body.odooDatabase;
+    if (body.odooUsername !== undefined) patch.odooUsername = body.odooUsername;
+    if (body.odooApiKey !== undefined) {
+      if (body.odooApiKey === null) {
+        patch.odooApiKeyEnc = null;
+        patch.odooApiKeyIv = null;
+      } else {
+        const { enc, iv } = encryptSecret(body.odooApiKey);
+        patch.odooApiKeyEnc = enc;
+        patch.odooApiKeyIv = iv;
+      }
+    }
+    if (body.odooSyncEnabled !== undefined) patch.odooSyncEnabled = body.odooSyncEnabled;
+    if (credsChanged) {
+      // Cached UID + Partner-ID resetten, nächster Sync re-authentifiziert
+      patch.odooUid = null;
+      patch.odooPartnerId = null;
+      patch.odooLastSyncError = null;
+    }
+
+    await db.update(users).set(patch).where(eq(users.id, me.id));
+    return c.json({ ok: true });
+  })
+
+  // POST: Verbindung testen ohne zu speichern. Body: gleiche Felder wie
+  // PATCH, optional. Wenn ein Feld nicht da ist, wird der aktuelle DB-Wert
+  // benutzt (so kann der User den Test mit „nur ändere URL"-Form auslösen).
+  .post('/calendar/test', requireAuth, async (c) => {
+    const me = c.get('user')!;
+    const body = z
+      .object({
+        odooUrl: z.string().url().optional(),
+        odooDatabase: z.string().optional(),
+        odooUsername: z.string().optional(),
+        odooApiKey: z.string().optional(),
+      })
+      .parse(await c.req.json().catch(() => ({})));
+
+    // Lade aktuelle Werte als Fallback
+    const [u] = await db.select().from(users).where(eq(users.id, me.id)).limit(1);
+    if (!u) return c.json({ ok: false, error: 'user_not_found' }, 404);
+
+    const url = body.odooUrl ?? u.odooUrl ?? '';
+    const database = body.odooDatabase ?? u.odooDatabase ?? '';
+    const username = body.odooUsername ?? u.odooUsername ?? '';
+    let apiKey = body.odooApiKey;
+    if (!apiKey) {
+      if (!u.odooApiKeyEnc || !u.odooApiKeyIv) {
+        return c.json({ ok: false, error: 'no_api_key' }, 400);
+      }
+      try {
+        const { decryptSecret } = await import('../lib/secrets.js');
+        apiKey = decryptSecret(u.odooApiKeyEnc, u.odooApiKeyIv);
+      } catch {
+        return c.json({ ok: false, error: 'decrypt_failed' }, 500);
+      }
+    }
+    if (!url || !database || !username || !apiKey) {
+      return c.json({ ok: false, error: 'incomplete' }, 400);
+    }
+
+    try {
+      const uid = await authenticate({ url, database, username, apiKey });
+      const info = await readUserInfo({ url, database, username, apiKey }, uid);
+      return c.json({ ok: true, uid, partnerId: info.partnerId, name: info.name, tz: info.tz });
+    } catch (e) {
+      const code = e instanceof OdooError ? e.code : 'network';
+      const message = (e as Error).message ?? 'unknown';
+      return c.json({ ok: false, error: code, message }, 200);
+    }
+  })
+
+  // DELETE: trennt die Verbindung — Credentials + Cache + State löschen.
+  .delete('/calendar', requireAuth, async (c) => {
+    const me = c.get('user')!;
+    await db
+      .update(users)
+      .set({
+        odooUrl: null,
+        odooDatabase: null,
+        odooUsername: null,
+        odooApiKeyEnc: null,
+        odooApiKeyIv: null,
+        odooUid: null,
+        odooPartnerId: null,
+        odooSyncEnabled: false,
+        odooLastSyncAt: null,
+        odooLastSyncError: null,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, me.id));
+    await db.delete(calendarEvents).where(eq(calendarEvents.userId, me.id));
+    return c.json({ ok: true });
+  })
+
+  // POST: Sofort einen Sync triggern (für „Jetzt synchronisieren"-Button im
+  // Settings-Tab). Returns Anzahl der gesyncten / gelöschten Events.
+  .post('/calendar/sync-now', requireAuth, async (c) => {
+    const me = c.get('user')!;
+    const [u] = await db.select().from(users).where(eq(users.id, me.id)).limit(1);
+    if (!u) return c.json({ error: 'user_not_found' }, 404);
+    if (!u.odooSyncEnabled || !u.odooApiKeyEnc) {
+      return c.json({ error: 'not_configured' }, 400);
+    }
+    try {
+      const r = await syncUserCalendar(u);
+      await db
+        .update(users)
+        .set({ odooLastSyncAt: new Date(), odooLastSyncError: null })
+        .where(eq(users.id, me.id));
+      return c.json({ ok: true, synced: r.synced, deleted: r.deleted });
+    } catch (e) {
+      const code = e instanceof OdooError ? e.code : 'network';
+      await db
+        .update(users)
+        .set({ odooLastSyncAt: new Date(), odooLastSyncError: code })
+        .where(eq(users.id, me.id));
+      return c.json({ ok: false, error: code }, 200);
+    }
   });

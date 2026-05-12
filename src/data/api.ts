@@ -642,3 +642,83 @@ export async function markNotificationRead(id: string): Promise<void> {
 export async function markAllNotificationsRead(): Promise<void> {
   await apiFetch('/notifications/read-all', { method: 'POST' });
 }
+
+// ── Calendar (Odoo-Sync) ────────────────────────────────────────────
+
+export interface CalendarEventDTO {
+  id: string;
+  userId: string;
+  odooEventId: string;
+  title: string;
+  location: string | null;
+  startAt: string; // ISO
+  endAt: string;   // ISO
+  allDay: boolean;
+  attendeeCount: number;
+  organizerName: string | null;
+  // Nur in /api/calendar/all (TV)
+  userName?: string;
+  userImage?: string | null;
+  userColor?: string;
+}
+
+export interface CalendarConfigPatch {
+  odooUrl?: string | null;
+  odooDatabase?: string | null;
+  odooUsername?: string | null;
+  odooApiKey?: string | null;
+  odooSyncEnabled?: boolean;
+}
+
+export interface CalendarTestResult {
+  ok: boolean;
+  uid?: number;
+  partnerId?: number;
+  name?: string;
+  tz?: string | null;
+  error?: string;
+  message?: string;
+}
+
+export interface CalendarSyncResult {
+  ok: boolean;
+  synced?: number;
+  deleted?: number;
+  error?: string;
+}
+
+export async function listMyCalendar(opts: { from?: string; to?: string } = {}): Promise<CalendarEventDTO[]> {
+  const params = new URLSearchParams();
+  if (opts.from) params.set('from', opts.from);
+  if (opts.to) params.set('to', opts.to);
+  const qs = params.toString();
+  const { events } = await apiFetch<{ events: CalendarEventDTO[] }>(`/calendar/my${qs ? `?${qs}` : ''}`);
+  return events;
+}
+
+export async function listAllCalendar(opts: { from?: string; to?: string } = {}): Promise<CalendarEventDTO[]> {
+  const params = new URLSearchParams();
+  if (opts.from) params.set('from', opts.from);
+  if (opts.to) params.set('to', opts.to);
+  const qs = params.toString();
+  const { events } = await apiFetch<{ events: CalendarEventDTO[] }>(`/calendar/all${qs ? `?${qs}` : ''}`);
+  return events;
+}
+
+export async function updateCalendarConfig(patch: CalendarConfigPatch): Promise<void> {
+  await apiFetch('/me/calendar', { method: 'PATCH', body: patch });
+}
+
+export async function testCalendarConnection(
+  creds: Partial<{ odooUrl: string; odooDatabase: string; odooUsername: string; odooApiKey: string }> = {},
+): Promise<CalendarTestResult> {
+  return apiFetch<CalendarTestResult>('/me/calendar/test', { method: 'POST', body: creds });
+}
+
+export async function deleteCalendarConfig(): Promise<void> {
+  await apiFetch('/me/calendar', { method: 'DELETE' });
+}
+
+export async function syncCalendarNow(): Promise<CalendarSyncResult> {
+  return apiFetch<CalendarSyncResult>('/me/calendar/sync-now', { method: 'POST' });
+}
