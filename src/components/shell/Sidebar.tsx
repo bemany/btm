@@ -224,24 +224,44 @@ export function Sidebar({
           role="button"
           tabIndex={0}
         >
-          <span
-            className="sb-foot-avatar"
-            style={{
-              width: 28,
-              height: 28,
-              borderRadius: '50%',
-              display: 'inline-grid',
-              placeItems: 'center',
-              background: avatarColor,
-              color: '#FAF7F2',
-              fontFamily: 'var(--font-mono)',
-              fontSize: 11,
-              fontWeight: 700,
-              flexShrink: 0,
-            }}
-          >
-            {initials}
-          </span>
+          {user?.image ? (
+            <span
+              className="sb-foot-avatar has-image"
+              style={{
+                width: 28,
+                height: 28,
+                borderRadius: '50%',
+                overflow: 'hidden',
+                flexShrink: 0,
+                display: 'inline-block',
+              }}
+            >
+              <img
+                src={user.image}
+                alt={displayName}
+                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+              />
+            </span>
+          ) : (
+            <span
+              className="sb-foot-avatar"
+              style={{
+                width: 28,
+                height: 28,
+                borderRadius: '50%',
+                display: 'inline-grid',
+                placeItems: 'center',
+                background: avatarColor,
+                color: '#FAF7F2',
+                fontFamily: 'var(--font-mono)',
+                fontSize: 11,
+                fontWeight: 700,
+                flexShrink: 0,
+              }}
+            >
+              {initials}
+            </span>
+          )}
           <div className="who">
             <div className="n">
               {displayName}

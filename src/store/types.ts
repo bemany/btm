@@ -87,7 +87,8 @@ export interface Timer {
 
 export interface Filter {
   proj: string;
-  who: 'mine' | 'all';
+  // 'mine' = eigene Tasks, 'all' = alle Personen, ansonsten konkrete User-ID
+  who: 'mine' | 'all' | string;
   q: string;
 }
 

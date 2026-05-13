@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { DragEvent } from 'react';
 import type { Task, Column, ColumnId } from '../../store/types';
 import { useStore } from '../../store/store';
@@ -8,6 +8,31 @@ import { TaskCard } from './TaskCard';
 import { QuickAdd } from './QuickAdd';
 import { showToast } from '../shared/Toast';
 import { useT } from '../../i18n';
+
+// Priority-Score für Kanban-Sortierung (niedriger = weiter oben).
+// 0 = überfällig, 1 = heute fällig, 2 = in nächsten 3 Tagen, 3 = später,
+// 4 = ohne Frist. Erledigte (col='done') werden nicht sortiert (skip).
+function duePriorityScore(task: Task): number {
+  if (task.col === 'done') return 4;
+  if (!task.due) return 4;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  let target: Date | null = null;
+  if (task.due === 'today') target = today;
+  else if (task.due === 'tomorrow') {
+    target = new Date(today);
+    target.setDate(target.getDate() + 1);
+  } else {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(task.due);
+    if (m) target = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  }
+  if (!target) return 4;
+  const diffDays = Math.round((target.getTime() - today.getTime()) / 86400000);
+  if (diffDays < 0) return 0; // überfällig
+  if (diffDays === 0) return 1; // heute
+  if (diffDays <= 3) return 2; // bald
+  return 3; // später
+}
 
 interface KanbanColumnProps {
   col: Column;
@@ -138,13 +163,36 @@ export function BoardKanban({ tasks }: BoardKanbanProps) {
   };
   const onTaskClick = (tk: Task) => setUI({ taskDetailId: tk.id });
 
+  // Pro Spalte vorsortieren: zuerst nach due-Priority (überfällig oben),
+  // dann nach Task-Priority (high → med → low), zuletzt nach Insertion-Reihen-
+  // folge (originaler Array-Index → stabile Sortierung).
+  const tasksByCol = useMemo(() => {
+    const prioWeight = { high: 0, med: 1, low: 2 } as const;
+    const byCol = new Map<ColumnId, Task[]>();
+    for (const col of COLUMNS) byCol.set(col.id, []);
+    for (const tk of tasks) {
+      const list = byCol.get(tk.col);
+      if (list) list.push(tk);
+    }
+    for (const [, list] of byCol) {
+      list.sort((a, b) => {
+        const ds = duePriorityScore(a) - duePriorityScore(b);
+        if (ds !== 0) return ds;
+        const pp = (prioWeight[a.prio] ?? 1) - (prioWeight[b.prio] ?? 1);
+        if (pp !== 0) return pp;
+        return 0;
+      });
+    }
+    return byCol;
+  }, [tasks]);
+
   return (
     <div className="kanban">
       {COLUMNS.map((col) => (
         <KanbanColumn
           key={col.id}
           col={col}
-          tasks={tasks.filter((tk) => tk.col === col.id)}
+          tasks={tasksByCol.get(col.id) ?? []}
           dragOver={dragOverCol === col.id}
           dragTask={dragTask}
           onDragStart={onDragStart}

@@ -19,20 +19,26 @@ export interface BoardTimelineProps {
   tasks: Task[];
 }
 
-// Liefert den Tag-Index 0-4 (Mo-Fr) für eine Task relativ zu einem
-// Wochenanker, oder -1 wenn keine Frist gesetzt / Frist außerhalb der
-// Woche / ungültiges Format.
-function dueDayIndex(due: string | null | undefined, weekStart: Date): number {
-  if (!due) return -1;
+// Liefert für eine Task einen der drei Zustände:
+//   - 0-4   Tag-Index Mo-Fr in der Woche von weekStart
+//   - 'no-due'     keine Frist gesetzt (gehört in den 'Ohne Frist'-Bucket)
+//   - 'out-of-week' Frist liegt außerhalb [Mo-Fr] dieser Woche
+//                   → Task wird in dieser Wochen-View gar nicht angezeigt.
+// Bug FqpkOtaAV67: vorher returnte das Funktion -1 für BEIDE Fälle und
+// 'out-of-week'-Tasks landeten fälschlich im 'Ohne Frist'-Bucket der
+// nächsten Woche. Jetzt sauber getrennt.
+type DuePlacement = number | 'no-due' | 'out-of-week';
+function dueDayIndex(due: string | null | undefined, weekStart: Date): DuePlacement {
+  if (!due) return 'no-due';
   // 'today'/'tomorrow' nur sinnvoll bei „aktueller" Woche — wir mappen sie
   // immer auf den ersten/zweiten Tag des aktuell sichtbaren Anker-Wochenstarts.
   if (due === 'today') return 0;
   if (due === 'tomorrow') return 1;
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(due);
-  if (!m) return -1;
+  if (!m) return 'no-due'; // ungültiges Format wie keine Frist behandeln
   const target = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
   const days = Math.round((target.getTime() - weekStart.getTime()) / 86400000);
-  if (days < 0 || days > 4) return -1;
+  if (days < 0 || days > 4) return 'out-of-week';
   return days;
 }
 
@@ -240,7 +246,8 @@ export function BoardTimeline({ tasks }: BoardTimelineProps) {
           const buckets: Task[][] = [[], [], [], [], [], []];
           for (const tk of list) {
             const di = dueDayIndex(tk.due, weekStart);
-            buckets[di < 0 ? 5 : di].push(tk);
+            if (di === 'out-of-week') continue; // außerhalb dieser Woche → skip
+            buckets[di === 'no-due' ? 5 : di].push(tk);
           }
           return (
             <div key={personId} className="tl-row">

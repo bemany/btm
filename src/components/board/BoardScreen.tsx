@@ -69,6 +69,7 @@ export function BoardScreen() {
   const filtered = useMemo(() => {
     let list = tasks;
     if (filter.who === 'mine') list = list.filter((t) => t.who === currentUser);
+    else if (filter.who !== 'all') list = list.filter((t) => t.who === filter.who);
     if (filter.proj !== 'all') list = list.filter((t) => t.proj === filter.proj);
     if (filter.q) {
       const q = filter.q.toLowerCase();

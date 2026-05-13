@@ -33,9 +33,45 @@ export function TaskCard({ task, dragging, onDragStart, onDragEnd, onClick }: Ta
     : task.loggedH;
   const over = liveLogged > task.estH * 1.05;
 
+  // Due-Status berechnen — für visuelles Highlighting + Sortierung im Kanban
+  // (Bug F2QWZBJbq4v). 'overdue' = Frist < heute, 'today' = heute, 'soon' = in
+  // den nächsten 3 Tagen, 'later' = später, 'none' = keine Frist gesetzt.
+  // 'done' Tasks bekommen immer 'none' damit erledigte nicht als 'überfällig'
+  // hervorgehoben werden.
+  const dueStatus: 'overdue' | 'today' | 'soon' | 'later' | 'none' = (() => {
+    if (task.col === 'done') return 'none';
+    if (!task.due) return 'none';
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    let target: Date | null = null;
+    if (task.due === 'today') target = today;
+    else if (task.due === 'tomorrow') {
+      target = new Date(today);
+      target.setDate(target.getDate() + 1);
+    } else {
+      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(task.due as string);
+      if (m) target = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+    }
+    if (!target) return 'none';
+    const diffDays = Math.round((target.getTime() - today.getTime()) / 86400000);
+    if (diffDays < 0) return 'overdue';
+    if (diffDays === 0) return 'today';
+    if (diffDays <= 3) return 'soon';
+    return 'later';
+  })();
+  const dueLabel: string | null = (() => {
+    if (dueStatus === 'none' || !task.due) return null;
+    if (task.due === 'today' || dueStatus === 'today') return t('board.card_due_today');
+    if (task.due === 'tomorrow') return t('board.card_due_tomorrow');
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(task.due as string);
+    if (!m) return null;
+    const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+    return d.toLocaleDateString(locale === 'en' ? 'en-US' : 'de-DE', { day: '2-digit', month: 'short' });
+  })();
+
   return (
     <div
-      className={`task-card ${dragging ? 'dragging' : ''} ${isLive ? 'live' : ''}`}
+      className={`task-card ${dragging ? 'dragging' : ''} ${isLive ? 'live' : ''} due-${dueStatus}`}
       draggable
       onDragStart={(e) => onDragStart(e, task)}
       onDragEnd={onDragEnd}
@@ -44,6 +80,12 @@ export function TaskCard({ task, dragging, onDragStart, onDragEnd, onClick }: Ta
       <div className="meta-row">
         <ProjTag id={task.proj} />
         <PrioDot p={task.prio} />
+        {dueLabel && (
+          <span className={`due-pill due-pill-${dueStatus}`} title={dueLabel}>
+            <Icon name={dueStatus === 'overdue' ? 'alert-triangle' : 'calendar'} size={9} />
+            {dueStatus === 'overdue' ? t('board.card_overdue') : dueLabel}
+          </span>
+        )}
         {task.parentTaskId && (
           <span
             className="subtask-pill"

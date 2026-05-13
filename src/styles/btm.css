@@ -4245,3 +4245,92 @@ body[data-theme="default-dark"] .cal-timeline-now-label,
 body[data-theme="glass-dark"] .cal-timeline-now-label {
   background: rgba(28, 26, 23, 0.9);
 }
+
+/* ── Task-Card Due-Date Pill + Highlight ─────────────────────────── */
+.due-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 6px;
+  font-size: 9.5px;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  letter-spacing: 0.03em;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+.due-pill-overdue {
+  background: rgba(184, 65, 45, 0.18);
+  color: #C0432C;
+  border: 1px solid rgba(184, 65, 45, 0.4);
+}
+.due-pill-today {
+  background: rgba(200, 90, 44, 0.15);
+  color: var(--accent-600);
+  border: 1px solid rgba(200, 90, 44, 0.35);
+}
+.due-pill-soon {
+  background: rgba(184, 138, 46, 0.12);
+  color: #8A6720;
+  border: 1px solid rgba(184, 138, 46, 0.3);
+}
+.due-pill-later {
+  background: var(--cream-100);
+  color: var(--ink-600);
+  border: 1px solid var(--ink-200);
+}
+
+/* TaskCard linker Akzent-Streifen für überfällige/heutige */
+.task-card.due-overdue {
+  box-shadow: inset 3px 0 0 #C0432C;
+}
+.task-card.due-today {
+  box-shadow: inset 3px 0 0 var(--accent-500);
+}
+
+body[data-theme="default-dark"] .due-pill-overdue,
+body[data-theme="glass-dark"] .due-pill-overdue {
+  color: #FF9C82;
+}
+body[data-theme="default-dark"] .due-pill-soon,
+body[data-theme="glass-dark"] .due-pill-soon {
+  color: #E0B85B;
+}
+body[data-theme="default-dark"] .due-pill-later,
+body[data-theme="glass-dark"] .due-pill-later {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: rgba(250, 247, 242, 0.6);
+}
+
+/* Filter-Row User-Picker-Dropdown */
+.filter-user-select {
+  background: var(--cream-50);
+  border: 1px solid var(--ink-200);
+  border-radius: 100px;
+  padding: 4px 10px;
+  font-size: 11.5px;
+  font-family: inherit;
+  color: var(--ink-700);
+  cursor: pointer;
+}
+.filter-user-select:hover {
+  border-color: var(--ink-300);
+}
+.filter-user-select.active {
+  background: var(--ink-900);
+  color: var(--cream-50);
+  border-color: var(--ink-900);
+}
+body[data-theme="default-dark"] .filter-user-select,
+body[data-theme="glass-dark"] .filter-user-select {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: rgba(250, 247, 242, 0.8);
+}
+body[data-theme="default-dark"] .filter-user-select.active,
+body[data-theme="glass-dark"] .filter-user-select.active {
+  background: var(--cream-50);
+  color: var(--ink-900);
+  border-color: var(--cream-50);
+}

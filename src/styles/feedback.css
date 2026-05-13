@@ -415,6 +415,17 @@ body[data-theme='glass-dark'] .feedback-type-btn,
 body[data-theme='default-dark'] .feedback-type-btn {
   background: rgba(255, 255, 255, 0.04);
   border-color: rgba(255, 255, 255, 0.1);
+  color: rgba(250, 247, 242, 0.7);
+}
+/* Active-Variante im Dark-Mode: expliziter Accent-Background damit der
+   Kontrast erhalten bleibt (Bug FuwEM9lBV8m). Ohne diese Override
+   gewann der generische .feedback-type-btn-Dark-Override visuell und
+   der Akzent ging unter. */
+body[data-theme='glass-dark'] .feedback-type-btn.is-active,
+body[data-theme='default-dark'] .feedback-type-btn.is-active {
+  background: var(--accent-500);
+  border-color: var(--accent-500);
+  color: var(--cream-50);
 }
 body[data-theme='glass-dark'] .feedback-field input,
 body[data-theme='default-dark'] .feedback-field input,
