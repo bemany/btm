@@ -471,6 +471,13 @@ export const en: Translations = {
     open_in_claude: 'Open in Claude',
     prompt_copied: 'Prompt copied. Paste it into Claude Code.',
     delete_confirm: 'Really delete this entry?',
+    edit_btn: 'Edit',
+    edit_save: 'Save',
+    edit_cancel: 'Cancel',
+    edit_saved: 'Changes saved.',
+    edit_required: 'Title and description cannot be empty.',
+    edit_title_placeholder: 'Short title',
+    edit_body_placeholder: 'Description — what did they mean? How does it reproduce?',
   },
   subtasks: {
     heading: 'Subtasks ({count})',

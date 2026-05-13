@@ -473,6 +473,13 @@ export const de = {
     open_in_claude: 'In Claude öffnen',
     prompt_copied: 'Prompt in Zwischenablage. Einfach in Claude Code einfügen.',
     delete_confirm: 'Diesen Eintrag wirklich löschen?',
+    edit_btn: 'Bearbeiten',
+    edit_save: 'Speichern',
+    edit_cancel: 'Abbrechen',
+    edit_saved: 'Änderung gespeichert.',
+    edit_required: 'Titel und Beschreibung dürfen nicht leer sein.',
+    edit_title_placeholder: 'Kurzer Titel',
+    edit_body_placeholder: 'Beschreibung — was wurde gemeint? Wie reproduziert sich das?',
   },
   subtasks: {
     heading: 'Subtasks ({count})',

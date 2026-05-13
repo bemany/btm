@@ -415,3 +415,73 @@ body[data-theme='default-dark'] .fb-action-btn:hover {
   background: rgba(255, 255, 255, 0.06);
   border-color: rgba(255, 255, 255, 0.2);
 }
+
+/* ── Admin Edit-Mode für Feedback-Cards ───────────────────────────── */
+.fb-admin-card.is-editing {
+  outline: 1px dashed rgba(200, 90, 44, 0.4);
+  outline-offset: -1px;
+}
+.fb-type-select {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border: 1px solid var(--ink-200);
+  background: var(--cream-50);
+  color: var(--ink-700);
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+.fb-edit-title {
+  flex: 1;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink-900);
+  border: 1px solid var(--accent-500);
+  background: var(--cream-50);
+  border-radius: 4px;
+  padding: 6px 10px;
+  outline: none;
+}
+.fb-edit-title:focus {
+  box-shadow: 0 0 0 3px rgba(200, 90, 44, 0.15);
+}
+.fb-edit-body {
+  width: 100%;
+  font-family: inherit;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--ink-900);
+  border: 1px solid var(--accent-500);
+  background: var(--cream-50);
+  border-radius: 4px;
+  padding: 10px 12px;
+  outline: none;
+  resize: vertical;
+  margin-bottom: 8px;
+}
+.fb-edit-body:focus {
+  box-shadow: 0 0 0 3px rgba(200, 90, 44, 0.15);
+}
+.fb-action-btn.fb-action-primary {
+  background: var(--accent-500);
+  color: var(--cream-50);
+  border-color: var(--accent-500);
+}
+.fb-action-btn.fb-action-primary:hover {
+  background: var(--accent-600);
+}
+
+body[data-theme="default-dark"] .fb-type-select,
+body[data-theme="glass-dark"] .fb-type-select,
+body[data-theme="default-dark"] .fb-edit-title,
+body[data-theme="glass-dark"] .fb-edit-title,
+body[data-theme="default-dark"] .fb-edit-body,
+body[data-theme="glass-dark"] .fb-edit-body {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(200, 90, 44, 0.5);
+  color: rgba(250, 247, 242, 0.9);
+}

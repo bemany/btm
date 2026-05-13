@@ -536,7 +536,13 @@ export async function createFeedback(input: {
 }
 export async function updateFeedback(
   id: string,
-  patch: { status?: FeedbackStatus; adminNote?: string | null },
+  patch: {
+    status?: FeedbackStatus;
+    adminNote?: string | null;
+    title?: string;
+    body?: string;
+    type?: FeedbackType;
+  },
 ): Promise<FeedbackEntry> {
   const { feedback } = await apiFetch<{ feedback: FeedbackEntry }>(`/feedback/${id}`, {
     method: 'PATCH',

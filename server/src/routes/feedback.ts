@@ -30,6 +30,12 @@ const createSchema = z.object({
 const updateSchema = z.object({
   status: StatusEnum.optional(),
   adminNote: z.string().max(20_000).nullable().optional(),
+  // Admin kann Title + Body korrigieren (z.B. Tippfehler, klarere Formulierung,
+  // unsinnige Feature-Wünsche rebooten). type bleibt unveränderlich — wenn das
+  // ein Feature statt Bug ist, ist das eine andere Entscheidung als ein Edit.
+  title: z.string().min(1).max(200).optional(),
+  body: z.string().min(1).max(20_000).optional(),
+  type: TypeEnum.optional(),
 });
 
 const resolveSchema = z.object({
@@ -77,10 +83,16 @@ export const feedbackRoute = new Hono<{ Variables: Variables }>()
     const patch: {
       status?: 'open' | 'in_progress' | 'done' | 'wontfix';
       adminNote?: string | null;
+      title?: string;
+      body?: string;
+      type?: 'bug' | 'feature';
       updatedAt: Date;
     } = { updatedAt: new Date() };
     if (body.status !== undefined) patch.status = body.status;
     if (body.adminNote !== undefined) patch.adminNote = body.adminNote;
+    if (body.title !== undefined) patch.title = body.title;
+    if (body.body !== undefined) patch.body = body.body;
+    if (body.type !== undefined) patch.type = body.type;
     const [row] = await db.update(feedback).set(patch).where(eq(feedback.id, id)).returning();
     if (!row) return c.json({ error: 'not found' }, 404);
     return c.json({ feedback: row });

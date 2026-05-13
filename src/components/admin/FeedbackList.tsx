@@ -12,7 +12,7 @@
 import { useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as api from '../../data/api';
-import type { FeedbackEntry, FeedbackStatus } from '../../data/api';
+import type { FeedbackEntry, FeedbackStatus, FeedbackType } from '../../data/api';
 import { useStore } from '../../store/store';
 import { Icon } from '../shared/Icon';
 import { showToast } from '../shared/Toast';
@@ -28,6 +28,14 @@ export function FeedbackList() {
   const users = useStore((s) => s.users);
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState<'all' | 'bug' | 'feature'>('all');
+  // Edit-Mode pro Item — null = keine Bearbeitung läuft.
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<{ title: string; body: string; type: FeedbackType }>({
+    title: '',
+    body: '',
+    type: 'bug',
+  });
+  const [savingEdit, setSavingEdit] = useState(false);
 
   const { data: items = [], isLoading } = useQuery({
     queryKey: FEEDBACK_KEY,
@@ -49,6 +57,36 @@ export function FeedbackList() {
       refresh();
     } catch {
       showToast(t('common.error_generic'));
+    }
+  };
+
+  const startEdit = (item: FeedbackEntry) => {
+    setEditingId(item.id);
+    setEditForm({ title: item.title, body: item.body, type: item.type });
+  };
+  const cancelEdit = () => {
+    setEditingId(null);
+  };
+  const saveEdit = async (id: string) => {
+    if (savingEdit) return;
+    if (!editForm.title.trim() || !editForm.body.trim()) {
+      showToast(t('feedback.edit_required'));
+      return;
+    }
+    setSavingEdit(true);
+    try {
+      await api.updateFeedback(id, {
+        title: editForm.title.trim(),
+        body: editForm.body.trim(),
+        type: editForm.type,
+      });
+      setEditingId(null);
+      refresh();
+      showToast(t('feedback.edit_saved'));
+    } catch {
+      showToast(t('common.error_generic'));
+    } finally {
+      setSavingEdit(false);
     }
   };
 
@@ -186,17 +224,42 @@ export function FeedbackList() {
           {filtered.map((item) => {
             const submitter = users.find((u) => u.id === item.submitterId);
             return (
-              <article key={item.id} className={`fb-admin-card status-${item.status}`}>
+              <article key={item.id} className={`fb-admin-card status-${item.status} ${editingId === item.id ? 'is-editing' : ''}`}>
                 <header className="fb-admin-card-head">
-                  <span className={`fb-type-pill type-${item.type}`}>
-                    <Icon name={item.type === 'bug' ? 'bug' : 'sparkles'} size={11} />
-                    {t(`feedback.type_${item.type}` as 'feedback.type_bug')}
-                  </span>
-                  <h3 className="fb-admin-card-title">{item.title}</h3>
+                  {editingId === item.id ? (
+                    <select
+                      className="fb-type-select"
+                      value={editForm.type}
+                      onChange={(e) => setEditForm((f) => ({ ...f, type: e.target.value as FeedbackType }))}
+                      disabled={savingEdit}
+                    >
+                      <option value="bug">{t('feedback.type_bug')}</option>
+                      <option value="feature">{t('feedback.type_feature')}</option>
+                    </select>
+                  ) : (
+                    <span className={`fb-type-pill type-${item.type}`}>
+                      <Icon name={item.type === 'bug' ? 'bug' : 'sparkles'} size={11} />
+                      {t(`feedback.type_${item.type}` as 'feedback.type_bug')}
+                    </span>
+                  )}
+                  {editingId === item.id ? (
+                    <input
+                      type="text"
+                      className="fb-edit-title"
+                      value={editForm.title}
+                      onChange={(e) => setEditForm((f) => ({ ...f, title: e.target.value }))}
+                      disabled={savingEdit}
+                      maxLength={200}
+                      placeholder={t('feedback.edit_title_placeholder')}
+                    />
+                  ) : (
+                    <h3 className="fb-admin-card-title">{item.title}</h3>
+                  )}
                   <select
                     className="fb-status-select"
                     value={item.status}
                     onChange={(e) => setStatus(item.id, e.target.value as FeedbackStatus)}
+                    disabled={editingId === item.id}
                   >
                     {STATUS_OPTIONS.map((s) => (
                       <option key={s} value={s}>
@@ -205,7 +268,19 @@ export function FeedbackList() {
                     ))}
                   </select>
                 </header>
-                <p className="fb-admin-card-body">{item.body}</p>
+                {editingId === item.id ? (
+                  <textarea
+                    className="fb-edit-body"
+                    value={editForm.body}
+                    onChange={(e) => setEditForm((f) => ({ ...f, body: e.target.value }))}
+                    disabled={savingEdit}
+                    rows={5}
+                    maxLength={20_000}
+                    placeholder={t('feedback.edit_body_placeholder')}
+                  />
+                ) : (
+                  <p className="fb-admin-card-body">{item.body}</p>
+                )}
                 <div className="fb-admin-card-meta">
                   {submitter && (
                     <span>
@@ -229,29 +304,61 @@ export function FeedbackList() {
                   )}
                 </div>
                 <div className="fb-admin-card-actions">
-                  <button
-                    type="button"
-                    className="fb-action-btn"
-                    onClick={() => copyPrompt(item)}
-                  >
-                    <Icon name="copy" size={11} /> {t('feedback.copy_prompt')}
-                  </button>
-                  <button
-                    type="button"
-                    className="fb-action-btn"
-                    onClick={() => openInClaudeCloud(item)}
-                  >
-                    <Icon name="external-link" size={11} /> {t('feedback.open_in_claude')}
-                  </button>
-                  <div style={{ flex: 1 }} />
-                  <button
-                    type="button"
-                    className="fb-action-btn fb-action-danger"
-                    onClick={() => remove(item.id)}
-                    title={t('common.delete')}
-                  >
-                    <Icon name="trash-2" size={11} />
-                  </button>
+                  {editingId === item.id ? (
+                    <>
+                      <button
+                        type="button"
+                        className="fb-action-btn fb-action-primary"
+                        onClick={() => saveEdit(item.id)}
+                        disabled={savingEdit}
+                      >
+                        <Icon name="check" size={11} /> {t('feedback.edit_save')}
+                      </button>
+                      <button
+                        type="button"
+                        className="fb-action-btn"
+                        onClick={cancelEdit}
+                        disabled={savingEdit}
+                      >
+                        <Icon name="x" size={11} /> {t('feedback.edit_cancel')}
+                      </button>
+                      <div style={{ flex: 1 }} />
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        className="fb-action-btn"
+                        onClick={() => startEdit(item)}
+                        title={t('feedback.edit_btn')}
+                      >
+                        <Icon name="pencil" size={11} /> {t('feedback.edit_btn')}
+                      </button>
+                      <button
+                        type="button"
+                        className="fb-action-btn"
+                        onClick={() => copyPrompt(item)}
+                      >
+                        <Icon name="copy" size={11} /> {t('feedback.copy_prompt')}
+                      </button>
+                      <button
+                        type="button"
+                        className="fb-action-btn"
+                        onClick={() => openInClaudeCloud(item)}
+                      >
+                        <Icon name="external-link" size={11} /> {t('feedback.open_in_claude')}
+                      </button>
+                      <div style={{ flex: 1 }} />
+                      <button
+                        type="button"
+                        className="fb-action-btn fb-action-danger"
+                        onClick={() => remove(item.id)}
+                        title={t('common.delete')}
+                      >
+                        <Icon name="trash-2" size={11} />
+                      </button>
+                    </>
+                  )}
                 </div>
               </article>
             );
