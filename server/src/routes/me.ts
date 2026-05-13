@@ -224,7 +224,11 @@ export const meRoute = new Hono<{ Variables: Variables }>()
         odooUrl: z.string().url().nullable().optional(),
         odooDatabase: z.string().min(1).max(200).nullable().optional(),
         odooUsername: z.string().min(1).max(200).nullable().optional(),
-        odooApiKey: z.string().min(1).max(1000).nullable().optional(),
+        // 20 Char Min-Length: Odoo-API-Keys sind 40-Hex-Chars. Damit fängt
+        // man Browser-Autofill-Müll ab (z.B. 8-12 Char-Passwörter) der
+        // sonst still die DB überschreibt und alle Syncs auf auth_failed
+        // schickt. Bei explizitem null wird der Key gelöscht (Disconnect).
+        odooApiKey: z.union([z.string().min(20).max(1000), z.null()]).optional(),
         odooSyncEnabled: z.boolean().optional(),
       })
       .parse(await c.req.json());

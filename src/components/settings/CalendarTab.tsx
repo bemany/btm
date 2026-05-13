@@ -195,13 +195,22 @@ export function CalendarTab() {
 
         <label className="cal-field">
           <span className="cal-field-label">{t('calendar.field_api_key')}</span>
+          {/* WICHTIG: name=odoo-api-key-… (mit zufälligem Suffix) +
+              autoComplete=new-password — verhindert dass Arc/Safari/Chrome
+              ihren Passwort-Manager den Key überschreibt mit irgendeinem
+              gespeicherten Login. Das hatte uns am 2026-05-13 die DB
+              kaputt gemacht (siehe Fix-Commit). */}
           <input
             type="password"
+            name="odoo-api-key-do-not-fill"
             placeholder={hasApiKey ? t('calendar.field_api_key_saved') : t('calendar.field_api_key_placeholder')}
             value={apiKey}
             onChange={(e) => setApiKey(e.target.value)}
             disabled={busy}
-            autoComplete="off"
+            autoComplete="new-password"
+            data-1p-ignore="true"
+            data-lpignore="true"
+            data-form-type="other"
           />
           <span className="cal-field-help">{t('calendar.field_api_key_help')}</span>
         </label>
