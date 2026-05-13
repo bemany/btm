@@ -53,6 +53,11 @@ export const users = pgTable('users', {
   odooSyncEnabled: boolean('odoo_sync_enabled').notNull().default(false),
   odooLastSyncAt: timestamp('odoo_last_sync_at', { withTimezone: true }),
   odooLastSyncError: text('odoo_last_sync_error'),
+  // Calendar-Privacy für TV-Dashboard: wenn true werden eigene Events auf
+  // /api/calendar/all (TV) als 'Privat' anonymisiert (Title, Location und
+  // Attendee-Count werden entfernt). Auf 'Meine Woche' bleibt der User
+  // immer sein eigener Titel sichtbar — Privacy gilt nur für andere User.
+  calendarTvPrivate: boolean('calendar_tv_private').notNull().default(false),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
@@ -404,16 +409,20 @@ export const feedback = pgTable(
   ],
 );
 
-// Cache für Odoo-Calendar-Events. Wird vom Sync-Scheduler (alle 5 Min)
-// upserted und außerhalb des [today, +7d]-Fensters gelöscht. odooEventId
-// ist Odoo's interner Event-ID (Integer, als Text gespeichert für
-// Konsistenz mit anderen Tabellen).
+// Cache für Calendar-Events aus mehreren Quellen (Odoo und iCal-Feeds).
+// Wird vom Sync-Scheduler (alle 5 Min) upserted und außerhalb des
+// [today, +7d]-Fensters gelöscht. `externalId` ist die ID aus der jeweili-
+// gen Quelle (Odoo: integer-id; iCal: UID-string). `source` + `externalId`
+// + `userId` ist eindeutig (zwei Quellen können theoretisch identische IDs
+// haben). `icalFeedId` ist nur bei source='ical' gesetzt.
 export const calendarEvents = pgTable(
   'calendar_events',
   {
     id: text('id').primaryKey(),
     userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-    odooEventId: text('odoo_event_id').notNull(),
+    source: text('source', { enum: ['odoo', 'ical'] }).notNull().default('odoo'),
+    icalFeedId: text('ical_feed_id'),
+    externalId: text('external_id').notNull(),
     title: text('title').notNull(),
     location: text('location'),
     startAt: timestamp('start_at', { withTimezone: true }).notNull(),
@@ -426,8 +435,27 @@ export const calendarEvents = pgTable(
   (t) => [
     index('cal_events_user_start_idx').on(t.userId, t.startAt),
     index('cal_events_start_idx').on(t.startAt),
-    uniqueIndex('cal_events_user_odoo_uid').on(t.userId, t.odooEventId),
+    uniqueIndex('cal_events_user_source_ext').on(t.userId, t.source, t.externalId),
   ],
+);
+
+// User-konfigurierte iCal-Feed-URLs. Mehrere pro User möglich (z.B.
+// "Privat (Google)" + "Familie (Apple)" + "Sportverein"). Aktivierbar
+// einzeln über syncEnabled — wenn ein Feed Mist liefert kann der User
+// ihn pausieren ohne ihn zu löschen.
+export const icalFeeds = pgTable(
+  'ical_feeds',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    url: text('url').notNull(),
+    label: text('label'),
+    syncEnabled: boolean('sync_enabled').notNull().default(true),
+    lastSyncAt: timestamp('last_sync_at', { withTimezone: true }),
+    lastSyncError: text('last_sync_error'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index('ical_feeds_user_idx').on(t.userId)],
 );
 
 // ── Type-Exports für Frontend / Routes ────────────────────────────────
@@ -455,3 +483,5 @@ export type Feedback = typeof feedback.$inferSelect;
 export type NewFeedback = typeof feedback.$inferInsert;
 export type CalendarEvent = typeof calendarEvents.$inferSelect;
 export type NewCalendarEvent = typeof calendarEvents.$inferInsert;
+export type IcalFeed = typeof icalFeeds.$inferSelect;
+export type NewIcalFeed = typeof icalFeeds.$inferInsert;

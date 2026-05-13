@@ -60,11 +60,18 @@ export const calendarRoute = new Hono<{ Variables: Variables }>()
 
     // Join mit users für UI-Anzeige (Name + Avatar).
     // Nur Events von Usern mit aktivem Sync.
+    // Wir wollen Events von Usern mit MINDESTENS einer aktiven Quelle
+    // (Odoo-Sync ODER mindestens ein iCal-Feed aktiv). Einfacher Filter:
+    // wir prüfen serverseitig nur dass das Event existiert (Sync hat es
+    // ja schon gefiltert). Privacy-Filter (calendar_tv_private) wird hier
+    // serverseitig angewandt: wenn der Owner privat haben will, wird
+    // Title auf 'Privat' gesetzt und Location/Attendees genullt.
     const rows = await db
       .select({
         id: calendarEvents.id,
         userId: calendarEvents.userId,
-        odooEventId: calendarEvents.odooEventId,
+        externalId: calendarEvents.externalId,
+        source: calendarEvents.source,
         title: calendarEvents.title,
         location: calendarEvents.location,
         startAt: calendarEvents.startAt,
@@ -75,14 +82,29 @@ export const calendarRoute = new Hono<{ Variables: Variables }>()
         userName: users.name,
         userImage: users.image,
         userColor: users.color,
+        tvPrivate: users.calendarTvPrivate,
       })
       .from(calendarEvents)
       .innerJoin(users, eq(calendarEvents.userId, users.id))
       .where(and(
-        eq(users.odooSyncEnabled, true),
         gte(calendarEvents.startAt, from),
         lt(calendarEvents.startAt, to),
       ))
       .orderBy(asc(calendarEvents.startAt));
-    return c.json({ events: rows });
+
+    // Privacy-Filter anwenden — Title/Location/Attendees nullen
+    const events = rows.map((r) => {
+      if (r.tvPrivate) {
+        return {
+          ...r,
+          title: 'Privat',
+          location: null,
+          attendeeCount: 0,
+          organizerName: null,
+          tvPrivate: undefined, // nicht ans Frontend leaken
+        };
+      }
+      return { ...r, tvPrivate: undefined };
+    });
+    return c.json({ events });
   });

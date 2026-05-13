@@ -12,11 +12,15 @@
 // User sieht „••• gespeichert" und kann einen neuen eingeben falls Rotation.
 
 import { useEffect, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../auth/AuthContext';
 import { Icon } from '../shared/Icon';
 import { useT, useLocale } from '../../i18n';
 import * as api from '../../data/api';
+import type { IcalFeedDTO } from '../../data/api';
 import { showToast } from '../shared/Toast';
+
+const ICAL_FEEDS_KEY = ['btm', 'me', 'icalFeeds'] as const;
 
 type TestStatus = null | { ok: true; uid: number; name?: string } | { ok: false; error: string };
 
@@ -158,6 +162,11 @@ export function CalendarTab() {
     <div className="set-pane cal-settings">
       <p className="set-intro">{t('calendar.intro')}</p>
 
+      <div className="cal-source-head">
+        <Icon name="briefcase" size={14} />
+        <h4>{t('calendar.source_odoo')}</h4>
+      </div>
+
       <div className="cal-form">
         <label className="cal-field">
           <span className="cal-field-label">{t('calendar.field_url')}</span>
@@ -292,6 +301,240 @@ export function CalendarTab() {
           </div>
         </div>
       )}
+
+      {/* ── iCal-Feeds (zweite Datenquelle, mehrere möglich) ── */}
+      <div className="cal-source-head">
+        <Icon name="link" size={14} />
+        <h4>{t('calendar.source_ical')}</h4>
+      </div>
+      <p className="cal-source-intro">{t('calendar.ical_intro')}</p>
+      <IcalFeedsSection />
+
+      {/* ── TV-Privacy-Toggle ── */}
+      <div className="cal-source-head">
+        <Icon name="shield" size={14} />
+        <h4>{t('calendar.privacy_heading')}</h4>
+      </div>
+      <PrivacyToggle />
     </div>
+  );
+}
+
+// ── iCal-Feeds-Subkomponente ───────────────────────────────────────────
+function IcalFeedsSection() {
+  const t = useT();
+  const [locale] = useLocale();
+  const queryClient = useQueryClient();
+  const [busy, setBusy] = useState(false);
+  const [newUrl, setNewUrl] = useState('');
+  const [newLabel, setNewLabel] = useState('');
+
+  const { data: feeds = [], isLoading } = useQuery({
+    queryKey: ICAL_FEEDS_KEY,
+    queryFn: api.listIcalFeeds,
+    staleTime: 30_000,
+  });
+
+  const refresh = () => queryClient.invalidateQueries({ queryKey: ICAL_FEEDS_KEY });
+
+  const fmtRel = (iso: string | null): string | null => {
+    if (!iso) return null;
+    const ms = Date.now() - new Date(iso).getTime();
+    const min = Math.floor(ms / 60_000);
+    if (min < 1) return locale === 'en' ? 'just now' : 'gerade eben';
+    if (min < 60) return locale === 'en' ? `${min}m ago` : `vor ${min} Min`;
+    const h = Math.floor(min / 60);
+    if (h < 24) return locale === 'en' ? `${h}h ago` : `vor ${h} Std`;
+    return new Date(iso).toLocaleString(locale === 'en' ? 'en-US' : 'de-DE');
+  };
+
+  const handleAdd = async () => {
+    if (busy || !newUrl.trim()) return;
+    setBusy(true);
+    try {
+      await api.createIcalFeed({ url: newUrl.trim(), label: newLabel.trim() || null });
+      setNewUrl('');
+      setNewLabel('');
+      refresh();
+      showToast(t('calendar.ical_added'));
+    } catch {
+      showToast(t('common.error_generic'));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleToggle = async (feed: IcalFeedDTO, next: boolean) => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      await api.updateIcalFeed(feed.id, { syncEnabled: next });
+      refresh();
+    } catch {
+      showToast(t('common.error_generic'));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleSyncNow = async (feed: IcalFeedDTO) => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      const r = await api.syncIcalFeedNow(feed.id);
+      if (r.ok) showToast(t('calendar.sync_now_ok', { count: r.synced ?? 0 }));
+      else showToast(t('calendar.sync_now_failed', { code: r.error ?? 'unknown' }));
+      refresh();
+    } catch {
+      showToast(t('common.error_generic'));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleDelete = async (feed: IcalFeedDTO) => {
+    if (busy) return;
+    if (!confirm(t('calendar.ical_delete_confirm', { label: feed.label || feed.url }))) return;
+    setBusy(true);
+    try {
+      await api.deleteIcalFeed(feed.id);
+      refresh();
+      showToast(t('calendar.ical_deleted'));
+    } catch {
+      showToast(t('common.error_generic'));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="cal-ical-section">
+      {isLoading && feeds.length === 0 ? (
+        <div className="cal-empty">{t('common.loading')}</div>
+      ) : feeds.length === 0 ? (
+        <div className="cal-empty">{t('calendar.ical_empty')}</div>
+      ) : (
+        <ul className="cal-ical-list">
+          {feeds.map((feed) => {
+            const rel = fmtRel(feed.lastSyncAt);
+            return (
+              <li key={feed.id} className="cal-ical-item">
+                <div className="cal-ical-item-head">
+                  <div className="cal-ical-item-label">
+                    <span className="cal-ical-label">{feed.label || t('calendar.ical_unnamed')}</span>
+                    {feed.lastSyncError ? (
+                      <span className="cal-status-error">
+                        <Icon name="alert-triangle" size={11} /> {feed.lastSyncError}
+                      </span>
+                    ) : rel ? (
+                      <span className="cal-status-ok">
+                        <Icon name="check" size={11} /> {rel}
+                      </span>
+                    ) : (
+                      <span className="dim">{t('calendar.status_never')}</span>
+                    )}
+                  </div>
+                  <span
+                    className={`notify-switch ${feed.syncEnabled ? 'is-on' : ''}`}
+                    onClick={() => handleToggle(feed, !feed.syncEnabled)}
+                    role="button"
+                    aria-pressed={feed.syncEnabled}
+                  >
+                    <span className="notify-switch-knob" />
+                  </span>
+                </div>
+                <div className="cal-ical-url" title={feed.url}>{feed.url}</div>
+                <div className="cal-ical-actions">
+                  <button type="button" className="tb-btn" onClick={() => handleSyncNow(feed)} disabled={busy || !feed.syncEnabled}>
+                    <Icon name="refresh-cw" size={12} />
+                    {t('calendar.sync_now_btn')}
+                  </button>
+                  <button type="button" className="tb-btn danger" onClick={() => handleDelete(feed)} disabled={busy}>
+                    <Icon name="trash-2" size={12} />
+                    {t('common.delete')}
+                  </button>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
+      <div className="cal-ical-add">
+        <label className="cal-field">
+          <span className="cal-field-label">{t('calendar.ical_label')}</span>
+          <input
+            type="text"
+            placeholder={t('calendar.ical_label_placeholder')}
+            value={newLabel}
+            onChange={(e) => setNewLabel(e.target.value)}
+            disabled={busy}
+          />
+        </label>
+        <label className="cal-field">
+          <span className="cal-field-label">{t('calendar.ical_url')}</span>
+          <input
+            type="url"
+            placeholder={t('calendar.ical_url_placeholder')}
+            value={newUrl}
+            onChange={(e) => setNewUrl(e.target.value)}
+            disabled={busy}
+          />
+          <span className="cal-field-help">{t('calendar.ical_url_help')}</span>
+        </label>
+        <button type="button" className="tb-btn primary" onClick={handleAdd} disabled={busy || !newUrl.trim()}>
+          <Icon name="plus" size={12} />
+          {t('calendar.ical_add_btn')}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── Privacy-Toggle für TV ──────────────────────────────────────────────
+function PrivacyToggle() {
+  const t = useT();
+  const { user, refresh } = useAuth();
+  const [busy, setBusy] = useState(false);
+  const [tvPrivate, setTvPrivate] = useState<boolean>(user?.calendarTvPrivate ?? false);
+
+  useEffect(() => {
+    setTvPrivate(user?.calendarTvPrivate ?? false);
+  }, [user?.calendarTvPrivate]);
+
+  const handleToggle = async (next: boolean) => {
+    if (busy) return;
+    const before = tvPrivate;
+    setTvPrivate(next);
+    setBusy(true);
+    try {
+      await api.updateUserPrefs({ calendarTvPrivate: next });
+      await refresh();
+    } catch {
+      setTvPrivate(before);
+      showToast(t('common.error_generic'));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      className={`set-card notify-toggle ${tvPrivate ? 'is-active' : ''}`}
+      onClick={() => handleToggle(!tvPrivate)}
+      disabled={busy}
+    >
+      <span className="set-card-icon">
+        <Icon name="shield" size={14} />
+      </span>
+      <span className="set-card-text">
+        <span className="set-card-title">{t('calendar.privacy_toggle_title')}</span>
+        <span className="set-card-sub">{t('calendar.privacy_toggle_body')}</span>
+      </span>
+      <span className={`notify-switch ${tvPrivate ? 'is-on' : ''}`} aria-hidden>
+        <span className="notify-switch-knob" />
+      </span>
+    </button>
   );
 }

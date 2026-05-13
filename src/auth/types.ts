@@ -22,6 +22,10 @@ export interface AuthUser {
   odooSyncEnabled?: boolean;
   odooLastSyncAt?: string | null;
   odooLastSyncError?: string | null;
+  /** Wenn true: eigene Events erscheinen auf dem TV-Dashboard mit
+   *  Title 'Privat' (Location + Attendees werden ausgeblendet).
+   *  „Meine Woche" zeigt eigene Titel immer voll. */
+  calendarTvPrivate?: boolean;
 }
 
 export type AuthMode = 'session' | 'apiToken' | null;

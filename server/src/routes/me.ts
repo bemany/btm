@@ -2,12 +2,15 @@ import { Hono } from 'hono';
 import { and, eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '../db/client.js';
-import { users, calendarEvents, taskSessions } from '../db/schema.js';
+import { users, calendarEvents, icalFeeds, taskSessions } from '../db/schema.js';
+import { nanoid } from 'nanoid';
+import { asc, desc } from 'drizzle-orm';
 import { requireAuth, type Variables } from '../lib/context.js';
 import { sendDigestForUser } from '../lib/digest.js';
 import { encryptSecret } from '../lib/secrets.js';
-import { syncUserCalendar } from '../lib/calendar-sync.js';
+import { syncUserCalendar, syncIcalFeed } from '../lib/calendar-sync.js';
 import { authenticate, readUserInfo, OdooError } from '../lib/odoo-client.js';
+import { IcalError } from '../lib/ical-client.js';
 
 export const meRoute = new Hono<{ Variables: Variables }>()
   .get('/', async (c) => {
@@ -47,6 +50,7 @@ export const meRoute = new Hono<{ Variables: Variables }>()
         odooSyncEnabled: user.odooSyncEnabled,
         odooLastSyncAt: user.odooLastSyncAt,
         odooLastSyncError: user.odooLastSyncError,
+        calendarTvPrivate: user.calendarTvPrivate,
       },
       authMode: mode,
     });
@@ -79,17 +83,22 @@ export const meRoute = new Hono<{ Variables: Variables }>()
             'grainient',
           ])
           .optional(),
+        // Calendar-Privacy für TV: wenn true werden eigene Events auf
+        // /api/calendar/all anonymisiert (Title 'Privat', kein Ort/Attendees).
+        calendarTvPrivate: z.boolean().optional(),
       })
       .parse(await c.req.json());
     const patch: Partial<{
       notifyMentionsMail: boolean;
       notifyDigestMail: boolean;
       backgroundChoice: string;
+      calendarTvPrivate: boolean;
       updatedAt: Date;
     }> = { updatedAt: new Date() };
     if (body.notifyMentionsMail !== undefined) patch.notifyMentionsMail = body.notifyMentionsMail;
     if (body.notifyDigestMail !== undefined) patch.notifyDigestMail = body.notifyDigestMail;
     if (body.backgroundChoice !== undefined) patch.backgroundChoice = body.backgroundChoice;
+    if (body.calendarTvPrivate !== undefined) patch.calendarTvPrivate = body.calendarTvPrivate;
     await db.update(users).set(patch).where(eq(users.id, me.id));
     return c.json({ ok: true });
   })
@@ -336,28 +345,172 @@ export const meRoute = new Hono<{ Variables: Variables }>()
     return c.json({ ok: true });
   })
 
-  // POST: Sofort einen Sync triggern (für „Jetzt synchronisieren"-Button im
-  // Settings-Tab). Returns Anzahl der gesyncten / gelöschten Events.
+  // POST: Sofort alles vom User syncen (Odoo + alle aktiven iCal-Feeds).
+  // Returns Summen von synced/deleted plus pro-Feed Status falls Fehler.
   .post('/calendar/sync-now', requireAuth, async (c) => {
     const me = c.get('user')!;
     const [u] = await db.select().from(users).where(eq(users.id, me.id)).limit(1);
     if (!u) return c.json({ error: 'user_not_found' }, 404);
-    if (!u.odooSyncEnabled || !u.odooApiKeyEnc) {
-      return c.json({ error: 'not_configured' }, 400);
+
+    let totalSynced = 0;
+    let totalDeleted = 0;
+    const errors: Array<{ source: string; id?: string; code: string }> = [];
+    let anyAttempt = false;
+
+    // Odoo
+    if (u.odooSyncEnabled && u.odooApiKeyEnc) {
+      anyAttempt = true;
+      try {
+        const r = await syncUserCalendar(u);
+        totalSynced += r.synced;
+        totalDeleted += r.deleted;
+        await db
+          .update(users)
+          .set({ odooLastSyncAt: new Date(), odooLastSyncError: null })
+          .where(eq(users.id, me.id));
+      } catch (e) {
+        const code = e instanceof OdooError ? e.code : 'network';
+        errors.push({ source: 'odoo', code });
+        await db
+          .update(users)
+          .set({ odooLastSyncAt: new Date(), odooLastSyncError: code })
+          .where(eq(users.id, me.id));
+      }
     }
-    try {
-      const r = await syncUserCalendar(u);
+
+    // iCal-Feeds
+    const feeds = await db
+      .select()
+      .from(icalFeeds)
+      .where(and(eq(icalFeeds.userId, me.id), eq(icalFeeds.syncEnabled, true)));
+    for (const feed of feeds) {
+      anyAttempt = true;
+      try {
+        const r = await syncIcalFeed(feed);
+        totalSynced += r.synced;
+        totalDeleted += r.deleted;
+        await db
+          .update(icalFeeds)
+          .set({ lastSyncAt: new Date(), lastSyncError: null })
+          .where(eq(icalFeeds.id, feed.id));
+      } catch (e) {
+        const code = e instanceof IcalError ? e.code : 'unknown';
+        errors.push({ source: 'ical', id: feed.id, code });
+        await db
+          .update(icalFeeds)
+          .set({ lastSyncAt: new Date(), lastSyncError: code })
+          .where(eq(icalFeeds.id, feed.id));
+      }
+    }
+
+    if (!anyAttempt) return c.json({ error: 'not_configured' }, 400);
+    return c.json({
+      ok: errors.length === 0,
+      synced: totalSynced,
+      deleted: totalDeleted,
+      errors: errors.length > 0 ? errors : undefined,
+    });
+  })
+
+  // ── iCal-Feeds CRUD ────────────────────────────────────────────────
+  .get('/calendar/feeds', requireAuth, async (c) => {
+    const me = c.get('user')!;
+    const rows = await db
+      .select()
+      .from(icalFeeds)
+      .where(eq(icalFeeds.userId, me.id))
+      .orderBy(asc(icalFeeds.createdAt));
+    return c.json({ feeds: rows });
+  })
+
+  .post('/calendar/feeds', requireAuth, async (c) => {
+    const me = c.get('user')!;
+    const body = z
+      .object({
+        url: z.string().url().max(2000),
+        label: z.string().max(120).nullable().optional(),
+      })
+      .parse(await c.req.json());
+    const id = `IF${nanoid(10)}`;
+    await db.insert(icalFeeds).values({
+      id,
+      userId: me.id,
+      url: body.url,
+      label: body.label ?? null,
+      syncEnabled: true,
+    });
+    return c.json({ ok: true, id }, 201);
+  })
+
+  .patch('/calendar/feeds/:id', requireAuth, async (c) => {
+    const me = c.get('user')!;
+    const id = c.req.param('id');
+    const body = z
+      .object({
+        url: z.string().url().max(2000).optional(),
+        label: z.string().max(120).nullable().optional(),
+        syncEnabled: z.boolean().optional(),
+      })
+      .parse(await c.req.json());
+    const patch: Record<string, unknown> = {};
+    if (body.url !== undefined) {
+      patch.url = body.url;
+      // Bei URL-Change: lösche cached Events dieses Feeds, damit beim
+      // nächsten Sync nicht alter Müll mit der neuen URL verwechselt wird.
       await db
-        .update(users)
-        .set({ odooLastSyncAt: new Date(), odooLastSyncError: null })
-        .where(eq(users.id, me.id));
+        .delete(calendarEvents)
+        .where(and(eq(calendarEvents.userId, me.id), eq(calendarEvents.icalFeedId, id)));
+      patch.lastSyncError = null;
+    }
+    if (body.label !== undefined) patch.label = body.label;
+    if (body.syncEnabled !== undefined) patch.syncEnabled = body.syncEnabled;
+    const result = await db
+      .update(icalFeeds)
+      .set(patch)
+      .where(and(eq(icalFeeds.id, id), eq(icalFeeds.userId, me.id)))
+      .returning();
+    if (!result.length) return c.json({ error: 'not_found' }, 404);
+    return c.json({ ok: true });
+  })
+
+  .delete('/calendar/feeds/:id', requireAuth, async (c) => {
+    const me = c.get('user')!;
+    const id = c.req.param('id');
+    // Erst cached Events löschen (FK ist nicht hart, weil icalFeedId nullable
+    // ohne FK-Constraint — wir machen es explizit für saubere Cleanup).
+    await db
+      .delete(calendarEvents)
+      .where(and(eq(calendarEvents.userId, me.id), eq(calendarEvents.icalFeedId, id)));
+    await db
+      .delete(icalFeeds)
+      .where(and(eq(icalFeeds.id, id), eq(icalFeeds.userId, me.id)));
+    return c.json({ ok: true });
+  })
+
+  // POST: einen einzelnen Feed manuell triggern (für „Jetzt sync"-Button
+  // pro Feed in der UI). Returns Sync-Status oder Fehler-Code.
+  .post('/calendar/feeds/:id/sync-now', requireAuth, async (c) => {
+    const me = c.get('user')!;
+    const id = c.req.param('id');
+    const [feed] = await db
+      .select()
+      .from(icalFeeds)
+      .where(and(eq(icalFeeds.id, id), eq(icalFeeds.userId, me.id)))
+      .limit(1);
+    if (!feed) return c.json({ error: 'not_found' }, 404);
+    try {
+      const r = await syncIcalFeed(feed);
+      await db
+        .update(icalFeeds)
+        .set({ lastSyncAt: new Date(), lastSyncError: null })
+        .where(eq(icalFeeds.id, id));
       return c.json({ ok: true, synced: r.synced, deleted: r.deleted });
     } catch (e) {
-      const code = e instanceof OdooError ? e.code : 'network';
+      const code = e instanceof IcalError ? e.code : 'unknown';
       await db
-        .update(users)
-        .set({ odooLastSyncAt: new Date(), odooLastSyncError: code })
-        .where(eq(users.id, me.id));
+        .update(icalFeeds)
+        .set({ lastSyncAt: new Date(), lastSyncError: code })
+        .where(eq(icalFeeds.id, id));
       return c.json({ ok: false, error: code }, 200);
     }
   });

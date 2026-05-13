@@ -12,10 +12,10 @@
 //
 // Fehler eines Users blockt die Iteration NICHT. Loop läuft für alle.
 
-import { and, eq, gte, inArray, lt, isNotNull } from 'drizzle-orm';
+import { and, eq, gte, inArray, lt, isNotNull, or } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { db } from '../db/client.js';
-import { users, calendarEvents, type User } from '../db/schema.js';
+import { users, calendarEvents, icalFeeds, type User, type IcalFeed } from '../db/schema.js';
 import { decryptSecret } from './secrets.js';
 import {
   authenticate,
@@ -26,6 +26,7 @@ import {
   OdooError,
   type OdooCreds,
 } from './odoo-client.js';
+import { fetchIcalEvents, IcalError } from './ical-client.js';
 
 const SYNC_WINDOW_DAYS = 7;
 const SCHEDULER_INTERVAL_MS = 5 * 60 * 1000; // 5 min
@@ -82,25 +83,27 @@ export async function syncUserCalendar(user: User): Promise<{ synced: number; de
   const win = syncWindow();
   const events = await searchReadEvents(creds, uid, partnerId, win.fromIso, win.toIso);
 
-  // Schritt C: Existierende DB-IDs im Window holen (für Diff-Delete)
+  // Schritt C: Existierende Odoo-Events im Window holen (für Diff-Delete).
+  // WICHTIG: nur source='odoo' — iCal-Events haben eigenen Sync.
   const existing = await db
-    .select({ id: calendarEvents.id, odooEventId: calendarEvents.odooEventId })
+    .select({ id: calendarEvents.id, externalId: calendarEvents.externalId })
     .from(calendarEvents)
     .where(and(
       eq(calendarEvents.userId, user.id),
+      eq(calendarEvents.source, 'odoo'),
       gte(calendarEvents.startAt, win.fromDate),
       lt(calendarEvents.startAt, win.toDate),
     ));
-  const existingByOdooId = new Map(existing.map((e) => [e.odooEventId, e.id]));
-  const seenOdooIds = new Set<string>();
+  const existingByExtId = new Map(existing.map((e) => [e.externalId, e.id]));
+  const seenIds = new Set<string>();
 
-  // Schritt D: Upsert. Wir nutzen INSERT … ON CONFLICT, dafür muss der
-  // Conflict-Target auf dem Unique-Index (userId, odooEventId) liegen.
+  // Schritt D: Upsert. Conflict-Target ist der neue Unique-Index
+  // (userId, source, external_id).
   let synced = 0;
   for (const ev of events) {
-    const odooEventIdStr = String(ev.id);
-    seenOdooIds.add(odooEventIdStr);
-    const existingId = existingByOdooId.get(odooEventIdStr);
+    const externalIdStr = String(ev.id);
+    seenIds.add(externalIdStr);
+    const existingId = existingByExtId.get(externalIdStr);
     const newId = existingId ?? `CE${nanoid(10)}`;
     const startAt = fromOdooDateTime(ev.start);
     const endAt = fromOdooDateTime(ev.stop);
@@ -112,7 +115,8 @@ export async function syncUserCalendar(user: User): Promise<{ synced: number; de
       .values({
         id: newId,
         userId: user.id,
-        odooEventId: odooEventIdStr,
+        source: 'odoo',
+        externalId: externalIdStr,
         title: ev.name,
         location,
         startAt,
@@ -123,7 +127,7 @@ export async function syncUserCalendar(user: User): Promise<{ synced: number; de
         syncedAt: new Date(),
       })
       .onConflictDoUpdate({
-        target: [calendarEvents.userId, calendarEvents.odooEventId],
+        target: [calendarEvents.userId, calendarEvents.source, calendarEvents.externalId],
         set: {
           title: ev.name,
           location,
@@ -138,17 +142,90 @@ export async function syncUserCalendar(user: User): Promise<{ synced: number; de
     synced++;
   }
 
-  // Schritt E: Verwaiste Events löschen (existierten im DB-Cache, sind aber
-  // nicht mehr in der frischen Odoo-Antwort → in Odoo gelöscht/verschoben).
+  // Schritt E: Verwaiste Odoo-Events löschen
   const orphanIds: string[] = [];
   for (const e of existing) {
-    if (!seenOdooIds.has(e.odooEventId)) orphanIds.push(e.id);
+    if (!seenIds.has(e.externalId)) orphanIds.push(e.id);
   }
   let deleted = 0;
   if (orphanIds.length > 0) {
-    const res = await db.delete(calendarEvents).where(inArray(calendarEvents.id, orphanIds));
+    await db.delete(calendarEvents).where(inArray(calendarEvents.id, orphanIds));
     deleted = orphanIds.length;
-    void res;
+  }
+
+  return { synced, deleted };
+}
+
+/**
+ * Syncs einen einzelnen iCal-Feed: holt URL → expandiert Events ins
+ * Window → upsert in calendar_events mit source='ical' und icalFeedId.
+ */
+export async function syncIcalFeed(feed: IcalFeed): Promise<{ synced: number; deleted: number }> {
+  const win = syncWindow();
+  const events = await fetchIcalEvents(feed.url, win.fromDate, win.toDate);
+
+  // Existierende Events dieses Feeds im Window holen (Diff-Delete)
+  const existing = await db
+    .select({ id: calendarEvents.id, externalId: calendarEvents.externalId })
+    .from(calendarEvents)
+    .where(and(
+      eq(calendarEvents.userId, feed.userId),
+      eq(calendarEvents.source, 'ical'),
+      eq(calendarEvents.icalFeedId, feed.id),
+      gte(calendarEvents.startAt, win.fromDate),
+      lt(calendarEvents.startAt, win.toDate),
+    ));
+  const existingByExtId = new Map(existing.map((e) => [e.externalId, e.id]));
+  const seen = new Set<string>();
+
+  let synced = 0;
+  for (const ev of events) {
+    seen.add(ev.uid);
+    const existingId = existingByExtId.get(ev.uid);
+    const newId = existingId ?? `CE${nanoid(10)}`;
+    await db
+      .insert(calendarEvents)
+      .values({
+        id: newId,
+        userId: feed.userId,
+        source: 'ical',
+        icalFeedId: feed.id,
+        externalId: ev.uid,
+        title: ev.title,
+        location: ev.location,
+        startAt: ev.startAt,
+        endAt: ev.endAt,
+        allDay: ev.allDay,
+        attendeeCount: ev.attendeeCount,
+        organizerName: ev.organizerName,
+        syncedAt: new Date(),
+      })
+      .onConflictDoUpdate({
+        target: [calendarEvents.userId, calendarEvents.source, calendarEvents.externalId],
+        set: {
+          title: ev.title,
+          location: ev.location,
+          startAt: ev.startAt,
+          endAt: ev.endAt,
+          allDay: ev.allDay,
+          attendeeCount: ev.attendeeCount,
+          organizerName: ev.organizerName,
+          icalFeedId: feed.id,
+          syncedAt: new Date(),
+        },
+      });
+    synced++;
+  }
+
+  // Verwaiste Events löschen
+  const orphanIds: string[] = [];
+  for (const e of existing) {
+    if (!seen.has(e.externalId)) orphanIds.push(e.id);
+  }
+  let deleted = 0;
+  if (orphanIds.length > 0) {
+    await db.delete(calendarEvents).where(inArray(calendarEvents.id, orphanIds));
+    deleted = orphanIds.length;
   }
 
   return { synced, deleted };
@@ -158,7 +235,8 @@ export async function runCalendarSyncTick(): Promise<void> {
   if (isRunning) return;
   isRunning = true;
   try {
-    const candidates = await db
+    // --- Teil 1: Odoo-Sync ---
+    const odooCandidates = await db
       .select()
       .from(users)
       .where(and(
@@ -167,9 +245,8 @@ export async function runCalendarSyncTick(): Promise<void> {
         isNotNull(users.odooUrl),
         isNotNull(users.odooApiKeyEnc),
       ));
-    if (candidates.length === 0) return;
 
-    for (const u of candidates) {
+    for (const u of odooCandidates) {
       try {
         const result = await syncUserCalendar(u);
         await db
@@ -177,7 +254,7 @@ export async function runCalendarSyncTick(): Promise<void> {
           .set({ odooLastSyncAt: new Date(), odooLastSyncError: null })
           .where(eq(users.id, u.id));
         console.log(
-          `[calendar-sync] user=${u.id} synced=${result.synced} deleted=${result.deleted}`,
+          `[calendar-sync] odoo user=${u.id} synced=${result.synced} deleted=${result.deleted}`,
         );
       } catch (e) {
         const code = e instanceof OdooError ? e.code : 'network';
@@ -185,7 +262,33 @@ export async function runCalendarSyncTick(): Promise<void> {
           .update(users)
           .set({ odooLastSyncAt: new Date(), odooLastSyncError: code })
           .where(eq(users.id, u.id));
-        console.warn(`[calendar-sync] user=${u.id} error=${code}:`, (e as Error).message);
+        console.warn(`[calendar-sync] odoo user=${u.id} error=${code}:`, (e as Error).message);
+      }
+    }
+
+    // --- Teil 2: iCal-Feeds ---
+    const feedsToSync = await db
+      .select()
+      .from(icalFeeds)
+      .where(eq(icalFeeds.syncEnabled, true));
+
+    for (const feed of feedsToSync) {
+      try {
+        const result = await syncIcalFeed(feed);
+        await db
+          .update(icalFeeds)
+          .set({ lastSyncAt: new Date(), lastSyncError: null })
+          .where(eq(icalFeeds.id, feed.id));
+        console.log(
+          `[calendar-sync] ical feed=${feed.id} user=${feed.userId} synced=${result.synced} deleted=${result.deleted}`,
+        );
+      } catch (e) {
+        const code = e instanceof IcalError ? e.code : 'unknown';
+        await db
+          .update(icalFeeds)
+          .set({ lastSyncAt: new Date(), lastSyncError: code })
+          .where(eq(icalFeeds.id, feed.id));
+        console.warn(`[calendar-sync] ical feed=${feed.id} error=${code}:`, (e as Error).message);
       }
     }
   } finally {

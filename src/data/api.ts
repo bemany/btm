@@ -461,6 +461,7 @@ export async function updateUserPrefs(patch: {
   notifyMentionsMail?: boolean;
   notifyDigestMail?: boolean;
   backgroundChoice?: string;
+  calendarTvPrivate?: boolean;
 }): Promise<void> {
   await apiFetch('/me/prefs', { method: 'PATCH', body: patch });
 }
@@ -648,7 +649,8 @@ export async function markAllNotificationsRead(): Promise<void> {
 export interface CalendarEventDTO {
   id: string;
   userId: string;
-  odooEventId: string;
+  externalId: string;
+  source?: 'odoo' | 'ical';
   title: string;
   location: string | null;
   startAt: string; // ISO
@@ -721,4 +723,40 @@ export async function deleteCalendarConfig(): Promise<void> {
 
 export async function syncCalendarNow(): Promise<CalendarSyncResult> {
   return apiFetch<CalendarSyncResult>('/me/calendar/sync-now', { method: 'POST' });
+}
+
+// iCal-Feeds (zweite Calendar-Quelle, mehrere pro User möglich)
+export interface IcalFeedDTO {
+  id: string;
+  userId: string;
+  url: string;
+  label: string | null;
+  syncEnabled: boolean;
+  lastSyncAt: string | null;
+  lastSyncError: string | null;
+  createdAt: string;
+}
+
+export async function listIcalFeeds(): Promise<IcalFeedDTO[]> {
+  const { feeds } = await apiFetch<{ feeds: IcalFeedDTO[] }>('/me/calendar/feeds');
+  return feeds;
+}
+
+export async function createIcalFeed(input: { url: string; label?: string | null }): Promise<{ id: string }> {
+  return apiFetch<{ id: string }>('/me/calendar/feeds', { method: 'POST', body: input });
+}
+
+export async function updateIcalFeed(
+  id: string,
+  patch: { url?: string; label?: string | null; syncEnabled?: boolean },
+): Promise<void> {
+  await apiFetch(`/me/calendar/feeds/${id}`, { method: 'PATCH', body: patch });
+}
+
+export async function deleteIcalFeed(id: string): Promise<void> {
+  await apiFetch(`/me/calendar/feeds/${id}`, { method: 'DELETE' });
+}
+
+export async function syncIcalFeedNow(id: string): Promise<CalendarSyncResult> {
+  return apiFetch<CalendarSyncResult>(`/me/calendar/feeds/${id}/sync-now`, { method: 'POST' });
 }

@@ -3699,3 +3699,107 @@ body[data-theme="glass-dark"] .cal-status {
   white-space: nowrap;
   text-overflow: ellipsis;
 }
+
+/* ── Calendar Settings: Quellen-Sektionen + iCal-Feeds ─────────────── */
+.cal-source-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 24px 0 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--ink-100);
+  color: var(--ink-700);
+}
+.cal-source-head:first-of-type { margin-top: 8px; }
+.cal-source-head h4 {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--ink-900);
+  flex: 1;
+}
+.cal-source-intro {
+  font-size: 12.5px;
+  color: var(--ink-500);
+  margin: 0 0 14px;
+  line-height: 1.45;
+}
+
+.cal-ical-section {
+  margin-bottom: 8px;
+}
+.cal-ical-list {
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.cal-ical-item {
+  padding: 12px 14px;
+  background: var(--cream-100);
+  border: 1px solid var(--ink-100);
+  border-radius: 8px;
+}
+.cal-ical-item-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+.cal-ical-item-label {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 13px;
+}
+.cal-ical-label {
+  font-weight: 600;
+  color: var(--ink-900);
+}
+.cal-ical-url {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-500);
+  margin-bottom: 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cal-ical-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.cal-ical-add {
+  padding: 14px;
+  background: var(--cream-50);
+  border: 1px dashed var(--ink-200);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.cal-ical-add .tb-btn {
+  align-self: flex-start;
+}
+
+/* Dark/Glass-Overrides */
+body[data-theme="default-dark"] .cal-source-head,
+body[data-theme="glass-dark"] .cal-source-head {
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+body[data-theme="default-dark"] .cal-ical-item,
+body[data-theme="glass-dark"] .cal-ical-item {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+body[data-theme="default-dark"] .cal-ical-add,
+body[data-theme="glass-dark"] .cal-ical-add {
+  background: rgba(255, 255, 255, 0.02);
+  border-color: rgba(255, 255, 255, 0.12);
+}
