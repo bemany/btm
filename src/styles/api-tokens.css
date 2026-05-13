@@ -57,7 +57,7 @@
 .apit-input:focus {
   outline: 0;
   border-color: var(--accent-500);
-  box-shadow: 0 0 0 3px rgba(200, 90, 44, 0.12);
+  box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.12);
 }
 
 .apit-empty {

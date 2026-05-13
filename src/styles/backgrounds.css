@@ -553,7 +553,7 @@ body[data-theme='glass-dark'] .bg-wave-3 { fill-opacity: 0.12; }
   border-radius: 4px;
 }
 .bg-hero-side-item.is-active {
-  background: rgba(224, 113, 64, 0.12);
+  background: rgba(var(--accent-rgb), 0.12);
   color: var(--accent-500);
   font-weight: 600;
 }
@@ -641,7 +641,7 @@ body[data-theme='glass-dark'] .bg-wave-3 { fill-opacity: 0.12; }
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #f5b8a4, #c85a2c);
+  background: linear-gradient(135deg, var(--accent-100), var(--accent-500));
 }
 .bg-hero-label {
   position: absolute;
@@ -730,7 +730,7 @@ body[data-theme='default-dark'] .bg-hero-side-dot {
 }
 .bg-picker-tile.is-active {
   border-color: var(--accent-500);
-  box-shadow: 0 0 0 2px rgba(224, 113, 64, 0.18);
+  box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.18);
 }
 .bg-picker-tile:disabled {
   opacity: 0.55;

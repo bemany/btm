@@ -9,7 +9,7 @@ body[data-theme="glass"] {
   /* Ambient gradient hinter dem App-Shell, sodass Glass-Layer
      etwas zum durchscheinen haben. */
   background:
-    radial-gradient(1100px 700px at 88% -8%, rgba(200, 90, 44, 0.18), transparent 60%),
+    radial-gradient(1100px 700px at 88% -8%, rgba(var(--accent-rgb), 0.18), transparent 60%),
     radial-gradient(900px 600px at -10% 110%, rgba(85, 115, 160, 0.18), transparent 55%),
     radial-gradient(700px 500px at 50% 50%, rgba(94, 127, 78, 0.10), transparent 60%),
     var(--bg-page);
@@ -123,12 +123,12 @@ body[data-theme="glass"] .tb-btn.primary {
   box-shadow: 0 1px 2px rgba(28, 26, 23, 0.18), 0 4px 14px rgba(28, 26, 23, 0.18);
 }
 body[data-theme="glass"] .tb-btn.accent {
-  background: rgba(200, 90, 44, 0.92);
-  border-color: rgba(200, 90, 44, 0.92);
+  background: rgba(var(--accent-rgb), 0.92);
+  border-color: rgba(var(--accent-rgb), 0.92);
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.25) inset,
-    0 1px 2px rgba(200, 90, 44, 0.25),
-    0 6px 18px rgba(200, 90, 44, 0.22);
+    0 1px 2px rgba(var(--accent-rgb), 0.25),
+    0 6px 18px rgba(var(--accent-rgb), 0.22);
 }
 
 body[data-theme="glass"] .timer-chip {
@@ -189,8 +189,8 @@ body[data-theme="glass"] .k-col-head {
   border-bottom: 1px solid rgba(28, 26, 23, 0.06);
 }
 body[data-theme="glass"] .k-col-body.drop-target {
-  background: rgba(224, 113, 64, 0.06);
-  box-shadow: inset 0 0 0 2px rgba(224, 113, 64, 0.35);
+  background: rgba(var(--accent-rgb), 0.06);
+  box-shadow: inset 0 0 0 2px rgba(var(--accent-rgb), 0.35);
 }
 body[data-theme="glass"] .k-col-head .add {
   border-color: rgba(28, 26, 23, 0.15);
@@ -216,10 +216,10 @@ body[data-theme="glass"] .timer-hero {
 
 /* AI drawer button glow */
 body[data-theme="glass"] .quickaction-btn {
-  background: linear-gradient(180deg, rgba(216, 110, 64, 1), rgba(200, 90, 44, 1));
+  background: linear-gradient(180deg, rgba(216, 110, 64, 1), rgba(var(--accent-rgb), 1));
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.25) inset,
-    0 6px 22px rgba(200, 90, 44, 0.32);
+    0 6px 22px rgba(var(--accent-rgb), 0.32);
 }
 
 /* ----------- macOS-STYLE SEGMENTED CONTROLS ---------------- */
@@ -349,7 +349,7 @@ body[data-theme="glass"] .proj-card-new {
 }
 body[data-theme="glass"] .proj-card-new:hover {
   background: rgba(255, 255, 255, 0.55);
-  border-color: rgba(200, 90, 44, 0.6);
+  border-color: rgba(var(--accent-rgb), 0.6);
 }
 
 /* Buttons in modal/drawer footers */

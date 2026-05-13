@@ -215,7 +215,7 @@ body[data-theme='glass-dark'] .set-nav {
 
 .set-card.is-active {
   border-color: var(--accent-500);
-  background: rgba(200, 90, 44, 0.06);
+  background: rgba(var(--accent-rgb), 0.06);
 }
 
 .set-card-swatch {
@@ -592,7 +592,7 @@ body[data-theme='default-dark'] .notify-switch.is-on {
 .profile-field-input:focus {
   outline: none;
   border-color: var(--accent-500);
-  box-shadow: 0 0 0 2px rgba(224, 113, 64, 0.18);
+  box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.18);
 }
 .profile-field-hint {
   font-size: 11px;
@@ -810,7 +810,7 @@ body[data-theme='default-dark'] .accent-preset:hover {
 body[data-theme='glass-dark'] .accent-preset.is-active,
 body[data-theme='default-dark'] .accent-preset.is-active {
   border-color: var(--accent-500);
-  background: rgba(232, 113, 64, 0.12);
+  background: rgba(var(--accent-rgb), 0.12);
 }
 body[data-theme='glass-dark'] .accent-custom,
 body[data-theme='default-dark'] .accent-custom {

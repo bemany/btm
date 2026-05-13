@@ -20,12 +20,17 @@
   --ink-200: #CFC7BB;     /* Borders */
   --ink-100: #E3DCCE;     /* Subtile Borders */
 
-  /* ---------- Color: Accent (Terrakotta) ---------- */
+  /* ---------- Color: Accent (Terrakotta) ----------
+     Diese 5 Tokens werden zur Laufzeit von src/lib/accentColor.ts pro User
+     überschrieben (Feature F7JzZf65SzX). `--accent-rgb` ist der R,G,B-
+     Triplet ohne Alpha — wird in `rgba(var(--accent-rgb), 0.X)` benutzt,
+     damit alle Tinten/Schatten/Highlights die Akzentfarbe respektieren. */
   --accent-50:  #FBECE3;
   --accent-100: #F4D0BA;
   --accent-500: #C85A2C;  /* Primary */
   --accent-600: #A84722;  /* Hover / Pressed */
   --accent-700: #86381B;
+  --accent-rgb: 200, 90, 44; /* matches --accent-500 */
 
   /* ---------- Color: Semantic (gedeckt, nicht leuchtend) ---------- */
   --ok-50:   #EDF1E7;

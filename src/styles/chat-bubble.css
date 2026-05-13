@@ -18,7 +18,7 @@
   place-items: center;
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.18) inset,
-    0 4px 12px rgba(200, 90, 44, 0.32),
+    0 4px 12px rgba(var(--accent-rgb), 0.32),
     0 12px 32px rgba(0, 0, 0, 0.18);
   transition: transform 150ms var(--ease-out), box-shadow 150ms;
 }
@@ -26,7 +26,7 @@
   transform: translateY(-1px) scale(1.04);
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.18) inset,
-    0 6px 16px rgba(200, 90, 44, 0.4),
+    0 6px 16px rgba(var(--accent-rgb), 0.4),
     0 16px 40px rgba(0, 0, 0, 0.22);
 }
 .cb-fab:active {

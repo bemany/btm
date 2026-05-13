@@ -3,10 +3,17 @@
  *
  * Übersicht: jeder User kann seine Accent-Color in den Einstellungen wählen.
  * Wir schreiben den Hex-Wert ('#RRGGBB') in `users.accentColor` (Server),
- * cachen ihn in localStorage und übersetzen ihn zur Laufzeit in die CSS-
- * Variablen `--accent-500` (Primary), `--accent-600` (Hover) und
- * `--accent-700` (Pressed). Die anderen Tints (50/100) bleiben — die sind
- * dezent genug, dass eine fixe Beige/Orange-Tint nicht stört.
+ * cachen ihn in localStorage und übersetzen ihn zur Laufzeit in alle
+ * Accent-CSS-Variablen:
+ *   --accent-50/100  hellere Tints (Pill-Backgrounds, Focus-Rings)
+ *   --accent-500     Primary (Buttons, Highlights)
+ *   --accent-600     Hover/Pressed
+ *   --accent-700     Pressed-dark, Active-Text-on-Tint
+ *   --accent-rgb     R,G,B-Triplet ohne Alpha — für rgba(var(--accent-rgb), X)
+ *
+ * Bugfix FatbLooqY9-: vorher nur 500/600/700 — viele Komponenten benutzen
+ * rgba-Tinten oder die 50/100-Tokens, die dadurch beim Wechsel auf z.B. Lila
+ * trotzdem orange blieben. Jetzt richtet sich alles nach dem User-Wert.
  *
  * Default-Verhalten: wenn `accentColor` null/leer ist, entfernen wir die
  * inline overrides → Tokens aus `globio-tokens.css` / `btm-dark.css` greifen
@@ -113,28 +120,46 @@ function hslToRgb(h: number, s: number, l: number): { r: number; g: number; b: n
   };
 }
 
-function darken(hex: string, deltaL: number): string {
+function shiftLightness(hex: string, deltaL: number): string {
   const rgb = hexToRgb(hex);
   if (!rgb) return hex;
   const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
-  const out = hslToRgb(hsl.h, hsl.s, Math.max(0, Math.min(1, hsl.l - deltaL)));
+  const out = hslToRgb(hsl.h, hsl.s, Math.max(0, Math.min(1, hsl.l + deltaL)));
   return rgbToHex(out.r, out.g, out.b);
 }
 
-/** Schreibt --accent-500/600/700 auf <body>. `null` → overrides entfernen. */
+/** Setzt die helle Tint absolut (überschreibt L) — nutzen wir für 50/100
+ *  damit die Tints unabhängig von der Source-Brightness immer hell genug
+ *  sind (sonst wirken z.B. helle Türkis-Tones als 50er fast unsichtbar). */
+function tintLightness(hex: string, targetL: number): string {
+  const rgb = hexToRgb(hex);
+  if (!rgb) return hex;
+  const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
+  // Sättigung etwas runternehmen, sonst sehen helle Tints zu „neon" aus.
+  const out = hslToRgb(hsl.h, Math.max(0, hsl.s * 0.6), targetL);
+  return rgbToHex(out.r, out.g, out.b);
+}
+
+/** Schreibt alle Accent-CSS-Variablen auf <body>. `null` → overrides
+ *  entfernen, damit die Defaults aus globio-tokens.css / btm-dark.css greifen. */
 export function applyAccent(hex: string | null): void {
   const body = document.body;
   if (!body) return;
+  const props = ['--accent-50', '--accent-100', '--accent-500', '--accent-600', '--accent-700', '--accent-rgb'];
   if (hex === null || !isValidAccentHex(hex)) {
-    body.style.removeProperty('--accent-500');
-    body.style.removeProperty('--accent-600');
-    body.style.removeProperty('--accent-700');
+    for (const p of props) body.style.removeProperty(p);
     return;
   }
   const norm = hex.toLowerCase();
+  const rgb = hexToRgb(norm);
+  body.style.setProperty('--accent-50', tintLightness(norm, 0.93));
+  body.style.setProperty('--accent-100', tintLightness(norm, 0.84));
   body.style.setProperty('--accent-500', norm);
-  body.style.setProperty('--accent-600', darken(norm, 0.1));
-  body.style.setProperty('--accent-700', darken(norm, 0.2));
+  body.style.setProperty('--accent-600', shiftLightness(norm, -0.1));
+  body.style.setProperty('--accent-700', shiftLightness(norm, -0.2));
+  if (rgb) {
+    body.style.setProperty('--accent-rgb', `${rgb.r}, ${rgb.g}, ${rgb.b}`);
+  }
 }
 
 /** Vordefinierte Presets — gerade Werte, klein gehalten, freundliche Töne. */

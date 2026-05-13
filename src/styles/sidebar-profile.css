@@ -124,7 +124,7 @@
 }
 .sb-profile-swatch.glass {
   background:
-    linear-gradient(135deg, rgba(200, 90, 44, 0.18) 0%, rgba(85, 115, 160, 0.22) 100%),
+    linear-gradient(135deg, rgba(var(--accent-rgb), 0.18) 0%, rgba(85, 115, 160, 0.22) 100%),
     rgba(255, 251, 245, 0.55);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);

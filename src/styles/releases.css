@@ -197,7 +197,7 @@
   color: #8C6F2D;
 }
 .rel-status-pill.status-fix-pending {
-  background: rgba(224, 113, 64, 0.18);
+  background: rgba(var(--accent-rgb), 0.18);
   color: var(--accent-700);
 }
 .rel-status-pill.status-external {

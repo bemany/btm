@@ -102,7 +102,7 @@
 .mention-pill {
   display: inline-block;
   padding: 0 5px;
-  background: rgba(200, 90, 44, 0.15);
+  background: rgba(var(--accent-rgb), 0.15);
   color: var(--accent-600);
   border-radius: 3px;
   font-weight: 500;
@@ -115,8 +115,8 @@
 
 body[data-theme="default-dark"] .mention-pill,
 body[data-theme="glass-dark"]   .mention-pill {
-  background: rgba(224, 113, 64, 0.22);
-  color: #E89770;
+  background: rgba(var(--accent-rgb), 0.22);
+  color: var(--accent-100);
 }
 
 /* Composer (Form unten) */
@@ -169,7 +169,7 @@ body[data-theme="glass-dark"] .cmt-composer {
 .mt-textarea:focus {
   outline: 0;
   border-color: var(--accent-500);
-  box-shadow: 0 0 0 3px rgba(200, 90, 44, 0.12);
+  box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.12);
 }
 .mt-textarea:disabled {
   opacity: 0.55;

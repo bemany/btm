@@ -210,7 +210,7 @@
 .dp-time-input:focus {
   outline: none;
   border-color: var(--accent-500);
-  box-shadow: 0 0 0 2px rgba(224, 113, 64, 0.18);
+  box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.18);
 }
 .dp-time-sep {
   font-family: var(--font-mono);

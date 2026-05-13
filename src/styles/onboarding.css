@@ -167,7 +167,7 @@ body[data-theme="default-dark"] .ot-btn.ghost {
 }
 .ot-theme-card.is-active {
   border-color: var(--accent-500);
-  background: rgba(224, 113, 64, 0.08);
+  background: rgba(var(--accent-rgb), 0.08);
 }
 .ot-theme-swatch {
   width: 32px;
@@ -222,7 +222,7 @@ body[data-theme="default-dark"] .ot-theme-card {
 }
 body[data-theme="glass-dark"] .ot-theme-card.is-active,
 body[data-theme="default-dark"] .ot-theme-card.is-active {
-  background: rgba(224, 113, 64, 0.18);
+  background: rgba(var(--accent-rgb), 0.18);
   border-color: var(--accent-500);
 }
 body[data-theme="glass-dark"] .ot-theme-card-title,
@@ -260,7 +260,7 @@ body[data-theme="default-dark"] .ot-theme-card-sub {
 }
 .ot-view-card.is-active {
   border-color: var(--accent-500);
-  background: rgba(224, 113, 64, 0.08);
+  background: rgba(var(--accent-rgb), 0.08);
 }
 .ot-view-icon {
   width: 32px;
@@ -274,9 +274,9 @@ body[data-theme="default-dark"] .ot-theme-card-sub {
   border: 1px solid var(--ink-200);
 }
 .ot-view-card.is-active .ot-view-icon {
-  background: rgba(224, 113, 64, 0.18);
+  background: rgba(var(--accent-rgb), 0.18);
   color: var(--accent-700);
-  border-color: rgba(224, 113, 64, 0.35);
+  border-color: rgba(var(--accent-rgb), 0.35);
 }
 .ot-view-card-text {
   flex: 1;
@@ -308,7 +308,7 @@ body[data-theme="default-dark"] .ot-view-card {
 }
 body[data-theme="glass-dark"] .ot-view-card.is-active,
 body[data-theme="default-dark"] .ot-view-card.is-active {
-  background: rgba(224, 113, 64, 0.18);
+  background: rgba(var(--accent-rgb), 0.18);
   border-color: var(--accent-500);
 }
 body[data-theme="glass-dark"] .ot-view-card-title,

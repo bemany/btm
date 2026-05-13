@@ -31,8 +31,8 @@
   border-color: var(--ink-200);
 }
 .inbox-item.is-unread {
-  background: rgba(200, 90, 44, 0.05);
-  border-color: rgba(200, 90, 44, 0.2);
+  background: rgba(var(--accent-rgb), 0.05);
+  border-color: rgba(var(--accent-rgb), 0.2);
 }
 
 /* Glass-Mode: frosted Inbox-Items, gleicher Look wie Kanban-Buckets +
@@ -51,8 +51,8 @@ body[data-theme="glass"] .inbox-item:hover {
   border-color: rgba(28, 26, 23, 0.12);
 }
 body[data-theme="glass"] .inbox-item.is-unread {
-  background: rgba(224, 113, 64, 0.1);
-  border-color: rgba(224, 113, 64, 0.28);
+  background: rgba(var(--accent-rgb), 0.1);
+  border-color: rgba(var(--accent-rgb), 0.28);
 }
 
 body[data-theme="glass-dark"] .inbox-item,
@@ -72,8 +72,8 @@ body[data-theme="default-dark"] .inbox-item:hover {
 }
 body[data-theme="default-dark"] .inbox-item.is-unread,
 body[data-theme="glass-dark"]   .inbox-item.is-unread {
-  background: rgba(224, 113, 64, 0.12);
-  border-color: rgba(224, 113, 64, 0.3);
+  background: rgba(var(--accent-rgb), 0.12);
+  border-color: rgba(var(--accent-rgb), 0.3);
 }
 
 .inbox-item-body {

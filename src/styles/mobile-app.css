@@ -78,7 +78,7 @@
   border-color: var(--accent-500);
   background: linear-gradient(
     to right,
-    rgba(224, 113, 64, 0.08) 0%,
+    rgba(var(--accent-rgb), 0.08) 0%,
     var(--bg-panel, #fff) 30%
   );
 }
@@ -114,7 +114,7 @@
   background: var(--cream-100);
   color: var(--ink-700);
 }
-.ma-pill.doing { background: rgba(224, 113, 64, 0.14); color: var(--accent-700); }
+.ma-pill.doing { background: rgba(var(--accent-rgb), 0.14); color: var(--accent-700); }
 .ma-pill.planned { background: #FBF1D9; color: #8C6F2D; }
 .ma-pill.review { background: rgba(122, 156, 200, 0.16); color: #4F6E94; }
 .ma-pill.prio-high { background: rgba(200, 60, 60, 0.14); color: #993C3C; }
