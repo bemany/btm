@@ -451,6 +451,9 @@ export const icalFeeds = pgTable(
     url: text('url').notNull(),
     label: text('label'),
     syncEnabled: boolean('sync_enabled').notNull().default(true),
+    /** Wenn true: Events dieses Feeds werden auf /api/calendar/all (TV)
+     *  als 'Privat' anonymisiert. Default false (= öffentlich anzeigen). */
+    tvPrivate: boolean('tv_private').notNull().default(false),
     lastSyncAt: timestamp('last_sync_at', { withTimezone: true }),
     lastSyncError: text('last_sync_error'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),

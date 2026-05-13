@@ -377,6 +377,19 @@ function IcalFeedsSection() {
     }
   };
 
+  const handlePrivacyToggle = async (feed: IcalFeedDTO, next: boolean) => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      await api.updateIcalFeed(feed.id, { tvPrivate: next });
+      refresh();
+    } catch {
+      showToast(t('common.error_generic'));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const handleSyncNow = async (feed: IcalFeedDTO) => {
     if (busy) return;
     setBusy(true);
@@ -444,6 +457,23 @@ function IcalFeedsSection() {
                   </span>
                 </div>
                 <div className="cal-ical-url" title={feed.url}>{feed.url}</div>
+                <div className="cal-ical-privacy">
+                  <span className="cal-ical-privacy-label">
+                    <Icon name={feed.tvPrivate ? 'shield' : 'eye'} size={12} />
+                    {feed.tvPrivate
+                      ? t('calendar.ical_privacy_private')
+                      : t('calendar.ical_privacy_public')}
+                  </span>
+                  <span
+                    className={`notify-switch sm ${feed.tvPrivate ? 'is-on' : ''}`}
+                    onClick={() => handlePrivacyToggle(feed, !feed.tvPrivate)}
+                    role="button"
+                    aria-pressed={feed.tvPrivate}
+                    title={t('calendar.ical_privacy_help')}
+                  >
+                    <span className="notify-switch-knob" />
+                  </span>
+                </div>
                 <div className="cal-ical-actions">
                   <button type="button" className="tb-btn" onClick={() => handleSyncNow(feed)} disabled={busy || !feed.syncEnabled}>
                     <Icon name="refresh-cw" size={12} />

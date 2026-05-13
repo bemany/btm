@@ -450,6 +450,7 @@ export const meRoute = new Hono<{ Variables: Variables }>()
         url: z.string().url().max(2000).optional(),
         label: z.string().max(120).nullable().optional(),
         syncEnabled: z.boolean().optional(),
+        tvPrivate: z.boolean().optional(),
       })
       .parse(await c.req.json());
     const patch: Record<string, unknown> = {};
@@ -464,6 +465,7 @@ export const meRoute = new Hono<{ Variables: Variables }>()
     }
     if (body.label !== undefined) patch.label = body.label;
     if (body.syncEnabled !== undefined) patch.syncEnabled = body.syncEnabled;
+    if (body.tvPrivate !== undefined) patch.tvPrivate = body.tvPrivate;
     const result = await db
       .update(icalFeeds)
       .set(patch)

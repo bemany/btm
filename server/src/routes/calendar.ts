@@ -12,7 +12,7 @@ import { Hono } from 'hono';
 import { and, asc, eq, gte, lt } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '../db/client.js';
-import { calendarEvents, users } from '../db/schema.js';
+import { calendarEvents, users, icalFeeds } from '../db/schema.js';
 import { requireAuth, type Variables } from '../lib/context.js';
 
 const rangeSchema = z.object({
@@ -60,18 +60,19 @@ export const calendarRoute = new Hono<{ Variables: Variables }>()
 
     // Join mit users für UI-Anzeige (Name + Avatar).
     // Nur Events von Usern mit aktivem Sync.
-    // Wir wollen Events von Usern mit MINDESTENS einer aktiven Quelle
-    // (Odoo-Sync ODER mindestens ein iCal-Feed aktiv). Einfacher Filter:
-    // wir prüfen serverseitig nur dass das Event existiert (Sync hat es
-    // ja schon gefiltert). Privacy-Filter (calendar_tv_private) wird hier
-    // serverseitig angewandt: wenn der Owner privat haben will, wird
-    // Title auf 'Privat' gesetzt und Location/Attendees genullt.
+    // Per-Source-Privacy:
+    //   • source='odoo'  → user.calendarTvPrivate entscheidet
+    //   • source='ical'  → ical_feeds.tvPrivate entscheidet (LEFT JOIN über
+    //     ical_feed_id; falls Feed gelöscht, ist Feed-Toggle effektiv false)
+    // Anonymisierung: Title='Privat', location=null, attendeeCount=0,
+    // organizerName=null.
     const rows = await db
       .select({
         id: calendarEvents.id,
         userId: calendarEvents.userId,
         externalId: calendarEvents.externalId,
         source: calendarEvents.source,
+        icalFeedId: calendarEvents.icalFeedId,
         title: calendarEvents.title,
         location: calendarEvents.location,
         startAt: calendarEvents.startAt,
@@ -82,29 +83,58 @@ export const calendarRoute = new Hono<{ Variables: Variables }>()
         userName: users.name,
         userImage: users.image,
         userColor: users.color,
-        tvPrivate: users.calendarTvPrivate,
+        odooTvPrivate: users.calendarTvPrivate,
+        feedTvPrivate: icalFeeds.tvPrivate,
       })
       .from(calendarEvents)
       .innerJoin(users, eq(calendarEvents.userId, users.id))
+      .leftJoin(icalFeeds, eq(calendarEvents.icalFeedId, icalFeeds.id))
       .where(and(
         gte(calendarEvents.startAt, from),
         lt(calendarEvents.startAt, to),
       ))
       .orderBy(asc(calendarEvents.startAt));
 
-    // Privacy-Filter anwenden — Title/Location/Attendees nullen
     const events = rows.map((r) => {
-      if (r.tvPrivate) {
+      const shouldHide =
+        (r.source === 'odoo' && !!r.odooTvPrivate) ||
+        (r.source === 'ical' && !!r.feedTvPrivate);
+      if (shouldHide) {
         return {
-          ...r,
+          id: r.id,
+          userId: r.userId,
+          externalId: r.externalId,
+          source: r.source,
+          icalFeedId: r.icalFeedId,
           title: 'Privat',
           location: null,
+          startAt: r.startAt,
+          endAt: r.endAt,
+          allDay: r.allDay,
           attendeeCount: 0,
           organizerName: null,
-          tvPrivate: undefined, // nicht ans Frontend leaken
+          userName: r.userName,
+          userImage: r.userImage,
+          userColor: r.userColor,
         };
       }
-      return { ...r, tvPrivate: undefined };
+      return {
+        id: r.id,
+        userId: r.userId,
+        externalId: r.externalId,
+        source: r.source,
+        icalFeedId: r.icalFeedId,
+        title: r.title,
+        location: r.location,
+        startAt: r.startAt,
+        endAt: r.endAt,
+        allDay: r.allDay,
+        attendeeCount: r.attendeeCount,
+        organizerName: r.organizerName,
+        userName: r.userName,
+        userImage: r.userImage,
+        userColor: r.userColor,
+      };
     });
     return c.json({ events });
   });

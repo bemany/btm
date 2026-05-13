@@ -99,6 +99,13 @@
       "when": 1778770000000,
       "tag": "0013_ical_feeds_and_privacy",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1778790000000,
+      "tag": "0014_ical_per_feed_privacy",
+      "breakpoints": true
     }
   ]
 }

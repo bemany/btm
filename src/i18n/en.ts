@@ -1060,9 +1060,12 @@ export const en: Translations = {
     ical_err_too_large: 'Feed too large (>8 MB).',
     ical_err_unknown: 'Unknown error during fetch.',
     // Privacy
-    privacy_heading: 'TV privacy',
-    privacy_toggle_title: 'Show as "Private" on TV',
-    privacy_toggle_body: 'Your events appear on the TV dashboard without title/location. "My Week" still shows your real titles.',
+    privacy_heading: 'TV privacy · Odoo',
+    privacy_toggle_title: 'Show Odoo events as "Private" on TV',
+    privacy_toggle_body: 'Your Odoo events appear on the TV dashboard without title/location. iCal feeds have their own privacy switches (above, per feed). "My Week" always shows everything in full.',
+    ical_privacy_public: 'Public on TV',
+    ical_privacy_private: 'Private on TV',
+    ical_privacy_help: 'When on, this calendar shows as "Private" on the TV (no title/location).',
   },
   inbox: {
     eyebrow: '00 · Inbox',

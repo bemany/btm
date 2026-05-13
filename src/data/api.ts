@@ -732,6 +732,7 @@ export interface IcalFeedDTO {
   url: string;
   label: string | null;
   syncEnabled: boolean;
+  tvPrivate: boolean;
   lastSyncAt: string | null;
   lastSyncError: string | null;
   createdAt: string;
@@ -748,7 +749,7 @@ export async function createIcalFeed(input: { url: string; label?: string | null
 
 export async function updateIcalFeed(
   id: string,
-  patch: { url?: string; label?: string | null; syncEnabled?: boolean },
+  patch: { url?: string; label?: string | null; syncEnabled?: boolean; tvPrivate?: boolean },
 ): Promise<void> {
   await apiFetch(`/me/calendar/feeds/${id}`, { method: 'PATCH', body: patch });
 }

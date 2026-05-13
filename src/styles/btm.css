@@ -3803,3 +3803,40 @@ body[data-theme="glass-dark"] .cal-ical-add {
   background: rgba(255, 255, 255, 0.02);
   border-color: rgba(255, 255, 255, 0.12);
 }
+
+/* iCal-Feed: Privacy-Toggle-Reihe pro Feed */
+.cal-ical-privacy {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 0 10px;
+  border-bottom: 1px dashed var(--ink-100);
+  margin-bottom: 10px;
+}
+.cal-ical-privacy-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--ink-700);
+}
+.cal-ical-privacy-label svg {
+  opacity: 0.65;
+}
+/* Smaller switch-Variante für die Inline-Privacy-Toggle */
+.notify-switch.sm {
+  width: 32px;
+  height: 18px;
+}
+.notify-switch.sm .notify-switch-knob {
+  width: 14px;
+  height: 14px;
+}
+.notify-switch.sm.is-on .notify-switch-knob {
+  transform: translateX(14px);
+}
+body[data-theme="default-dark"] .cal-ical-privacy,
+body[data-theme="glass-dark"] .cal-ical-privacy {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}

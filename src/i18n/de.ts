@@ -1062,9 +1062,12 @@ export const de = {
     ical_err_too_large: 'Feed ist zu groß (>8 MB).',
     ical_err_unknown: 'Unbekannter Fehler beim Abruf.',
     // Privacy
-    privacy_heading: 'TV-Privatsphäre',
-    privacy_toggle_title: 'Auf TV als „Privat" anzeigen',
-    privacy_toggle_body: 'Deine Termine erscheinen auf dem TV-Dashboard ohne Titel/Ort. Auf „Meine Woche" siehst du deine echten Titel weiterhin.',
+    privacy_heading: 'TV-Privatsphäre · Odoo',
+    privacy_toggle_title: 'Odoo-Termine auf TV als „Privat" anzeigen',
+    privacy_toggle_body: 'Deine Odoo-Termine erscheinen auf dem TV-Dashboard ohne Titel/Ort. iCal-Feeds haben ihre eigenen Privatsphäre-Schalter (oben pro Feed). Auf „Meine Woche" siehst du immer alles voll.',
+    ical_privacy_public: 'Öffentlich auf TV',
+    ical_privacy_private: 'Privat auf TV',
+    ical_privacy_help: 'Wenn an, erscheint dieser Kalender auf dem TV als „Privat" ohne Titel/Ort.',
   },
   inbox: {
     eyebrow: '00 · Inbox',
