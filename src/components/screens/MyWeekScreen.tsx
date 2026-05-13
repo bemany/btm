@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useStore } from '../../store/store';
 import type { ScreenId } from '../../store/types';
 import { useTick } from '../shared/hooks';
@@ -25,6 +26,7 @@ export function MyWeekScreen({ setActive }: MyWeekScreenProps) {
   const [locale] = useLocale();
 
   const users = useStore((s) => s.users);
+  const [quickStartOpen, setQuickStartOpen] = useState(false);
   useTick(!!timer);
   const meUser = users.find((u) => u.id === currentUser);
   const me = meUser
@@ -194,11 +196,28 @@ export function MyWeekScreen({ setActive }: MyWeekScreenProps) {
 
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 20 }}>
         <div>
-          <div className="eyebrow" style={{ marginBottom: 10 }}>
-            {t('week.in_progress_now')}
+          <div
+            className="eyebrow"
+            style={{ marginBottom: 10, display: 'flex', alignItems: 'center', gap: 10 }}
+          >
+            <span style={{ flex: 1 }}>{t('week.in_progress_now')}</span>
+            <button
+              type="button"
+              className="qs-toggle-btn"
+              onClick={() => setQuickStartOpen((v) => !v)}
+            >
+              <Icon name={quickStartOpen ? 'x' : 'play'} size={11} />
+              {quickStartOpen ? t('common.cancel') : t('week.quickstart_btn')}
+            </button>
           </div>
+          {quickStartOpen && (
+            <QuickStartForm
+              onClose={() => setQuickStartOpen(false)}
+              onStarted={() => setQuickStartOpen(false)}
+            />
+          )}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {today.length === 0 && (
+            {today.length === 0 && !quickStartOpen && (
               <div className="empty-state">
                 <Icon name="check-circle-2" size={36} className="icon" />
                 <h4>{t('week.empty_doing_title')}</h4>
@@ -303,6 +322,114 @@ export function MyWeekScreen({ setActive }: MyWeekScreenProps) {
           window.dispatchEvent(new CustomEvent('btm:open-settings', { detail: { tab: 'calendar' } }));
         }}
       />
+    </div>
+  );
+}
+
+// ── QuickStart-Form (auf Meine Woche) ──────────────────────────────────
+// Schnellster Weg eine neue Aufgabe zu starten:
+//   1. Title-Input (required, auto-fokussiert)
+//   2. Projekt-Select (required, kein Default — User MUSS wählen)
+//   3. „Starten" → laufenden Timer stoppen, Task in col='doing' anlegen,
+//      Timer auf die neue Task starten
+// Bug-Report Fvyh_H5dNy3 (Benjamin Fiens).
+interface QuickStartFormProps {
+  onClose: () => void;
+  onStarted: () => void;
+}
+function QuickStartForm({ onClose, onStarted }: QuickStartFormProps) {
+  const t = useT();
+  const projects = useStore((s) => s.projects);
+  const currentUser = useStore((s) => s.currentUser);
+  const timer = useStore((s) => s.timer);
+  const addTask = useStore((s) => s.addTask);
+  const startTimer = useStore((s) => s.startTimer);
+  const stopTimer = useStore((s) => s.stopTimer);
+
+  const [title, setTitle] = useState('');
+  const [proj, setProj] = useState<string>(''); // explizit leer → User muss wählen
+  const [busy, setBusy] = useState(false);
+  const inputRef = (el: HTMLInputElement | null) => { el?.focus(); };
+
+  const submit = async () => {
+    const trimmed = title.trim();
+    if (!trimmed) {
+      showToast(t('week.quickstart_need_title'));
+      return;
+    }
+    if (!proj) {
+      showToast(t('week.quickstart_need_project'));
+      return;
+    }
+    setBusy(true);
+    try {
+      // Laufenden Timer stoppen (falls vorhanden) — die alte Task wird so
+      // auf Pause gesetzt, ihre erfasste Zeit gespeichert.
+      if (timer) {
+        await stopTimer();
+      }
+      const created = await addTask({
+        title: trimmed,
+        proj,
+        col: 'doing',
+        prio: 'med',
+        estH: 0,
+        who: currentUser,
+      });
+      if (!created) {
+        showToast(t('toast.save_failed'));
+        setBusy(false);
+        return;
+      }
+      await startTimer(created.id, true);
+      showToast(t('week.quickstart_started'));
+      onStarted();
+    } catch {
+      showToast(t('toast.save_failed'));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="qs-form" onClick={(e) => e.stopPropagation()}>
+      <input
+        ref={inputRef}
+        className="qs-title"
+        placeholder={t('week.quickstart_title_placeholder')}
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') void submit();
+          if (e.key === 'Escape') onClose();
+        }}
+        disabled={busy}
+      />
+      <select
+        className="qs-project"
+        value={proj}
+        onChange={(e) => setProj(e.target.value)}
+        disabled={busy}
+        required
+      >
+        <option value="" disabled>
+          {t('week.quickstart_pick_project')}
+        </option>
+        {projects.map((p) => (
+          <option key={p.id} value={p.id}>
+            {p.code} · {p.name}
+          </option>
+        ))}
+      </select>
+      <button
+        type="button"
+        className="qs-go"
+        onClick={() => void submit()}
+        disabled={busy || !title.trim() || !proj}
+      >
+        <Icon name="play" size={12} />
+        {timer ? t('week.quickstart_swap_btn') : t('week.quickstart_start_btn')}
+      </button>
     </div>
   );
 }

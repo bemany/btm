@@ -3840,3 +3840,93 @@ body[data-theme="default-dark"] .cal-ical-privacy,
 body[data-theme="glass-dark"] .cal-ical-privacy {
   border-bottom-color: rgba(255, 255, 255, 0.08);
 }
+
+/* ── QuickStart-Form auf Meine Woche ─────────────────────────────── */
+.qs-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  font-family: inherit;
+  text-transform: none;
+  letter-spacing: 0.02em;
+  border: 1px solid var(--ink-200);
+  background: var(--cream-50);
+  color: var(--ink-700);
+  border-radius: 100px;
+  cursor: pointer;
+}
+.qs-toggle-btn:hover {
+  border-color: var(--accent-500);
+  color: var(--accent-500);
+  background: rgba(200, 90, 44, 0.06);
+}
+.qs-form {
+  display: grid;
+  grid-template-columns: 1fr 200px auto;
+  gap: 8px;
+  padding: 12px;
+  margin-bottom: 10px;
+  background: var(--cream-50);
+  border: 1px solid var(--accent-500);
+  border-radius: 8px;
+  box-shadow: 0 0 0 3px rgba(200, 90, 44, 0.08);
+}
+.qs-form input,
+.qs-form select {
+  padding: 8px 10px;
+  font-size: 13px;
+  font-family: inherit;
+  border: 1px solid var(--ink-200);
+  background: var(--cream-50);
+  color: var(--ink-900);
+  border-radius: 6px;
+  outline: none;
+}
+.qs-form input:focus,
+.qs-form select:focus {
+  border-color: var(--accent-500);
+  box-shadow: 0 0 0 2px rgba(200, 90, 44, 0.15);
+}
+.qs-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 16px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  border: 0;
+  background: var(--accent-500);
+  color: var(--cream-50);
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.qs-go:hover:not(:disabled) { background: var(--accent-600); }
+.qs-go:disabled {
+  background: var(--ink-300);
+  cursor: not-allowed;
+}
+
+body[data-theme="default-dark"] .qs-toggle-btn,
+body[data-theme="glass-dark"] .qs-toggle-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: rgba(250, 247, 242, 0.75);
+}
+body[data-theme="default-dark"] .qs-form,
+body[data-theme="glass-dark"] .qs-form {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(200, 90, 44, 0.5);
+}
+body[data-theme="default-dark"] .qs-form input,
+body[data-theme="default-dark"] .qs-form select,
+body[data-theme="glass-dark"] .qs-form input,
+body[data-theme="glass-dark"] .qs-form select {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: rgba(250, 247, 242, 0.9);
+}
