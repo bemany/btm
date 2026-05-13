@@ -179,7 +179,10 @@ export const usersRoute = new Hono<{ Variables: Variables }>()
       expiresAt: new Date(Date.now() + 15 * 60 * 1000),
     });
     const baseUrl = process.env.BETTER_AUTH_URL ?? 'https://btm.bethesna.org';
-    const loginUrl = `${baseUrl}/?as=${encodeURIComponent(lowerEmail)}&code=${code}`;
+    // Wichtig: /login als Pfad damit der LoginScreen direkt rendert auch
+    // ohne dass AppGate erst die Magic-Params an / erkennen muss
+    // (Bug FKMsD4WmmOX). Frontend-Fallback fängt /-URLs aus Bestand mit ab.
+    const loginUrl = `${baseUrl}/login?as=${encodeURIComponent(lowerEmail)}&code=${code}`;
     logActivity({
       kind: 'user_updated',
       actorId: me.id,

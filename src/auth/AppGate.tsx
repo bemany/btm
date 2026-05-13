@@ -86,7 +86,13 @@ export function AppGate({ children }: { children: ReactNode }) {
   }
 
   if (status === 'anon') {
-    if (isLoginPath(location.pathname)) return <LoginScreen />;
+    // Admin-Magic-Link: URL hat ?as=email&code=123456 (Bug FKMsD4WmmOX).
+    // Auch ohne /login-Pfad zum LoginScreen routen damit der dortige
+    // Auto-Login-Pfad greift — sonst landet der Empfaenger auf der
+    // Landing und die Query-Params gehen beim ersten Klick verloren.
+    const params = new URLSearchParams(location.search);
+    const hasMagic = !!params.get('as') && /^\d{6}$/.test(params.get('code') ?? '');
+    if (hasMagic || isLoginPath(location.pathname)) return <LoginScreen />;
     return <LandingPage onLogin={() => navigate('/login')} />;
   }
 

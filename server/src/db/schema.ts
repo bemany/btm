@@ -58,6 +58,10 @@ export const users = pgTable('users', {
   // Attendee-Count werden entfernt). Auf 'Meine Woche' bleibt der User
   // immer sein eigener Titel sichtbar — Privacy gilt nur für andere User.
   calendarTvPrivate: boolean('calendar_tv_private').notNull().default(false),
+  // Per-User Accent-Color (F7JzZf65SzX). Hex-Format '#RRGGBB' oder null
+  // (= globaler BTM-Default-Orange). Wird bei Mount als CSS-Variable
+  // --accent-500 + --accent-600 gesetzt.
+  accentColor: text('accent_color'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });

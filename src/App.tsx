@@ -16,6 +16,12 @@ import {
   isValidBackgroundId,
   type BackgroundId,
 } from './components/backgrounds/catalog';
+import {
+  applyAccent,
+  isValidAccentHex,
+  loadAccent,
+  saveAccent,
+} from './lib/accentColor';
 import * as api from './data/api';
 import { MyWeekScreen } from './components/screens/MyWeekScreen';
 import { BoardScreen } from './components/board/BoardScreen';
@@ -89,6 +95,18 @@ function ScreenFallback() {
 
 const THEME_STORAGE_KEY = 'btm.theme.v1';
 
+// Akzentfarbe sofort beim Module-Load anwenden (vor React-Mount) damit kein
+// Orange-Flash entsteht wenn der User eine andere Farbe gespeichert hat.
+// Sobald der Server-User geladen ist, gleicht ein useEffect-Sync in <App />
+// einen evtl. divergierenden Server-Wert nach.
+if (typeof document !== 'undefined') {
+  try {
+    applyAccent(loadAccent());
+  } catch {
+    /* ignore — fallback CSS-Default greift */
+  }
+}
+
 function loadTheme(): ThemeMode {
   try {
     const v = localStorage.getItem(THEME_STORAGE_KEY);
@@ -143,6 +161,33 @@ export function App() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authUser?.backgroundChoice]);
+
+  // Akzentfarbe (F7JzZf65SzX) — same Pattern wie background, aber pro-User CSS-
+  // Variable. `null` heißt: Default-Orange aus den Tokens.
+  const [accentColor, setAccentColorState] = useState<string | null>(loadAccent);
+  const setAccentColor = useCallback((hex: string | null) => {
+    const norm = hex && isValidAccentHex(hex) ? hex.toLowerCase() : null;
+    setAccentColorState(norm);
+    saveAccent(norm);
+    applyAccent(norm);
+    void api.updateUserPrefs({ accentColor: norm }).catch((e) => {
+      console.warn('accent save failed', e);
+    });
+  }, []);
+  // Server-Sync: bei Login ggf. den Server-Wert auf das aktuelle Gerät ziehen.
+  useEffect(() => {
+    if (!authUser) return;
+    const serverAccent = authUser.accentColor ?? null;
+    // explicit-undefined-Check: Server kann null zurückgeben (Default) — dann
+    // wollen wir lokale Caches auch leeren.
+    const norm = serverAccent && isValidAccentHex(serverAccent) ? serverAccent.toLowerCase() : null;
+    if (norm !== accentColor) {
+      setAccentColorState(norm);
+      saveAccent(norm);
+      applyAccent(norm);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authUser?.accentColor]);
   const isMobile = useIsMobile(768);
 
   const setTheme = useCallback((t: ThemeMode) => {
@@ -289,6 +334,8 @@ export function App() {
             setTheme={setTheme}
             background={background}
             setBackground={setBackground}
+            accentColor={accentColor}
+            setAccentColor={setAccentColor}
             onReplayTour={() => setTourReplay((n) => n + 1)}
             onClose={() => setSettingsTab(null)}
           />

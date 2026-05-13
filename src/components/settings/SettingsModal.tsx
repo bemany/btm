@@ -29,6 +29,8 @@ export interface SettingsModalProps {
   setTheme: (t: ThemeMode) => void;
   background: BackgroundId;
   setBackground: (id: BackgroundId) => void;
+  accentColor: string | null;
+  setAccentColor: (hex: string | null) => void;
   onReplayTour?: () => void;
 }
 
@@ -39,6 +41,8 @@ export function SettingsModal({
   setTheme,
   background,
   setBackground,
+  accentColor,
+  setAccentColor,
   onReplayTour,
 }: SettingsModalProps) {
   const t = useT();
@@ -99,7 +103,14 @@ export function SettingsModal({
           </nav>
           <div className="set-content">
             {tab === 'profile' && <ProfileTab />}
-            {tab === 'appearance' && <AppearanceTab theme={theme} setTheme={setTheme} />}
+            {tab === 'appearance' && (
+              <AppearanceTab
+                theme={theme}
+                setTheme={setTheme}
+                accentColor={accentColor}
+                setAccentColor={setAccentColor}
+              />
+            )}
             {tab === 'backgrounds' && (
               <BackgroundsTab theme={theme} background={background} setBackground={setBackground} />
             )}

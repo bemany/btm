@@ -26,6 +26,10 @@ export interface AuthUser {
    *  Title 'Privat' (Location + Attendees werden ausgeblendet).
    *  „Meine Woche" zeigt eigene Titel immer voll. */
   calendarTvPrivate?: boolean;
+  /** Per-User Akzentfarbe als Hex '#RRGGBB'. null/undefined → globaler
+   *  BTM-Default Orange (#c85a2c). Wird in App.tsx bei Mount als
+   *  CSS-Variable --accent-500/--accent-600 auf <body> gesetzt. */
+  accentColor?: string | null;
 }
 
 export type AuthMode = 'session' | 'apiToken' | null;

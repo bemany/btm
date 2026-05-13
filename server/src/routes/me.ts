@@ -51,6 +51,8 @@ export const meRoute = new Hono<{ Variables: Variables }>()
         odooLastSyncAt: user.odooLastSyncAt,
         odooLastSyncError: user.odooLastSyncError,
         calendarTvPrivate: user.calendarTvPrivate,
+        // Per-User Akzentfarbe (F7JzZf65SzX). null → BTM-Default-Orange.
+        accentColor: user.accentColor,
       },
       authMode: mode,
     });
@@ -86,6 +88,11 @@ export const meRoute = new Hono<{ Variables: Variables }>()
         // Calendar-Privacy für TV: wenn true werden eigene Events auf
         // /api/calendar/all anonymisiert (Title 'Privat', kein Ort/Attendees).
         calendarTvPrivate: z.boolean().optional(),
+        // Per-User Akzentfarbe (F7JzZf65SzX). null → BTM-Default-Orange.
+        // 6-Hex-Format strikt — alles andere lehnen wir ab.
+        accentColor: z
+          .union([z.string().regex(/^#[0-9a-fA-F]{6}$/), z.null()])
+          .optional(),
       })
       .parse(await c.req.json());
     const patch: Partial<{
@@ -93,12 +100,17 @@ export const meRoute = new Hono<{ Variables: Variables }>()
       notifyDigestMail: boolean;
       backgroundChoice: string;
       calendarTvPrivate: boolean;
+      accentColor: string | null;
       updatedAt: Date;
     }> = { updatedAt: new Date() };
     if (body.notifyMentionsMail !== undefined) patch.notifyMentionsMail = body.notifyMentionsMail;
     if (body.notifyDigestMail !== undefined) patch.notifyDigestMail = body.notifyDigestMail;
     if (body.backgroundChoice !== undefined) patch.backgroundChoice = body.backgroundChoice;
     if (body.calendarTvPrivate !== undefined) patch.calendarTvPrivate = body.calendarTvPrivate;
+    if (body.accentColor !== undefined) {
+      // Normalisiere auf Lowercase, damit DB-Inhalte konsistent sind.
+      patch.accentColor = body.accentColor === null ? null : body.accentColor.toLowerCase();
+    }
     await db.update(users).set(patch).where(eq(users.id, me.id));
     return c.json({ ok: true });
   })

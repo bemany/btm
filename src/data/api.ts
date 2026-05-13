@@ -464,6 +464,8 @@ export async function updateUserPrefs(patch: {
   notifyDigestMail?: boolean;
   backgroundChoice?: string;
   calendarTvPrivate?: boolean;
+  /** Per-User Akzentfarbe als '#RRGGBB' oder null für Default-Orange. */
+  accentColor?: string | null;
 }): Promise<void> {
   await apiFetch('/me/prefs', { method: 'PATCH', body: patch });
 }
