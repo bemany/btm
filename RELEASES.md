@@ -9,6 +9,53 @@ im Repo.
 
 ---
 
+## 0.11.0 — 2026-05-13
+
+**Kalender-Sync, schneller Aufgaben-Start, Wochenboard-Politur und Multi-Team**
+
+### User-facing
+
+**Kalender-Integration:**
+- 🆕 **Odoo-Kalender-Sync** in Settings → Kalender. Eigene Termine auf „Meine Woche" (heute + morgen), alle Team-Termine im TV-Dashboard. Server-Sync alle 5 Min, API-Keys AES-verschlüsselt.
+- 🆕 **iCal-Feeds als zweite Quelle** — beliebig viele URLs (Google, Apple, Outlook). Mit Label, Aktiv-Toggle, Sync-Status. Wiederkehrende Termine via RRULE auto-expandiert.
+- 🆕 **TV-Privatsphäre pro Quelle**: Toggle für Odoo + Toggle pro iCal-Feed. Privat-Modus auf TV: Avatar + Zeit sichtbar, Titel/Ort als „Privat" anonymisiert.
+- 🆕 **Calendar-Widget erweitert**: „Nächster Termin in 1h 23 Min"-Karte mit Live-Countdown, „Jetzt"-Linie zwischen vergangenen/kommenden Events, Timeline-View-Toggle (vertikale Stunden 07-20 Uhr mit Event-Blocks + pulsierender Now-Linie).
+
+**Workflow:**
+- 🆕 **Aufgabe in 3 Klicks starten** vom Hauptbildschirm: „Aufgabe starten"-Button → Titel + Projekt → Klick. Pausiert laufenden Timer, legt Task in „In Arbeit" an, startet neuen Timer.
+- 🆕 **Personen-Filter im Wochenboard**: Dropdown mit allen aktiven Personen, filtert auf deren Tasks.
+- 🆕 **Fristen sichtbar im Kanban**: Due-Pill (Datum / „Heute" / „Überfällig") mit 4 Farb-Stufen, Akzent-Streifen links, automatische Sortierung pro Spalte nach Dringlichkeit.
+
+**Admin:**
+- 🆕 **Multi-Team-Mitgliedschaft**: User in beliebig vielen Teams. Multi-Select-Chips im User-Drawer, Stern markiert primäres Team.
+- 🆕 **Feedback bearbeiten**: pro Feedback-Eintrag „Bearbeiten"-Button für Titel, Beschreibung und Typ (Bug ↔ Feature).
+- 🆕 **Status-Filter Feedback-Liste**: Default „Aktiv (offen + in Arbeit)" — erledigte ausgeblendet. Dropdown rechts oben für andere Status mit Live-Counts.
+- 🆕 **Resolve-Endpoint**: Feedback nach Fix via `POST /api/feedback/:id/resolve` → Status=done, Inbox-Notification an Reporter, Mail.
+- 🔄 **Admin-Magic-Link**: kopiert nur noch den Login-Link (statt Email + Code + URL).
+- 🆕 **Projekt-Favoriten** mit Stern, eigene Sektion oben in der Card-View.
+- 🆕 **Admins**: fremde Privatprojekte default ausgeblendet, Toggle zum Einblenden (dann mit gestrichelter Border).
+
+**Diverse Fixes:**
+- 🛠 **Logout** funktionierte nicht zuverlässig (Cookie wurde nicht gelöscht, Better-Auth wollte JSON-Content-Type).
+- 🛠 **HTTP 431** „Request Header Fields Too Large" auf Page-Open — Better-Auth's Avatar-Cookie wurde zu groß. cookieCache aus, Node-Limit auf 32 KB.
+- 🛠 **„Ohne Frist"-Tab im Timeline** zeigte Tasks anderer Wochen fälschlich (Date-Logic-Bug).
+- 🛠 **TV-Dashboard** crashte bei jedem kurzen API-Hick-up mit „Token ungültig". Jetzt nur bei echten 401/403, sonst Reconnect-Banner und letzte bekannte Daten.
+- 🛠 **App-Icon in Mails** war broken — fehlte im Server-Image. Magic-Link, Invites, Mentions, Digest, Feedback-Resolved zeigen jetzt das Logo.
+- 🛠 **Profilbild Sidebar-Footer** wurde nicht angezeigt (nur Initialen).
+- 🛠 **Bug/Feature-Buttons im Feedback-Modal** hatten im Dark-Mode keinen erkennbaren Accent.
+- 🛠 **Browser-Autofill** konnte Odoo-API-Key überschreiben — Form-Feld blockt jetzt, Server validiert min-length.
+- 🛠 **iCal-Fehlermeldungen** lesbar (z.B. „bei Google brauchst du die _geheime_ Adresse" bei 404).
+
+**Layout:**
+- 🔄 **TV-Dashboard**: rechter Quadrant zeigt echten Team-Kalender (statt „Heute erledigt").
+- 🔄 **Projekte**: Listen-View-Toggle mit Tabelle (Code, Owner, Tasks, Fortschritt, Frist).
+- 🔄 **Avatare überall**: hochgeladenes Profilbild statt nur Initialen.
+
+### Commits (ab `eb74e5f` … `4115a7b`)
+*~30 Commits seit 0.10.0 — siehe git log auf `main`.*
+
+---
+
 ## 0.10.0 — 2026-05-10
 
 **Timeline mit Drag-and-Drop, Zeit-Filter, neue Hintergründe & Profil-Editor**

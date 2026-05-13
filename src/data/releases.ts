@@ -49,6 +49,198 @@ export function tx(value: Localizable, locale: 'de' | 'en'): string {
 
 export const RELEASES: Release[] = [
   {
+    version: '0.11.0',
+    date: '2026-05-13',
+    title: {
+      de: 'Kalender-Sync, schneller Aufgaben-Start, Wochenboard-Politur und Multi-Team',
+      en: 'Calendar sync, quick task start, week board polish and multi-team',
+    },
+    changes: [
+      {
+        kind: 'feature',
+        text: {
+          de: '**Odoo-Kalender-Sync**: Verbinde deinen Odoo-Kalender in Settings → Kalender. Auf „Meine Woche" siehst du deine eigenen Termine für heute und morgen, auf dem TV-Dashboard alle Termine aller Team-Mitglieder mit aktivem Sync. Server synct alle 5 Min im Hintergrund, API-Keys werden AES-verschlüsselt gespeichert.',
+          en: '**Odoo calendar sync**: connect your Odoo calendar in Settings → Calendar. "My Week" shows your own events for today + tomorrow, the TV dashboard shows all team events. Background sync every 5 min, API keys AES-encrypted.',
+        },
+      },
+      {
+        kind: 'feature',
+        text: {
+          de: '**Eigene iCal-Feeds**: zusätzlich zu Odoo kannst du beliebig viele iCal-URLs einbinden (Google, Apple, Outlook, alles was eine .ics-URL hat). Mit Label, Aktiv-Toggle und individueller Sync-Status-Anzeige. Wiederkehrende Termine (RRULE) werden automatisch expandiert.',
+          en: 'Add your own iCal feeds in addition to Odoo: any .ics URL (Google, Apple, Outlook, …). With label, active toggle, per-feed sync status. Recurring events (RRULE) auto-expanded.',
+        },
+      },
+      {
+        kind: 'feature',
+        text: {
+          de: '**TV-Privatsphäre pro Quelle**: ein Toggle für deine Odoo-Termine + ein Toggle pro iCal-Feed. „Privat" auf TV bedeutet: Avatar + Zeit weiterhin sichtbar, Titel und Ort werden zu „Privat" anonymisiert. Auf deiner eigenen „Meine Woche"-Ansicht siehst du immer die vollen Titel.',
+          en: 'Per-source TV privacy: one toggle for Odoo events + one per iCal feed. "Private" on TV: avatar + time stay visible, title and location anonymized. Your own "My Week" view always shows real titles.',
+        },
+      },
+      {
+        kind: 'feature',
+        text: {
+          de: 'Das Kalender-Widget auf „Meine Woche" zeigt jetzt eine **„Nächster Termin in 1h 23 Min"-Karte** mit Live-Countdown, eine „Jetzt"-Linie zwischen vergangenen und kommenden Terminen, und einen Toggle für **Timeline-View** (vertikale Stunden-Skala mit Event-Blöcken und pulsierender Now-Linie).',
+          en: 'The calendar widget on "My Week" now has a **"Next up in 1h 23m" card** with live countdown, a "Now" line between past and upcoming events, and a **Timeline view** toggle (vertical hours grid with event blocks and pulsing now-line).',
+        },
+      },
+      {
+        kind: 'feature',
+        text: {
+          de: '**Aufgabe starten in 3 Klicks** vom Hauptbildschirm: neuer „Aufgabe starten"-Button auf „Meine Woche". Klick öffnet ein Inline-Form (Titel + Pflicht-Projekt), Klick auf „Starten" pausiert deinen laufenden Timer, legt die Aufgabe in „In Arbeit" an und startet den neuen Timer automatisch.',
+          en: '**Start a task in 3 clicks** from the home screen: new "Start task" button on "My Week". Opens an inline form (title + required project). Click starts a new task in "In progress", auto-pauses your current timer and starts the new one.',
+        },
+      },
+      {
+        kind: 'feature',
+        text: {
+          de: '**Personen-Filter im Wochenboard**: neben den „Meine/Team"-Chips ein Dropdown mit allen aktiven Personen. Auswählen und du siehst nur Aufgaben dieser Person — praktisch für „was macht XY gerade".',
+          en: '**Person filter on the week board**: next to "Mine/Team" chips, a dropdown of all active people. Pick one to see only their tasks — handy for "what is XY working on right now".',
+        },
+      },
+      {
+        kind: 'feature',
+        text: {
+          de: '**Fristen im Wochenboard sichtbar**: jede Kanban-Karte zeigt jetzt das Fälligkeitsdatum als kleinen Pill (Kalender-Icon + Datum). Überfällige Karten sind rot mit Warn-Icon, heute fällige orange, in nächsten 3 Tagen gelb. Karten werden zusätzlich pro Spalte automatisch nach Frist sortiert — überfällig → heute → bald → später → ohne Frist.',
+          en: 'Due dates visible on the week board: every kanban card now shows a due-date pill (calendar icon + date). Overdue cards turn red with a warning icon, today-due cards orange, next-3-days yellow. Cards are also auto-sorted per column by urgency — overdue → today → soon → later → no deadline.',
+        },
+      },
+      {
+        kind: 'feature',
+        text: {
+          de: '**Multi-Team-Mitgliedschaft**: ein Mensch kann jetzt in beliebig vielen Teams sein, nicht mehr nur einem. Im Admin → User-Drawer erscheinen alle Team-Zugehörigkeiten als Chips, ein Stern markiert das primäre Team. Hinzufügen über Dropdown, Entfernen über X.',
+          en: '**Multi-team membership**: a person can now belong to any number of teams, not just one. In Admin → User Drawer, all team memberships appear as chips with a star on the primary one. Add via dropdown, remove via X.',
+        },
+      },
+      {
+        kind: 'feature',
+        text: {
+          de: '**Bug-Report / Feature-Wunsch im Admin bearbeiten**: pro Eintrag in der Admin-Feedback-Liste ein neuer „Bearbeiten"-Button. Damit kannst du Titel, Beschreibung und Typ (Bug ↔ Feature) korrigieren — z.B. Tippfehler raus oder unsinnige Wünsche präzisieren bevor sie ins Claude-Prompt gehen.',
+          en: '**Edit feedback in admin**: each entry in the admin feedback list now has an "Edit" button. Lets you correct the title, description and type (bug ↔ feature) — e.g. fix typos or sharpen vague wishes before sending them off to Claude.',
+        },
+      },
+      {
+        kind: 'feature',
+        text: {
+          de: '**Status-Filter in der Admin-Feedback-Liste**: Default zeigt nur „Aktiv (offen + in Arbeit)" — erledigte und verworfene werden ausgeblendet. Dropdown rechts oben um nach jedem Status einzeln zu filtern, mit Live-Counts.',
+          en: '**Status filter in admin feedback**: default is "Active (open + in progress)" — done and won\'t-fix entries are hidden. Dropdown at top right to filter any status individually, with live counts.',
+        },
+      },
+      {
+        kind: 'feature',
+        text: {
+          de: '**Bearbeitete Feedbacks resolven**: neuer Workflow im Admin. Nach dem Fix kann Claude den `POST /api/feedback/:id/resolve`-Endpoint aufrufen — das setzt den Status auf „Erledigt", schreibt eine Inbox-Notification an den Reporter und schickt ihm eine Mail mit der Auflösungs-Notiz.',
+          en: '**Resolve feedback after fixing**: new admin workflow. After implementing a fix, Claude can hit `POST /api/feedback/:id/resolve` — sets status to "done", writes an inbox notification to the reporter, and emails them with the resolution note.',
+        },
+      },
+      {
+        kind: 'feature',
+        text: {
+          de: '**Admin-Magic-Link**: Klick auf das Schlüssel-Symbol im Admin-User-Drawer kopiert jetzt nur den Login-Link in die Zwischenablage (statt Email + Code + URL). Beim Öffnen des Links wird der Empfänger automatisch eingeloggt, 15 Min gültig.',
+          en: '**Admin magic link**: clicking the key icon in the user drawer now copies just the login URL (instead of email + code + URL). Opening the link signs the recipient in directly, valid 15 min.',
+        },
+      },
+      {
+        kind: 'feature',
+        text: {
+          de: '**Projekt-Favoriten**: jedes Projekt hat jetzt einen Stern in den Card-Actions und in der Tabellen-Spalte. Favorisierte Projekte erscheinen in einer eigenen „Favoriten"-Sektion oben, gelb umrandet. Pro User unabhängig speicherbar.',
+          en: '**Project favorites**: every project has a star in the card actions and table column. Favorites show up in their own "Favorites" section at the top, gold-tinted. Stored per user.',
+        },
+      },
+      {
+        kind: 'feature',
+        text: {
+          de: 'Für Admins: **fremde Privatprojekte sind in der Übersicht standardmäßig ausgeblendet** — ein Toggle oben rechts blendet sie ein, dann werden sie mit gestrichelter Border + lila „PRIVAT"-Pill gerendert. Eigene Privatprojekte bleiben immer sichtbar.',
+          en: 'For admins: **other users\' private projects are hidden by default** — a toggle at the top reveals them, rendered with dashed border + purple "PRIVATE" pill. Your own private projects are always visible.',
+        },
+      },
+      {
+        kind: 'fix',
+        text: {
+          de: '**Logout funktionierte nicht** zuverlässig: nach Klick auf „Abmelden" war man nach einem Hard-Reload wieder eingeloggt. Better-Auth verlangt `Content-Type: application/json` auch bei POST ohne Body — der wurde nicht mitgeschickt, das Session-Cookie blieb am Leben. Fix: leerer JSON-Body wird jetzt mitgeschickt; bei Netzwerk-Fehler bleibt der User eingeloggt und sieht einen Toast statt eines stillen Fake-Logouts.',
+          en: '**Sign-out was unreliable**: after clicking "Sign out" a hard reload brought you back in. Better-Auth requires `Content-Type: application/json` even on bodyless POST — wasn\'t sent, session cookie survived. Fixed: empty JSON body is now sent; on network errors user stays signed in and gets a toast instead of a silent fake-logout.',
+        },
+      },
+      {
+        kind: 'fix',
+        text: {
+          de: '**HTTP 431 „Request Header Fields Too Large"** beim Öffnen von BTM behoben. Better-Auth speicherte den Avatar-base64 in einem Cookie — das wuchs schnell über Node\'s 16-KB-Header-Limit. `cookieCache` ist jetzt aus, Node-Limit auf 32 KB gebumpt. Wenn du diese Seite je gesehen hast: einmalig Cookies für `btm.bethesna.org` löschen und neu einloggen.',
+          en: '**HTTP 431 "Request Header Fields Too Large"** on opening BTM fixed. Better-Auth was stashing the avatar as base64 in a cookie — grew past Node\'s 16 KB header limit. `cookieCache` is now off, Node limit bumped to 32 KB. If you ever saw that page: clear cookies for `btm.bethesna.org` once and sign in fresh.',
+        },
+      },
+      {
+        kind: 'fix',
+        text: {
+          de: 'Das **„Ohne Frist"-Tab im Wochenboard-Timeline** zeigte fälschlich Aufgaben, die in einer anderen Woche fällig sind. Beim KW-Wechsel landeten zugewiesene Aufgaben als „ohne Frist" — jetzt verschwinden sie korrekt aus der aktuellen Wochen-View, weil sie ja eine echte Frist haben (nur in einer anderen Woche).',
+          en: 'The **"No deadline" column in the week board timeline** wrongly showed tasks that are due in a different week. After switching weeks, assigned tasks would appear as "no deadline" — they now correctly disappear from the current week\'s view because they do have a deadline (just in a different week).',
+        },
+      },
+      {
+        kind: 'fix',
+        text: {
+          de: 'Im **TV-Dashboard** war jeder kurze API-Hick-up (etwa beim Deploy oder kurzem Netzwerk-Aussetzer) sofort der dramatische „Token ungültig"-Fehlerbildschirm. Jetzt wird nur bei echten 401/403-Auth-Fehlern dieser Screen gezeigt; bei allen anderen Fehlern bleibt das Dashboard mit den letzten Daten sichtbar und ein kleiner roter „verbinde neu"-Banner schwebt rechts oben bis sich der Server wieder meldet. Plus 8 Retry-Versuche mit Exponential-Backoff statt 3.',
+          en: 'On the **TV dashboard**, any brief API hiccup (deploy, network blip) would immediately show the dramatic "Token invalid" error screen. Now only real 401/403 errors show that screen; for everything else the dashboard keeps showing last-known data with a small red "reconnecting" banner top-right until the server comes back. Plus 8 retry attempts with exponential backoff instead of 3.',
+        },
+      },
+      {
+        kind: 'fix',
+        text: {
+          de: '**App-Icon in allen Mails** war broken (kleines „BTM"-Alt-Text statt Icon). Der btm-api-Container hatte keinen Zugriff aufs Frontend-Asset-Verzeichnis. Das Icon liegt jetzt direkt im Server-Image — Magic-Link-Mails, Einladungen, Mention-Mails, Daily-Digest und Feedback-Resolved-Mails kommen mit Logo.',
+          en: 'The **app icon in all emails** was broken (showed "BTM" alt-text instead of icon). The btm-api container had no access to the frontend asset directory. Icon now lives inside the server image — magic-link mails, invitations, mention mails, daily digest and feedback-resolved mails all show the logo.',
+        },
+      },
+      {
+        kind: 'fix',
+        text: {
+          de: 'Das **hochgeladene Profilbild** wurde unten links in der Sidebar nicht angezeigt (Initialen statt Bild). Jetzt sauber.',
+          en: 'Your **uploaded profile picture** was not shown in the bottom-left sidebar (just initials). Fixed.',
+        },
+      },
+      {
+        kind: 'fix',
+        text: {
+          de: 'Die **„Bug melden / Feature wünschen"-Buttons** im Feedback-Modal hatten im Dark-Mode keine erkennbare Accent-Farbe — der aktive Button war fast nicht vom inaktiven unterscheidbar. Accent-Override für `.is-active` ergänzt, der orange Highlight ist wieder da.',
+          en: 'The **"Report bug / Request feature" buttons** in the feedback modal had no recognizable accent color in dark mode — active button was almost indistinguishable from inactive. Active-state accent override added, orange highlight is back.',
+        },
+      },
+      {
+        kind: 'fix',
+        text: {
+          de: 'Browser-Password-Manager (Arc, 1Password, LastPass) konnten den **Odoo-API-Key**-Input automatisch mit gespeicherten Login-Passwörtern füllen — der zu kurze String hat dann den echten Key in der DB überschrieben und alle Syncs schlugen mit `auth_failed` fehl. Form-Feld blockt jetzt Autofill (`autoComplete=new-password` + diverse Vendor-Attribute), Server validiert zusätzlich `min(20)`.',
+          en: 'Browser password managers (Arc, 1Password, LastPass) could auto-fill the **Odoo API key** input with saved login passwords — the too-short string then overwrote the real key in the database and all syncs failed with `auth_failed`. Form field now blocks autofill (`autoComplete=new-password` + vendor attributes), server adds `min(20)` validation.',
+        },
+      },
+      {
+        kind: 'fix',
+        text: {
+          de: 'Fehler beim iCal-Feed-Sync zeigten nur kryptische Codes wie `http_error`. Jetzt klassifiziert: 404 mit dem Hinweis „bei Google brauchst du die _geheime_ Adresse im iCal-Format, nicht die öffentliche", 401 „erfordert Anmeldung", 403 „nicht öffentlich freigegeben". Tooltip zeigt den Original-Code falls man genau wissen will was passiert ist.',
+          en: 'Errors during iCal feed sync only showed cryptic codes like `http_error`. Now classified: 404 with the hint "for Google you need the _secret_ iCal address, not the public one", 401 "requires login", 403 "not publicly shared". Tooltip shows the original code if you want to dig deeper.',
+        },
+      },
+      {
+        kind: 'change',
+        text: {
+          de: '**TV-Dashboard** zeigt im rechten Quadrant nicht mehr den „Heute erledigt"-Stapel sondern den **echten Team-Kalender für heute**. Wenn das Kalender-Sync aktiv ist und Termine im Team anstehen, siehst du sie hier mit Zeit + Titel + Avatar live.',
+          en: '**TV dashboard** right quadrant no longer shows "Done today" but the **real team calendar for today**. With calendar sync active and team events scheduled, you see them here with time + title + avatar live.',
+        },
+      },
+      {
+        kind: 'change',
+        text: {
+          de: '**Projekte-Ansicht hat eine Listen-Variante** (Toggle oben rechts): kompakte Tabelle mit Code, Name, Owner-Avatar, Aufgaben-Count, Fortschritts-Balken, geplanten + erfassten Stunden, Frist und Aktionen. Persistent in localStorage.',
+          en: '**Projects view has a list mode** (toggle at top right): compact table with code, name, owner avatar, task count, progress bar, planned + logged hours, due date and actions. Persisted in localStorage.',
+        },
+      },
+      {
+        kind: 'change',
+        text: {
+          de: 'Avatare in der App zeigen jetzt überall das **hochgeladene Profilbild** (statt nur Initialen) — TaskCards, Inbox, Kapazität, Project-Members, Comments, TV-Dashboard und Sidebar.',
+          en: 'Avatars throughout the app now show the **uploaded profile picture** (instead of just initials) — task cards, inbox, capacity, project members, comments, TV dashboard and sidebar.',
+        },
+      },
+    ],
+  },
+  {
     version: '0.10.0',
     date: '2026-05-10',
     title: {
@@ -534,17 +726,6 @@ export const RELEASES: Release[] = [
 
 export const ROADMAP: RoadmapItem[] = [
   {
-    title: { de: 'Live-Updates ohne Refresh', en: 'Live updates without refresh' },
-    description: {
-      de: 'Wenn jemand eine Aufgabe verschiebt, einen Kommentar schreibt oder einen Timer stoppt, siehst du es sofort. Ohne dass du die Seite neu laden musst.',
-      en: 'When someone moves a task, posts a comment or stops a timer, you see it instantly. No need to refresh.',
-    },
-    eta: {
-      de: 'in Arbeit, kommt in den nächsten Releases',
-      en: 'in progress, shipping in the next releases',
-    },
-  },
-  {
     title: { de: 'KI legt Aufgaben direkt an', en: 'AI creates tasks for you' },
     description: {
       de: 'Der KI-Planungsassistent kann bald nicht nur Aufgaben aus deinem Briefing extrahieren, sondern sie auch direkt anlegen, verschieben und Timer starten. Ohne dass du sie erst manuell ins Board ziehen musst.',
@@ -562,6 +743,14 @@ export const ROADMAP: RoadmapItem[] = [
       en: 'File uploads per task. Screenshots, PDFs, briefings right where the context is.',
     },
     eta: { de: 'Platzhalter ist schon im Drawer', en: 'placeholder already in the drawer' },
+  },
+  {
+    title: { de: 'Kalender-Termine aus BTM erstellen', en: 'Create calendar events from BTM' },
+    description: {
+      de: 'Aktuell ist der Kalender-Sync read-only. Geplant: Termine direkt aus BTM in Odoo/Google anlegen — z.B. „blockiere mir 2h für diese Aufgabe morgen Vormittag".',
+      en: 'Calendar sync is currently read-only. Planned: create events directly from BTM into Odoo/Google — e.g. "block 2h for this task tomorrow morning".',
+    },
+    eta: { de: 'nach dem Stabilisierungs-Sprint', en: 'after the stabilization sprint' },
   },
 ];
 
