@@ -23,7 +23,7 @@ export interface IcalEvent {
 }
 
 export class IcalError extends Error {
-  code: 'fetch_failed' | 'parse_failed' | 'http_error' | 'too_large';
+  code: 'fetch_failed' | 'parse_failed' | 'http_404' | 'http_401' | 'http_403' | 'http_error' | 'too_large';
   details?: unknown;
   constructor(code: IcalError['code'], message: string, details?: unknown) {
     super(message);
@@ -50,6 +50,18 @@ async function fetchFeed(url: string): Promise<string> {
     clearTimeout(timer);
   }
   if (!res.ok) {
+    // Auth-/Not-Found-Fehler explizit klassifizieren — bei Google Calendar
+    // bedeutet 404 meist „Kalender nicht public, falsche URL", 401/403 ist
+    // „nicht freigegeben". Der Frontend-Tab kann darauf reagieren.
+    if (res.status === 404) {
+      throw new IcalError('http_404', 'Calendar not found (404)', { status: 404 });
+    }
+    if (res.status === 401) {
+      throw new IcalError('http_401', 'Unauthorized (401)', { status: 401 });
+    }
+    if (res.status === 403) {
+      throw new IcalError('http_403', 'Forbidden (403)', { status: 403 });
+    }
     throw new IcalError('http_error', `HTTP ${res.status}`, { status: res.status });
   }
   // Body als Stream lesen mit Size-Cap

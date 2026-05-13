@@ -423,8 +423,8 @@ function IcalFeedsSection() {
                   <div className="cal-ical-item-label">
                     <span className="cal-ical-label">{feed.label || t('calendar.ical_unnamed')}</span>
                     {feed.lastSyncError ? (
-                      <span className="cal-status-error">
-                        <Icon name="alert-triangle" size={11} /> {feed.lastSyncError}
+                      <span className="cal-status-error" title={feed.lastSyncError}>
+                        <Icon name="alert-triangle" size={11} /> {humanizeIcalError(feed.lastSyncError, t)}
                       </span>
                     ) : rel ? (
                       <span className="cal-status-ok">
@@ -537,4 +537,20 @@ function PrivacyToggle() {
       </span>
     </button>
   );
+}
+
+// Übersetzt Sync-Error-Codes aus dem Backend in lesbare Texte für den User.
+// Codes kommen direkt aus IcalError.code (siehe server/lib/ical-client.ts).
+function humanizeIcalError(code: string, t: (k: 'calendar.ical_err_unknown', vars?: Record<string, string | number>) => string): string {
+  const mapping: Record<string, 'calendar.ical_err_unknown'> = {
+    http_404: 'calendar.ical_err_http_404' as 'calendar.ical_err_unknown',
+    http_401: 'calendar.ical_err_http_401' as 'calendar.ical_err_unknown',
+    http_403: 'calendar.ical_err_http_403' as 'calendar.ical_err_unknown',
+    http_error: 'calendar.ical_err_http_error' as 'calendar.ical_err_unknown',
+    fetch_failed: 'calendar.ical_err_fetch_failed' as 'calendar.ical_err_unknown',
+    parse_failed: 'calendar.ical_err_parse_failed' as 'calendar.ical_err_unknown',
+    too_large: 'calendar.ical_err_too_large' as 'calendar.ical_err_unknown',
+  };
+  const key = mapping[code];
+  return key ? t(key) : t('calendar.ical_err_unknown');
 }
