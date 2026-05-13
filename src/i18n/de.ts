@@ -480,6 +480,9 @@ export const de = {
     edit_required: 'Titel und Beschreibung dürfen nicht leer sein.',
     edit_title_placeholder: 'Kurzer Titel',
     edit_body_placeholder: 'Beschreibung — was wurde gemeint? Wie reproduziert sich das?',
+    status_filter_label: 'Status',
+    status_filter_active: 'Aktiv (offen + in Arbeit)',
+    status_filter_all: 'Alle inkl. erledigt',
   },
   subtasks: {
     heading: 'Subtasks ({count})',

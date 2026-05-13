@@ -28,6 +28,11 @@ export function FeedbackList() {
   const users = useStore((s) => s.users);
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState<'all' | 'bug' | 'feature'>('all');
+  // Status-Filter: Default 'active' = offen + in Arbeit. 'done' und
+  // 'wontfix' sind damit per Default ausgeblendet — wer alte erledigte
+  // sehen will, wechselt auf 'done' / 'wontfix' / 'all'.
+  type StatusFilterValue = 'active' | 'all' | 'open' | 'in_progress' | 'done' | 'wontfix';
+  const [statusFilter, setStatusFilter] = useState<StatusFilterValue>('active');
   // Edit-Mode pro Item — null = keine Bearbeitung läuft.
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<{ title: string; body: string; type: FeedbackType }>({
@@ -44,10 +49,29 @@ export function FeedbackList() {
     refetchInterval: 60_000,
   });
 
-  const filtered = useMemo(() => {
-    if (filter === 'all') return items;
-    return items.filter((i) => i.type === filter);
+  // Counts pro Status-Wert für die Dropdown-Labels.
+  const statusCounts = useMemo(() => {
+    const base = filter === 'all' ? items : items.filter((i) => i.type === filter);
+    return {
+      total: base.length,
+      active: base.filter((i) => i.status === 'open' || i.status === 'in_progress').length,
+      open: base.filter((i) => i.status === 'open').length,
+      in_progress: base.filter((i) => i.status === 'in_progress').length,
+      done: base.filter((i) => i.status === 'done').length,
+      wontfix: base.filter((i) => i.status === 'wontfix').length,
+    };
   }, [items, filter]);
+
+  const filtered = useMemo(() => {
+    // Erst nach Typ filtern, dann nach Status
+    let list = filter === 'all' ? items : items.filter((i) => i.type === filter);
+    if (statusFilter === 'active') {
+      list = list.filter((i) => i.status === 'open' || i.status === 'in_progress');
+    } else if (statusFilter !== 'all') {
+      list = list.filter((i) => i.status === statusFilter);
+    }
+    return list;
+  }, [items, filter, statusFilter]);
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: FEEDBACK_KEY });
 
@@ -212,6 +236,36 @@ export function FeedbackList() {
               )}
             </button>
           ))}
+        </div>
+        <div className="fb-admin-status-filter">
+          <label className="fb-admin-status-label" htmlFor="fb-status-filter-select">
+            {t('feedback.status_filter_label')}
+          </label>
+          <select
+            id="fb-status-filter-select"
+            className="fb-admin-status-select"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as StatusFilterValue)}
+          >
+            <option value="active">
+              {t('feedback.status_filter_active')} ({statusCounts.active})
+            </option>
+            <option value="open">
+              {t('feedback.status_open')} ({statusCounts.open})
+            </option>
+            <option value="in_progress">
+              {t('feedback.status_in_progress')} ({statusCounts.in_progress})
+            </option>
+            <option value="done">
+              {t('feedback.status_done')} ({statusCounts.done})
+            </option>
+            <option value="wontfix">
+              {t('feedback.status_wontfix')} ({statusCounts.wontfix})
+            </option>
+            <option value="all">
+              {t('feedback.status_filter_all')} ({statusCounts.total})
+            </option>
+          </select>
         </div>
       </div>
 

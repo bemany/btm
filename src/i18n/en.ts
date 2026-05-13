@@ -478,6 +478,9 @@ export const en: Translations = {
     edit_required: 'Title and description cannot be empty.',
     edit_title_placeholder: 'Short title',
     edit_body_placeholder: 'Description — what did they mean? How does it reproduce?',
+    status_filter_label: 'Status',
+    status_filter_active: 'Active (open + in progress)',
+    status_filter_all: 'All incl. resolved',
   },
   subtasks: {
     heading: 'Subtasks ({count})',

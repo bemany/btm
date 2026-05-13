@@ -204,7 +204,39 @@
 .fb-admin-head {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.fb-admin-status-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+.fb-admin-status-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-500);
+}
+.fb-admin-status-select {
+  background: var(--cream-100);
+  border: 1px solid var(--ink-200);
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 12.5px;
+  font-family: inherit;
+  color: var(--ink-900);
+  cursor: pointer;
+}
+.fb-admin-status-select:hover { border-color: var(--ink-300); }
+.fb-admin-status-select:focus { outline: 2px solid var(--accent-500); outline-offset: 1px; }
+body[data-theme="default-dark"] .fb-admin-status-select,
+body[data-theme="glass-dark"] .fb-admin-status-select {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: rgba(250, 247, 242, 0.9);
 }
 .fb-admin-filter {
   display: inline-flex;
