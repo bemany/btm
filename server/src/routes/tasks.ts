@@ -1,13 +1,29 @@
 import { Hono } from 'hono';
-import { and, eq, asc, sql, isNull, or } from 'drizzle-orm';
+import { and, eq, asc, sql, isNull, or, desc } from 'drizzle-orm';
 import { z } from 'zod';
 import { nanoid } from 'nanoid';
+import { promises as fs, createReadStream } from 'node:fs';
+import { join as joinPath, extname } from 'node:path';
+import { Readable } from 'node:stream';
 import { db } from '../db/client.js';
-import { tasks, taskSessions, liveTimers, projects, projectMembers } from '../db/schema.js';
+import { tasks, taskSessions, liveTimers, projects, projectMembers, taskAttachments } from '../db/schema.js';
 import { requireAuth, type Variables } from '../lib/context.js';
 import { logActivity } from '../lib/activity.js';
 import { createNotification } from '../lib/notifications.js';
 import { listVisibleProjectIds } from '../lib/project-visibility.js';
+
+// Attachment-Storage. UPLOAD_DIR kommt aus ENV (Docker-Volume),
+// default /app/uploads. Pro Task ein Subdir damit es nicht 10k Files
+// im Root gibt. Filename = generierte ID + Original-Extension (Path-
+// Traversal-Schutz: nichts vom User wird in den Pfad geschrieben).
+const UPLOAD_DIR = process.env.UPLOAD_DIR ?? '/app/uploads';
+const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024; // 5 MB
+
+// Sichere Extension extrahieren — nur a-z0-9 erlaubt, sonst leer.
+function safeExt(filename: string): string {
+  const e = extname(filename).toLowerCase().slice(1);
+  return /^[a-z0-9]{1,8}$/.test(e) ? `.${e}` : '';
+}
 
 const ColumnEnum = z.enum(['todo', 'planned', 'doing', 'review', 'done']);
 const PrioEnum = z.enum(['low', 'med', 'high']);
@@ -420,6 +436,151 @@ export const tasksRoute = new Hono<{ Variables: Variables }>()
         .where(eq(tasks.id, s.taskId));
     }
     return c.json({ session: updated });
+  })
+
+  // ── Attachments ────────────────────────────────────────────────────
+  // POST /:id/attachments — multipart/form-data, key 'file'. Max 5 MB.
+  // Visibility-Check via Project-Membership.
+  .post('/:id/attachments', async (c) => {
+    const me = c.get('user')!;
+    const taskId = c.req.param('id');
+    const [task] = await db.select().from(tasks).where(eq(tasks.id, taskId)).limit(1);
+    if (!task) return c.json({ error: 'task_not_found' }, 404);
+
+    // Visibility-Check: Task gehört zu einem Projekt das der User sehen darf?
+    if (task.projectId) {
+      const { ids } = await listVisibleProjectIds(me.id, me.role);
+      if (!ids.includes(task.projectId)) return c.json({ error: 'forbidden' }, 403);
+    }
+
+    // Hono parseBody hat eingebautes multipart-Handling
+    const body = await c.req.parseBody();
+    const file = body['file'];
+    if (!(file instanceof File)) {
+      return c.json({ error: 'no_file' }, 400);
+    }
+    if (file.size > MAX_ATTACHMENT_BYTES) {
+      return c.json({ error: 'too_large', maxBytes: MAX_ATTACHMENT_BYTES }, 413);
+    }
+    if (file.size === 0) {
+      return c.json({ error: 'empty_file' }, 400);
+    }
+
+    const id = `TA${nanoid(12)}`;
+    const ext = safeExt(file.name);
+    const taskDir = joinPath(UPLOAD_DIR, taskId);
+    await fs.mkdir(taskDir, { recursive: true });
+    const storagePath = joinPath(taskId, `${id}${ext}`); // relativ zu UPLOAD_DIR
+    const absPath = joinPath(UPLOAD_DIR, storagePath);
+    const buf = Buffer.from(await file.arrayBuffer());
+    await fs.writeFile(absPath, buf);
+
+    const [row] = await db
+      .insert(taskAttachments)
+      .values({
+        id,
+        taskId,
+        uploaderId: me.id,
+        filename: file.name.slice(0, 300),
+        mimeType: file.type || 'application/octet-stream',
+        sizeBytes: file.size,
+        storagePath,
+      })
+      .returning();
+    return c.json({ attachment: row }, 201);
+  })
+
+  // GET /:id/attachments — Liste aller Attachments dieser Task
+  .get('/:id/attachments', async (c) => {
+    const me = c.get('user')!;
+    const taskId = c.req.param('id');
+    const [task] = await db.select().from(tasks).where(eq(tasks.id, taskId)).limit(1);
+    if (!task) return c.json({ error: 'task_not_found' }, 404);
+    if (task.projectId) {
+      const { ids } = await listVisibleProjectIds(me.id, me.role);
+      if (!ids.includes(task.projectId)) return c.json({ error: 'forbidden' }, 403);
+    }
+    const rows = await db
+      .select({
+        id: taskAttachments.id,
+        taskId: taskAttachments.taskId,
+        uploaderId: taskAttachments.uploaderId,
+        filename: taskAttachments.filename,
+        mimeType: taskAttachments.mimeType,
+        sizeBytes: taskAttachments.sizeBytes,
+        createdAt: taskAttachments.createdAt,
+      })
+      .from(taskAttachments)
+      .where(eq(taskAttachments.taskId, taskId))
+      .orderBy(desc(taskAttachments.createdAt));
+    return c.json({ attachments: rows });
+  })
+
+  // GET /:id/attachments/:attachmentId/download — Streaming-Download.
+  // Content-Disposition: attachment, damit der Browser nichts inline rendert
+  // (kein XSS-Risiko durch hochgeladene HTML/SVG/PDF).
+  .get('/:id/attachments/:attachmentId/download', async (c) => {
+    const me = c.get('user')!;
+    const taskId = c.req.param('id');
+    const attachmentId = c.req.param('attachmentId');
+    const [row] = await db
+      .select()
+      .from(taskAttachments)
+      .where(and(eq(taskAttachments.id, attachmentId), eq(taskAttachments.taskId, taskId)))
+      .limit(1);
+    if (!row) return c.json({ error: 'not_found' }, 404);
+
+    const [task] = await db.select().from(tasks).where(eq(tasks.id, taskId)).limit(1);
+    if (!task) return c.json({ error: 'task_not_found' }, 404);
+    if (task.projectId) {
+      const { ids } = await listVisibleProjectIds(me.id, me.role);
+      if (!ids.includes(task.projectId)) return c.json({ error: 'forbidden' }, 403);
+    }
+
+    const absPath = joinPath(UPLOAD_DIR, row.storagePath);
+    try {
+      await fs.access(absPath);
+    } catch {
+      return c.json({ error: 'storage_missing' }, 410);
+    }
+    const stream = createReadStream(absPath);
+    const webStream = Readable.toWeb(stream) as ReadableStream<Uint8Array>;
+    // Safe filename für Content-Disposition (RFC 6266)
+    const safeName = row.filename.replace(/["\\\r\n]/g, '_');
+    return new Response(webStream, {
+      status: 200,
+      headers: {
+        'Content-Type': row.mimeType || 'application/octet-stream',
+        'Content-Length': String(row.sizeBytes),
+        'Content-Disposition': `attachment; filename="${safeName}"; filename*=UTF-8''${encodeURIComponent(row.filename)}`,
+        'Cache-Control': 'private, max-age=300',
+      },
+    });
+  })
+
+  // DELETE /:id/attachments/:attachmentId — nur Uploader oder Admin.
+  .delete('/:id/attachments/:attachmentId', async (c) => {
+    const me = c.get('user')!;
+    const taskId = c.req.param('id');
+    const attachmentId = c.req.param('attachmentId');
+    const [row] = await db
+      .select()
+      .from(taskAttachments)
+      .where(and(eq(taskAttachments.id, attachmentId), eq(taskAttachments.taskId, taskId)))
+      .limit(1);
+    if (!row) return c.json({ error: 'not_found' }, 404);
+    if (me.role !== 'admin' && row.uploaderId !== me.id) {
+      return c.json({ error: 'forbidden' }, 403);
+    }
+    // Erst DB-Eintrag löschen, dann File. Falls File-Delete fehlschlägt
+    // (z.B. schon weg) → kein Rollback, nur log. Orphans sind harmlos.
+    await db.delete(taskAttachments).where(eq(taskAttachments.id, attachmentId));
+    try {
+      await fs.unlink(joinPath(UPLOAD_DIR, row.storagePath));
+    } catch (e) {
+      console.warn('[attachments] unlink failed for', row.storagePath, e);
+    }
+    return c.json({ ok: true });
   });
 
 // ── Helper: Owner-Notification beim Review-Wechsel ────────────────────

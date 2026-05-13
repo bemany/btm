@@ -503,6 +503,18 @@ export const de = {
     status_filter_active: 'Aktiv (offen + in Arbeit)',
     status_filter_all: 'Alle inkl. erledigt',
   },
+  attachments: {
+    heading: 'Anhänge ({count})',
+    drop_or_click: 'Datei hierher ziehen oder klicken zum Auswählen',
+    add_more: 'Weitere Datei hinzufügen',
+    max_size: 'Max {max} pro Datei',
+    uploading: 'Lädt hoch …',
+    uploaded: '„{name}" hochgeladen.',
+    deleted: 'Datei gelöscht.',
+    delete_confirm: '„{name}" wirklich löschen?',
+    too_large: 'Datei zu groß ({max} Maximum).',
+    empty: 'Leere Datei kann nicht hochgeladen werden.',
+  },
   subtasks: {
     heading: 'Subtasks ({count})',
     add_short: 'Subtask',

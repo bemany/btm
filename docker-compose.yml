@@ -66,6 +66,10 @@ services:
       LMSTUDIO_URL: ${LMSTUDIO_URL}
       LMSTUDIO_TOKEN: ${LMSTUDIO_TOKEN}
       LMSTUDIO_MODEL: ${LMSTUDIO_MODEL}
+      # Persistent storage für Task-Attachments (siehe Migration 0016).
+      UPLOAD_DIR: /app/uploads
+    volumes:
+      - btm-uploads:/app/uploads
     networks:
       - btm
       - caddy
@@ -80,3 +84,5 @@ networks:
 volumes:
   btm-pgdata:
     name: btm-pgdata
+  btm-uploads:
+    name: btm-uploads

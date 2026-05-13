@@ -12,6 +12,7 @@ import { SessionsSection } from '../sessions/SessionsSection';
 import { TaskTimeline } from '../sessions/TaskTimeline';
 import { DatePicker } from '../shared/DatePicker';
 import { SubtasksSection } from './SubtasksSection';
+import { AttachmentsSection } from './AttachmentsSection';
 
 export interface TaskDetailDrawerProps {
   id: string;
@@ -408,23 +409,7 @@ export function TaskDetailDrawer({ id }: TaskDetailDrawerProps) {
             />
           </div>
 
-          <div className="eyebrow" style={{ marginTop: 18, marginBottom: 8 }}>
-            {tr('task_detail.attachments')}
-          </div>
-          <div
-            style={{
-              border: '1px dashed var(--ink-200)',
-              borderRadius: 6,
-              padding: 16,
-              textAlign: 'center',
-              fontSize: 12,
-              color: 'var(--ink-500)',
-              marginBottom: 18,
-            }}
-          >
-            <Icon name="paperclip" size={16} style={{ color: 'var(--ink-400)', marginRight: 6 }} />
-            {tr('task_detail.attachments_dropzone')}
-          </div>
+          <AttachmentsSection taskId={t.id} />
 
           <div style={{ marginTop: 18, marginBottom: 18 }}>
             <SubtasksSection parent={t} />

@@ -769,3 +769,59 @@ export async function deleteIcalFeed(id: string): Promise<void> {
 export async function syncIcalFeedNow(id: string): Promise<CalendarSyncResult> {
   return apiFetch<CalendarSyncResult>(`/me/calendar/feeds/${id}/sync-now`, { method: 'POST' });
 }
+
+// ── Task-Attachments (FmFsMB3v6rK) ──────────────────────────────────
+export interface TaskAttachmentDTO {
+  id: string;
+  taskId: string;
+  uploaderId: string | null;
+  filename: string;
+  mimeType: string;
+  sizeBytes: number;
+  createdAt: string;
+}
+
+export async function listTaskAttachments(taskId: string): Promise<TaskAttachmentDTO[]> {
+  const { attachments } = await apiFetch<{ attachments: TaskAttachmentDTO[] }>(
+    `/tasks/${taskId}/attachments`,
+  );
+  return attachments;
+}
+
+/** Lädt eine Datei via FormData hoch. Nutzt direktes fetch statt apiFetch
+ *  weil wir keine JSON-Content-Type setzen dürfen (multipart braucht
+ *  Boundary). credentials: include für Cookie-Session. */
+export async function uploadTaskAttachment(
+  taskId: string,
+  file: File,
+): Promise<TaskAttachmentDTO> {
+  const fd = new FormData();
+  fd.append('file', file);
+  const res = await fetch(`/api/tasks/${taskId}/attachments`, {
+    method: 'POST',
+    credentials: 'include',
+    body: fd,
+  });
+  if (!res.ok) {
+    let msg = `HTTP ${res.status}`;
+    try {
+      const payload = await res.json();
+      msg = payload.error ? `${payload.error}` : msg;
+      if (payload.error === 'too_large') msg = 'too_large';
+    } catch {
+      /* ignore */
+    }
+    throw new Error(msg);
+  }
+  const { attachment } = (await res.json()) as { attachment: TaskAttachmentDTO };
+  return attachment;
+}
+
+export async function deleteTaskAttachment(taskId: string, attachmentId: string): Promise<void> {
+  await apiFetch(`/tasks/${taskId}/attachments/${attachmentId}`, { method: 'DELETE' });
+}
+
+/** Liefert die URL für den Download — Browser navigiert dorthin direkt. */
+export function taskAttachmentDownloadUrl(taskId: string, attachmentId: string): string {
+  return `/api/tasks/${taskId}/attachments/${attachmentId}/download`;
+}

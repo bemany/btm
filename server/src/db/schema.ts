@@ -148,6 +148,27 @@ export const projectMembers = pgTable(
   ],
 );
 
+// Datei-Anhänge an Tasks. Storage liegt im Filesystem (Docker-Volume
+// /app/uploads/{taskId}/{id}.{ext}), in der DB nur Metadata. uploaderId
+// kann null werden wenn der User gelöscht wird (set null). Files werden
+// über storage_path-relative Pfade aufgelöst.
+export const taskAttachments = pgTable(
+  'task_attachments',
+  {
+    id: text('id').primaryKey(),
+    taskId: text('task_id').notNull().references(() => tasks.id, { onDelete: 'cascade' }),
+    uploaderId: text('uploader_id').references(() => users.id, { onDelete: 'set null' }),
+    filename: text('filename').notNull(),       // Original-Filename (Display)
+    mimeType: text('mime_type').notNull(),
+    sizeBytes: integer('size_bytes').notNull(),
+    storagePath: text('storage_path').notNull(), // relativ zu UPLOAD_DIR
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index('task_attachments_task_idx').on(t.taskId, t.createdAt),
+  ],
+);
+
 // Persönliche Projekt-Favoriten — komplett user-spezifisch, kein Sharing.
 // PK ist (userId, projectId). Beim Löschen von User oder Projekt cascading.
 export const projectFavorites = pgTable(
@@ -506,3 +527,5 @@ export type CalendarEvent = typeof calendarEvents.$inferSelect;
 export type NewCalendarEvent = typeof calendarEvents.$inferInsert;
 export type IcalFeed = typeof icalFeeds.$inferSelect;
 export type NewIcalFeed = typeof icalFeeds.$inferInsert;
+export type TaskAttachment = typeof taskAttachments.$inferSelect;
+export type NewTaskAttachment = typeof taskAttachments.$inferInsert;

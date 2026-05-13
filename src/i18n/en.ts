@@ -501,6 +501,18 @@ export const en: Translations = {
     status_filter_active: 'Active (open + in progress)',
     status_filter_all: 'All incl. resolved',
   },
+  attachments: {
+    heading: 'Attachments ({count})',
+    drop_or_click: 'Drop file here or click to choose',
+    add_more: 'Add another file',
+    max_size: 'Max {max} per file',
+    uploading: 'Uploading …',
+    uploaded: '"{name}" uploaded.',
+    deleted: 'File deleted.',
+    delete_confirm: 'Really delete "{name}"?',
+    too_large: 'File too large ({max} max).',
+    empty: 'Cannot upload empty file.',
+  },
   subtasks: {
     heading: 'Subtasks ({count})',
     add_short: 'Subtask',
