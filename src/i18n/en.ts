@@ -1054,6 +1054,12 @@ export const en: Translations = {
     attendees: '{count} attendees',
     not_configured: 'Calendar sync not active — connect your Odoo in settings.',
     open_settings: 'Open settings',
+    nextup_next_label: 'Next up',
+    nextup_now_label: 'In progress',
+    nextup_ongoing_remaining: '{rel} left',
+    now_label: 'Now',
+    view_list: 'List',
+    view_timeline: 'Timeline',
     // Source sections (tab layout)
     source_odoo: 'Odoo (ERP)',
     source_ical: 'iCal feeds',

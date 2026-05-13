@@ -1056,6 +1056,12 @@ export const de = {
     attendees: '{count} Teilnehmer',
     not_configured: 'Kalender-Sync nicht aktiv — verbinde dein Odoo in den Einstellungen.',
     open_settings: 'Einstellungen öffnen',
+    nextup_next_label: 'Nächster Termin',
+    nextup_now_label: 'Läuft gerade',
+    nextup_ongoing_remaining: 'noch {rel}',
+    now_label: 'Jetzt',
+    view_list: 'Liste',
+    view_timeline: 'Timeline',
     // Quellen-Sektionen (Tab-Layout)
     source_odoo: 'Odoo (ERP)',
     source_ical: 'iCal-Feeds',
