@@ -279,7 +279,9 @@ export async function listUsers(): Promise<AppUser[]> {
 
 export async function updateUser(
   id: string,
-  patch: Partial<Pick<AppUser, 'name' | 'jobTitle' | 'phone' | 'cap' | 'color' | 'role' | 'status' | 'teamId' | 'boardDefaultView'>>,
+  patch: Partial<Pick<AppUser, 'name' | 'jobTitle' | 'phone' | 'cap' | 'color' | 'role' | 'status' | 'teamId' | 'boardDefaultView'>> & {
+    teamIds?: string[];
+  },
 ): Promise<AppUser> {
   const { user } = await apiFetch<{ user: AppUser }>(`/users/${id}`, {
     method: 'PATCH',

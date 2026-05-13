@@ -20,6 +20,7 @@ interface Draft {
   jobTitle: string;
   phone: string;
   teamId: string | null;
+  teamIds: string[];
   cap: number;
   role: 'admin' | 'member';
   status: 'active' | 'invited' | 'inactive';
@@ -33,6 +34,7 @@ function emptyDraft(teams: AppTeam[]): Draft {
     jobTitle: '',
     phone: '',
     teamId: teams[0]?.id ?? null,
+    teamIds: teams[0] ? [teams[0].id] : [],
     cap: 40,
     role: 'member',
     status: 'active',
@@ -41,12 +43,17 @@ function emptyDraft(teams: AppTeam[]): Draft {
 }
 
 function fromUser(u: AppUser): Draft {
+  // teamIds: bevorzugt aus u.teamIds (Multi-Team), Fallback nur teamId.
+  // Wenn primary teamId nicht in teamIds enthalten ist, hinzufügen.
+  const teamIds = u.teamIds ?? (u.teamId ? [u.teamId] : []);
+  const merged = u.teamId && !teamIds.includes(u.teamId) ? [u.teamId, ...teamIds] : teamIds;
   return {
     email: u.email,
     name: u.name,
     jobTitle: u.jobTitle ?? '',
     phone: u.phone ?? '',
     teamId: u.teamId ?? null,
+    teamIds: merged,
     cap: u.cap,
     role: u.role,
     status: u.status,
@@ -113,6 +120,7 @@ export function UserDrawer({ id, onClose }: Props) {
           color: draft.color,
           role: draft.role,
           teamId: draft.teamId,
+          teamIds: draft.teamIds,
         });
         await queryClient.invalidateQueries({ queryKey: SYNC_KEYS.USERS });
         showToast(t('admin.profile_updated'));
@@ -204,19 +212,82 @@ export function UserDrawer({ id, onClose }: Props) {
           <div className="admin-drawer-section">
             <div className="admin-drawer-section-label">{t('admin.section_org')}</div>
             <div className="admin-field">
-              <label>{t('admin.field_team')}</label>
-              <select
-                className="admin-input"
-                value={draft.teamId ?? ''}
-                onChange={(e) => update({ teamId: e.target.value || null })}
-              >
-                <option value="">{t('admin.team_none')}</option>
-                {teams.map((tm) => (
-                  <option key={tm.id} value={tm.id}>
-                    {tm.name}
-                  </option>
-                ))}
-              </select>
+              <label>{t('admin.field_teams')}</label>
+              <div className="admin-teams-multi">
+                {draft.teamIds.length === 0 && (
+                  <span className="admin-teams-empty">{t('admin.team_none')}</span>
+                )}
+                {draft.teamIds.map((tid) => {
+                  const tm = teams.find((x) => x.id === tid);
+                  const isPrimary = tid === draft.teamId;
+                  return (
+                    <span
+                      key={tid}
+                      className={`admin-team-chip ${isPrimary ? 'is-primary' : ''}`}
+                      style={tm ? { borderColor: tm.color, color: tm.color } : undefined}
+                    >
+                      {isPrimary && (
+                        <span title={t('admin.team_primary_marker')}>
+                          <Icon name="star" size={9} />
+                        </span>
+                      )}
+                      <span>{tm?.name ?? '—'}</span>
+                      {!isPrimary && draft.teamIds.length > 1 && (
+                        <button
+                          type="button"
+                          className="admin-team-chip-action"
+                          onClick={() =>
+                            update({
+                              teamId: tid,
+                            })
+                          }
+                          title={t('admin.team_set_primary')}
+                        >
+                          <Icon name="star" size={9} />
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        className="admin-team-chip-remove"
+                        onClick={() => {
+                          const next = draft.teamIds.filter((x) => x !== tid);
+                          const nextPrimary = isPrimary ? next[0] ?? null : draft.teamId;
+                          update({ teamIds: next, teamId: nextPrimary });
+                        }}
+                        title={t('admin.team_remove')}
+                      >
+                        <Icon name="x" size={9} />
+                      </button>
+                    </span>
+                  );
+                })}
+              </div>
+              {teams.filter((tm) => !draft.teamIds.includes(tm.id)).length > 0 && (
+                <select
+                  className="admin-input admin-teams-add"
+                  value=""
+                  onChange={(e) => {
+                    const tid = e.target.value;
+                    if (!tid) return;
+                    const next = [...draft.teamIds, tid];
+                    update({
+                      teamIds: next,
+                      // wenn noch keiner primary war, dieses neue Team wird primary
+                      teamId: draft.teamId ?? tid,
+                    });
+                  }}
+                >
+                  <option value="">{t('admin.team_add_placeholder')}</option>
+                  {teams
+                    .filter((tm) => !draft.teamIds.includes(tm.id))
+                    .map((tm) => (
+                      <option key={tm.id} value={tm.id}>
+                        {tm.name}
+                      </option>
+                    ))}
+                </select>
+              )}
+              <span className="admin-field-help">{t('admin.teams_help')}</span>
             </div>
             <div className="admin-field">
               <label>{t('admin.field_capacity')}</label>

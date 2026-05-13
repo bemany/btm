@@ -113,7 +113,11 @@ export interface AppUser {
   color: string;
   jobTitle: string | null;
   phone: string | null;
+  /** Primary-Team (Backwards-Compat in Views wo nur ein Team pro User gerendert wird). */
   teamId: string | null;
+  /** Alle Team-Mitgliedschaften des Users. Enthält teamId auch (Multi-Team-
+   *  Erweiterung in Migration 0015). */
+  teamIds?: string[];
   boardDefaultView: LayoutMode;
   createdAt: string;
 }

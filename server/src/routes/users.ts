@@ -1,9 +1,9 @@
 import { Hono } from 'hono';
-import { eq, asc, and } from 'drizzle-orm';
+import { eq, asc, and, inArray } from 'drizzle-orm';
 import { z } from 'zod';
 import { nanoid } from 'nanoid';
 import { db } from '../db/client.js';
-import { users, invitations, loginCodes } from '../db/schema.js';
+import { users, invitations, loginCodes, userTeams } from '../db/schema.js';
 import { requireAuth, requireAdmin, type Variables } from '../lib/context.js';
 import { sendMail, inviteEmail, appIconAttachment } from '../lib/mailer.js';
 import { logActivity } from '../lib/activity.js';
@@ -25,8 +25,52 @@ const updateUserSchema = z.object({
   role: z.enum(['admin', 'member']).optional(),
   status: z.enum(['active', 'invited', 'inactive']).optional(),
   teamId: z.string().nullable().optional(),
+  // Multi-Team: kompletter Replace der Memberships. Wenn gesetzt, wird
+  // user_teams für diesen User auf genau diese IDs gesetzt. Primary
+  // teamId (users.teamId) bleibt was im teamId-Field steht (oder wird
+  // auf die erste teamIds-ID gesetzt falls teamId nicht im Patch).
+  teamIds: z.array(z.string()).optional(),
   boardDefaultView: z.enum(['kanban', 'list', 'timeline']).optional(),
 });
+
+// Hilfsfunktion: lädt die teamIds-Listen für eine Menge von User-IDs
+// und gibt eine Map zurück. Verwendet in GET /users.
+async function loadTeamIdsForUsers(userIds: string[]): Promise<Map<string, string[]>> {
+  const out = new Map<string, string[]>();
+  for (const id of userIds) out.set(id, []);
+  if (userIds.length === 0) return out;
+  const rows = await db
+    .select({ userId: userTeams.userId, teamId: userTeams.teamId })
+    .from(userTeams)
+    .where(inArray(userTeams.userId, userIds));
+  for (const r of rows) {
+    const cur = out.get(r.userId);
+    if (cur) cur.push(r.teamId);
+  }
+  return out;
+}
+
+// Setzt die Multi-Team-Memberships für einen User auf genau die IDs.
+// Bestehende Einträge die nicht mehr in der Liste sind werden gelöscht,
+// neue dazugefügt.
+async function syncUserTeams(userId: string, teamIds: string[]): Promise<void> {
+  const existing = await db
+    .select({ teamId: userTeams.teamId })
+    .from(userTeams)
+    .where(eq(userTeams.userId, userId));
+  const existingSet = new Set(existing.map((e) => e.teamId));
+  const wantedSet = new Set(teamIds);
+  const toRemove = [...existingSet].filter((id) => !wantedSet.has(id));
+  const toAdd = [...wantedSet].filter((id) => !existingSet.has(id));
+  if (toRemove.length > 0) {
+    await db
+      .delete(userTeams)
+      .where(and(eq(userTeams.userId, userId), inArray(userTeams.teamId, toRemove)));
+  }
+  if (toAdd.length > 0) {
+    await db.insert(userTeams).values(toAdd.map((tid) => ({ userId, teamId: tid })));
+  }
+}
 
 const projectionFields = {
   id: users.id,
@@ -48,7 +92,10 @@ export const usersRoute = new Hono<{ Variables: Variables }>()
   .use('*', requireAuth)
   .get('/', async (c) => {
     const list = await db.select(projectionFields).from(users).orderBy(asc(users.name));
-    return c.json({ users: list });
+    const ids = list.map((u) => u.id);
+    const teamIdsMap = await loadTeamIdsForUsers(ids);
+    const enriched = list.map((u) => ({ ...u, teamIds: teamIdsMap.get(u.id) ?? [] }));
+    return c.json({ users: enriched });
   })
   .patch('/:id', async (c) => {
     const me = c.get('user')!;
@@ -59,13 +106,42 @@ export const usersRoute = new Hono<{ Variables: Variables }>()
     if (id !== me.id && me.role !== 'admin') return c.json({ error: 'forbidden' }, 403);
     if ((body.role || body.status) && me.role !== 'admin') return c.json({ error: 'admin only' }, 403);
 
+    // teamIds ist eine separate Tabelle — aus body rauspulen damit Drizzle
+    // es nicht ans users-Update gibt
+    const { teamIds, ...userPatch } = body;
+
+    // Wenn teamIds gesetzt und Primary teamId nicht explizit gepatcht:
+    // Primary teamId wird die erste der Liste (oder null wenn Liste leer).
+    if (teamIds !== undefined && userPatch.teamId === undefined) {
+      userPatch.teamId = teamIds.length > 0 ? teamIds[0] : null;
+    }
+
     const before = await db.select().from(users).where(eq(users.id, id)).limit(1);
     const [row] = await db
       .update(users)
-      .set({ ...body, updatedAt: new Date() })
+      .set({ ...userPatch, updatedAt: new Date() })
       .where(eq(users.id, id))
       .returning(projectionFields);
     if (!row) return c.json({ error: 'not found' }, 404);
+
+    // Multi-Team-Memberships synchronisieren
+    if (teamIds !== undefined) {
+      // Stelle sicher dass primary teamId immer in der Liste ist
+      const merged = userPatch.teamId
+        ? Array.from(new Set([userPatch.teamId, ...teamIds]))
+        : teamIds;
+      await syncUserTeams(id, merged);
+    } else if (userPatch.teamId !== undefined && userPatch.teamId !== before[0]?.teamId) {
+      // Nur primary teamId geändert ohne expliziten teamIds-Patch:
+      // wenn primary auf eine neue ID gesetzt wird, mindestens diese auch
+      // in user_teams haben. Bestehende andere Memberships bleiben unangetastet.
+      if (userPatch.teamId) {
+        await db
+          .insert(userTeams)
+          .values({ userId: id, teamId: userPatch.teamId })
+          .onConflictDoNothing();
+      }
+    }
 
     if (body.role && before[0]?.role !== body.role) {
       logActivity({ kind: 'role_changed', actorId: me.id, target: id, meta: { from: before[0]?.role, to: body.role } });
@@ -81,7 +157,9 @@ export const usersRoute = new Hono<{ Variables: Variables }>()
       logActivity({ kind: 'user_updated', actorId: me.id, target: id, meta: body });
     }
 
-    return c.json({ user: row });
+    // teamIds für die Response nachladen damit das Frontend den frischen State hat
+    const teamIdsMap = await loadTeamIdsForUsers([id]);
+    return c.json({ user: { ...row, teamIds: teamIdsMap.get(id) ?? [] } });
   })
 
   // Admin-Tool: 6-stelligen Login-Code für einen anderen User generieren

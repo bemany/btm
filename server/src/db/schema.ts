@@ -260,6 +260,24 @@ export const teams = pgTable('teams', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
+// User ↔ Team Multi-Membership. Ein User kann in 0..N Teams sein.
+// users.teamId bleibt als 'primary team' für Backwards-Compat in bestehenden
+// Views (Capacity-Filter, Activity-Liste etc.). Die hier sind alle weiteren
+// Mitgliedschaften — beim Speichern hält Code sicher dass teamId IMMER auch
+// in dieser Tabelle vorhanden ist.
+export const userTeams = pgTable(
+  'user_teams',
+  {
+    userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    teamId: text('team_id').notNull().references(() => teams.id, { onDelete: 'cascade' }),
+    addedAt: timestamp('added_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index('user_teams_user_idx').on(t.userId),
+    index('user_teams_team_idx').on(t.teamId),
+  ],
+);
+
 // ── Activity Log ───────────────────────────────────────────────────────
 
 export const activityLog = pgTable(
