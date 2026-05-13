@@ -3,6 +3,8 @@ import type { ColumnId } from '../../store/types';
 import { useStore } from '../../store/store';
 import { showToast } from '../shared/Toast';
 import { useT } from '../../i18n';
+import { ProjectSelect } from '../shared/ProjectSelect';
+import { filterAssignableProjects } from '../../lib/projectFilters';
 
 export interface QuickAddProps {
   col: ColumnId;
@@ -19,12 +21,17 @@ export function QuickAdd({ col, onClose }: QuickAddProps) {
   const [title, setTitle] = useState('');
   // Wenn das Board auf ein bestimmtes Projekt gefiltert ist, soll der
   // Quick-Add neue Aufgaben standardmäßig in diesem Projekt anlegen — sonst
-  // landet die Aufgabe im ersten Projekt der Liste und ist nach dem Create
-  // wegen des aktiven Filters unsichtbar.
-  const initialProj =
-    filterProj && filterProj !== 'all' && projects.some((p) => p.id === filterProj)
-      ? filterProj
-      : projects[0]?.id ?? '';
+  // landet die Aufgabe im ersten Favoriten (nicht im ersten alphabetischen).
+  const initialProj = (() => {
+    if (filterProj && filterProj !== 'all' && projects.some((p) => p.id === filterProj)) {
+      return filterProj;
+    }
+    const { all } = filterAssignableProjects(projects, {
+      currentUserId: currentUser,
+      showOnlyFavorites: true,
+    });
+    return all[0]?.id ?? '';
+  })();
   const [proj, setProj] = useState(initialProj);
   const [estH, setEstH] = useState(1.0);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -53,13 +60,12 @@ export function QuickAdd({ col, onClose }: QuickAddProps) {
         }}
       />
       <div className="row">
-        <select value={proj} onChange={(e) => setProj(e.target.value)}>
-          {projects.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.code}
-            </option>
-          ))}
-        </select>
+        <ProjectSelect
+          value={proj || null}
+          projects={projects}
+          currentUserId={currentUser}
+          onChange={(v) => setProj(v ?? '')}
+        />
         <input
           type="number"
           step="0.5"

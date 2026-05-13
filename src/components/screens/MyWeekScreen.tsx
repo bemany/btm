@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import type { Project } from '../../store/types';
 import { useStore } from '../../store/store';
 import type { ScreenId } from '../../store/types';
+import { filterAssignableProjects } from '../../lib/projectFilters';
 import { useTick } from '../shared/hooks';
 import { Icon } from '../shared/Icon';
 import { ProjTag } from '../shared/ProjTag';
@@ -405,22 +407,14 @@ function QuickStartForm({ onClose, onStarted }: QuickStartFormProps) {
         }}
         disabled={busy}
       />
-      <select
-        className="qs-project"
+      <QuickStartProjectSelect
         value={proj}
-        onChange={(e) => setProj(e.target.value)}
+        projects={projects}
+        currentUserId={currentUser}
+        onChange={setProj}
         disabled={busy}
-        required
-      >
-        <option value="" disabled>
-          {t('week.quickstart_pick_project')}
-        </option>
-        {projects.map((p) => (
-          <option key={p.id} value={p.id}>
-            {p.code} · {p.name}
-          </option>
-        ))}
-      </select>
+        placeholder={t('week.quickstart_pick_project')}
+      />
       <button
         type="button"
         className="qs-go"
@@ -431,5 +425,61 @@ function QuickStartForm({ onClose, onStarted }: QuickStartFormProps) {
         {timer ? t('week.quickstart_swap_btn') : t('week.quickstart_start_btn')}
       </button>
     </div>
+  );
+}
+
+// QuickStart-Project-Select: gleicher Filter wie ProjectSelect (Favoriten
+// first, fremde Privat raus), aber mit eigenem Placeholder/Style damit es
+// ins QuickStart-Form passt. Wenn der User noch keine Favoriten gesetzt
+// hat, werden alle Projekte gezeigt (sonst leere Liste).
+interface QuickStartProjectSelectProps {
+  value: string;
+  projects: Project[];
+  currentUserId: string | null | undefined;
+  onChange: (id: string) => void;
+  disabled?: boolean;
+  placeholder: string;
+}
+function QuickStartProjectSelect({
+  value,
+  projects,
+  currentUserId,
+  onChange,
+  disabled,
+  placeholder,
+}: QuickStartProjectSelectProps) {
+  const { favorites, others } = filterAssignableProjects(projects, {
+    currentUserId,
+    showOnlyFavorites: true,
+    includeIds: value ? [value] : [],
+  });
+  return (
+    <select
+      className="qs-project"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      disabled={disabled}
+      required
+    >
+      <option value="" disabled>{placeholder}</option>
+      {favorites.length > 0 && others.length > 0 ? (
+        <>
+          <optgroup label="★ Favoriten">
+            {favorites.map((p) => (
+              <option key={p.id} value={p.id}>{p.code} · {p.name}</option>
+            ))}
+          </optgroup>
+          <optgroup label="Andere Projekte">
+            {others.map((p) => (
+              <option key={p.id} value={p.id}>{p.code} · {p.name}</option>
+            ))}
+          </optgroup>
+        </>
+      ) : (
+        [...favorites, ...others].map((p) => (
+          <option key={p.id} value={p.id}>{p.code} · {p.name}</option>
+        ))
+      )}
+    </select>
   );
 }

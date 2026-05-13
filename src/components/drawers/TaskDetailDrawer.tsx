@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { ColumnId, Priority } from '../../store/types';
 import { useStore } from '../../store/store';
 import { COLUMNS } from '../../store/seed';
+import { ProjectSelect } from '../shared/ProjectSelect';
 import { useTick } from '../shared/hooks';
 import { Icon } from '../shared/Icon';
 import { ProjTag } from '../shared/ProjTag';
@@ -218,9 +219,11 @@ export function TaskDetailDrawer({ id }: TaskDetailDrawerProps) {
                   </option>
                 ))}
             </select>
-            <select
-              value={t.proj ?? ''}
-              onChange={(e) => updateTask(t.id, { proj: e.target.value || null })}
+            <ProjectSelect
+              value={t.proj}
+              currentUserId={currentUserId}
+              projects={projects}
+              onChange={(v) => updateTask(t.id, { proj: v })}
               style={{
                 background: 'var(--cream-50)',
                 border: '1px solid var(--ink-200)',
@@ -228,13 +231,7 @@ export function TaskDetailDrawer({ id }: TaskDetailDrawerProps) {
                 padding: '6px 10px',
                 fontSize: 12,
               }}
-            >
-              {projects.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.code}
-                </option>
-              ))}
-            </select>
+            />
             <select
               value={t.prio}
               onChange={(e) => updateTask(t.id, { prio: e.target.value as Priority })}

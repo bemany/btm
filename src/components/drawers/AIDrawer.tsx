@@ -6,6 +6,7 @@ import { Avatar } from '../shared/Avatar';
 import { ProjTag } from '../shared/ProjTag';
 import { showToast } from '../shared/Toast';
 import { useT, useLocale } from '../../i18n';
+import { filterAssignableProjects } from '../../lib/projectFilters';
 
 interface ExtractedTask {
   title: string;
@@ -25,6 +26,7 @@ export interface AIDrawerProps {
 
 export function AIDrawer({ setActive }: AIDrawerProps) {
   const projects = useStore((s) => s.projects);
+  const currentUser = useStore((s) => s.currentUser);
   const tasks = useStore((s) => s.tasks);
   const users = useStore((s) => s.users);
   const addTask = useStore((s) => s.addTask);
@@ -373,11 +375,32 @@ export function AIDrawer({ setActive }: AIDrawerProps) {
                               )
                             }
                           >
-                            {projects.map((p) => (
-                              <option key={p.id} value={p.id}>
-                                {p.code} · {p.name}
-                              </option>
-                            ))}
+                            {(() => {
+                              const { favorites, others } = filterAssignableProjects(projects, {
+                                currentUserId: currentUser,
+                                showOnlyFavorites: true,
+                                includeIds: editedTasks[editIdx].proj ? [editedTasks[editIdx].proj] : [],
+                              });
+                              if (favorites.length > 0 && others.length > 0) {
+                                return (
+                                  <>
+                                    <optgroup label="★ Favoriten">
+                                      {favorites.map((p) => (
+                                        <option key={p.id} value={p.id}>{p.code} · {p.name}</option>
+                                      ))}
+                                    </optgroup>
+                                    <optgroup label="Andere Projekte">
+                                      {others.map((p) => (
+                                        <option key={p.id} value={p.id}>{p.code} · {p.name}</option>
+                                      ))}
+                                    </optgroup>
+                                  </>
+                                );
+                              }
+                              return [...favorites, ...others].map((p) => (
+                                <option key={p.id} value={p.id}>{p.code} · {p.name}</option>
+                              ));
+                            })()}
                           </select>
                         </label>
                         <label>

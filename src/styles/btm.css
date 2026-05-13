@@ -4334,3 +4334,47 @@ body[data-theme="glass-dark"] .filter-user-select.active {
   color: var(--ink-900);
   border-color: var(--cream-50);
 }
+
+/* Filter-Row: Show-More-Chip + Favoriten-Stern + Toggle */
+.filter-chip-ghost {
+  background: transparent;
+  border: 1px dashed var(--ink-200);
+  color: var(--ink-500);
+}
+.filter-chip-ghost:hover {
+  border-color: var(--accent-500);
+  color: var(--accent-500);
+}
+body[data-theme="default-dark"] .filter-chip-ghost,
+body[data-theme="glass-dark"] .filter-chip-ghost {
+  border-color: rgba(255, 255, 255, 0.15);
+  color: rgba(250, 247, 242, 0.55);
+}
+
+/* ProjectSelect: Show-more-Mini-Button */
+.proj-select-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.proj-select-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  border: 1px dashed var(--ink-200);
+  background: transparent;
+  color: var(--ink-500);
+  border-radius: 100px;
+  padding: 3px 8px;
+  cursor: pointer;
+}
+.proj-select-toggle:hover {
+  border-color: var(--accent-500);
+  color: var(--accent-500);
+}
+body[data-theme="default-dark"] .proj-select-toggle,
+body[data-theme="glass-dark"] .proj-select-toggle {
+  border-color: rgba(255, 255, 255, 0.15);
+  color: rgba(250, 247, 242, 0.6);
+}
