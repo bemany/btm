@@ -167,6 +167,28 @@ export function CalendarTab() {
         <h4>{t('calendar.source_odoo')}</h4>
       </div>
 
+      {/* Bethesna-Preset (FystBwbvLnW). Spart neuen Kolleg:innen das Tippen
+          der URL+DB. API-Key bleibt vom User selbst einzutragen. */}
+      <div className="cal-preset-box">
+        <div className="cal-preset-text">
+          <Icon name="zap" size={13} />
+          <span>{t('calendar.preset_hint')}</span>
+        </div>
+        <button
+          type="button"
+          className="tb-btn"
+          onClick={() => {
+            setUrl('https://meinfahrer.odoo.com');
+            setDatabase('meinfahrer-main-22367884');
+            if (!username && user?.email) setUsername(user.email);
+          }}
+          disabled={busy}
+        >
+          <Icon name="wand-2" size={12} />
+          {t('calendar.preset_btn')}
+        </button>
+      </div>
+
       <div className="cal-form">
         <label className="cal-field">
           <span className="cal-field-label">{t('calendar.field_url')}</span>
@@ -223,6 +245,20 @@ export function CalendarTab() {
           />
           <span className="cal-field-help">{t('calendar.field_api_key_help')}</span>
         </label>
+
+        {/* Video-Tutorial-Platzhalter (FystBwbvLnW). Sobald Esref ein
+            Tutorial aufgenommen hat, Video-URL hier eintragen + Banner
+            durch <video>/<iframe> ersetzen. */}
+        <div className="cal-video-placeholder">
+          <div className="cal-video-placeholder-icon">
+            <Icon name="play-circle" size={22} />
+          </div>
+          <div className="cal-video-placeholder-text">
+            <div className="cal-video-placeholder-title">{t('calendar.video_tutorial_title')}</div>
+            <div className="cal-video-placeholder-sub">{t('calendar.video_tutorial_sub')}</div>
+          </div>
+          <span className="cal-video-placeholder-badge">{t('calendar.video_tutorial_soon')}</span>
+        </div>
       </div>
 
       <div className="cal-actions">

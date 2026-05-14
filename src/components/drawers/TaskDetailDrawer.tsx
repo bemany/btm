@@ -14,6 +14,7 @@ import { DatePicker } from '../shared/DatePicker';
 import { SubtasksSection } from './SubtasksSection';
 import { AttachmentsSection } from './AttachmentsSection';
 import { checkMarkDone } from '../../lib/taskPermissions';
+import { navigate } from '../../router';
 
 export interface TaskDetailDrawerProps {
   id: string;
@@ -133,6 +134,19 @@ export function TaskDetailDrawer({ id }: TaskDetailDrawerProps) {
             {t.id}
           </span>
           <div style={{ flex: 1 }} />
+          {/* Shortcut zur Wochenansicht (FRr66InEsBQ). Klick schließt Drawer
+              + navigiert zu /week. */}
+          <button
+            className="x"
+            onClick={() => {
+              close();
+              navigate('/');
+            }}
+            title={tr('task_detail.go_to_week')}
+            aria-label={tr('task_detail.go_to_week')}
+          >
+            <Icon name="calendar-days" size={14} />
+          </button>
           {t.col === 'done' && !t.archivedAt && (
             <button
               className="x"

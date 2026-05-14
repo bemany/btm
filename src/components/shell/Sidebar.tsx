@@ -128,12 +128,34 @@ export function Sidebar({
     },
   ];
   const adminItem: Item = { id: 'admin', label: t('sidebar.admin'), icon: 'shield-check' };
-  const itemsBottom: Item[] = [
+  // Esref-Wunsch FR0_IIsrpwo: Updates wandert nach unten (über Profil),
+  // die drei Extras-Items kommen in eine zusammenklappbare Gruppe.
+  const extrasItems: Item[] = [
     { id: 'mobile', label: t('sidebar.mobile_preview'), icon: 'smartphone' },
     { id: 'chrome', label: t('sidebar.chrome_plugin'), icon: 'puzzle' },
     { id: 'tv', label: t('sidebar.tv_dashboard'), icon: 'monitor' },
-    { id: 'releases', label: t('sidebar.updates'), icon: 'sparkles' },
   ];
+  const releasesItem: Item = { id: 'releases', label: t('sidebar.updates'), icon: 'sparkles' };
+  // Extras-Section auf-/zugeklappt; wird in localStorage gemerkt damit
+  // Power-User die nicht jedes Reload neu aufklappen müssen.
+  const isExtrasActive = extrasItems.some((it) => it.id === active);
+  const [extrasOpen, setExtrasOpen] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('btm.sidebar.extrasOpen') !== '0';
+    } catch {
+      return true;
+    }
+  });
+  useEffect(() => {
+    if (isExtrasActive) setExtrasOpen(true);
+  }, [isExtrasActive]);
+  const toggleExtras = () => {
+    setExtrasOpen((v) => {
+      const next = !v;
+      try { localStorage.setItem('btm.sidebar.extrasOpen', next ? '1' : '0'); } catch { /* ignore */ }
+      return next;
+    });
+  };
 
   return (
     <aside className="app-sidebar">
@@ -209,24 +231,56 @@ export function Sidebar({
       )}
 
       <div className="sb-section" style={{ marginTop: 8 }}>
-        {!collapsed && <div className="sb-section-label">{t('sidebar.section_outlook')}</div>}
-        {itemsBottom.map((it) => (
+        {!collapsed ? (
           <button
-            key={it.id}
-            className={`sb-item ${active === it.id ? 'active' : ''}`}
-            onClick={() => setActive(it.id)}
-            title={it.label}
+            type="button"
+            className={`sb-item sb-extras-toggle ${isExtrasActive ? 'active' : ''}`}
+            onClick={toggleExtras}
+            aria-expanded={extrasOpen}
+            aria-controls="sb-extras-list"
+            title={t('sidebar.extras')}
           >
-            <Icon name={it.icon} size={18} className="sb-icon" />
-            <span className="sb-label">{it.label}</span>
-            {it.id === 'releases' && unseenCount > 0 && (
-              <span className="sb-new-pill">{t('release.sidebar_new_pill')}</span>
-            )}
+            <Icon name="layout-grid" size={18} className="sb-icon" />
+            <span className="sb-label">{t('sidebar.extras')}</span>
+            <Icon
+              name="chevron-down"
+              size={13}
+              className="sb-extras-chev"
+              style={{ transform: extrasOpen ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform .15s ease' }}
+            />
           </button>
-        ))}
+        ) : (
+          // Collapsed: zeige die Sub-Items flach direkt mit kleinen Icons
+          null
+        )}
+        {(extrasOpen || collapsed) &&
+          extrasItems.map((it) => (
+            <button
+              key={it.id}
+              className={`sb-item ${active === it.id ? 'active' : ''} ${collapsed ? '' : 'sb-extras-sub'}`}
+              onClick={() => setActive(it.id)}
+              title={it.label}
+              id={!collapsed ? `sb-extras-list-${it.id}` : undefined}
+            >
+              <Icon name={it.icon} size={18} className="sb-icon" />
+              <span className="sb-label">{it.label}</span>
+            </button>
+          ))}
       </div>
 
       <div className="sb-foot-wrap" ref={profileRef}>
+        {/* Updates direkt über dem Profil (FR0_IIsrpwo). */}
+        <button
+          className={`sb-item sb-foot-link ${active === releasesItem.id ? 'active' : ''}`}
+          onClick={() => setActive(releasesItem.id)}
+          title={releasesItem.label}
+        >
+          <Icon name={releasesItem.icon} size={18} className="sb-icon" />
+          <span className="sb-label">{releasesItem.label}</span>
+          {unseenCount > 0 && (
+            <span className="sb-new-pill">{t('release.sidebar_new_pill')}</span>
+          )}
+        </button>
         <UpdatePill collapsed={collapsed} />
         <div
           className={`sb-foot ${profileOpen ? 'is-open' : ''}`}

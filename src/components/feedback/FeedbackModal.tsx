@@ -43,17 +43,26 @@ export function FeedbackModal({ initialType = 'bug', onClose }: FeedbackModalPro
   const [screenshot, setScreenshot] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
 
-  // Escape schließt
+  // Versehentlicher Backdrop-/Escape-Close mit unsubmittedem Inhalt → confirm
+  // (FHwNHtIY5Xe). Sonst tippt man 200 Wörter und ein Misklick frisst alles.
+  const hasUnsavedContent = () => title.trim().length > 0 || body.trim().length > 0 || !!screenshot;
+  const requestClose = () => {
+    if (hasUnsavedContent() && !window.confirm(t('feedback.discard_confirm'))) return;
+    onClose();
+  };
+
+  // Escape schließt (mit Discard-Guard)
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.preventDefault();
-        onClose();
+        requestClose();
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [title, body, screenshot]);
 
   // Clipboard-Paste-Listener (Cmd/Ctrl+V): wenn ein Bild im Clipboard ist,
   // hängen wir es an. Auf Image-Items reagieren, Text-Pastes ins Textfeld
@@ -131,7 +140,7 @@ export function FeedbackModal({ initialType = 'bug', onClose }: FeedbackModalPro
     <div
       className="feedback-backdrop"
       onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
+        if (e.target === e.currentTarget) requestClose();
       }}
       role="dialog"
       aria-modal="true"
@@ -142,7 +151,7 @@ export function FeedbackModal({ initialType = 'bug', onClose }: FeedbackModalPro
             <div className="feedback-eyebrow">{t('feedback.eyebrow')}</div>
             <h2 className="feedback-title">{t('feedback.modal_title')}</h2>
           </div>
-          <button className="feedback-close" onClick={onClose} aria-label={t('common.close')}>
+          <button className="feedback-close" onClick={requestClose} aria-label={t('common.close')}>
             <Icon name="x" size={16} />
           </button>
         </div>
@@ -246,7 +255,7 @@ export function FeedbackModal({ initialType = 'bug', onClose }: FeedbackModalPro
         </div>
 
         <div className="feedback-foot">
-          <button className="feedback-btn" onClick={onClose} disabled={busy}>
+          <button className="feedback-btn" onClick={requestClose} disabled={busy}>
             {t('common.cancel')}
           </button>
           <button className="feedback-btn is-primary" onClick={submit} disabled={!canSubmit}>
