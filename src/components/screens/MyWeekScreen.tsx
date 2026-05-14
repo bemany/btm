@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { Project } from '../../store/types';
+import type { Priority, Project } from '../../store/types';
 import { useStore } from '../../store/store';
 import type { ScreenId } from '../../store/types';
 import { filterAssignableProjects } from '../../lib/projectFilters';
@@ -7,6 +7,7 @@ import { useTick } from '../shared/hooks';
 import { Icon } from '../shared/Icon';
 import { ProjTag } from '../shared/ProjTag';
 import { showToast } from '../shared/Toast';
+import { DatePicker } from '../shared/DatePicker';
 import { fmtHMS, fmtMS } from '../../lib/format';
 import { computePomo } from '../../lib/pomodoro';
 import { useT, useLocale } from '../../i18n';
@@ -354,6 +355,9 @@ function QuickStartModal({ onClose, onStarted }: QuickStartModalProps) {
 
   const [title, setTitle] = useState('');
   const [proj, setProj] = useState<string>(''); // explizit leer → User muss wählen
+  const [desc, setDesc] = useState('');
+  const [prio, setPrio] = useState<Priority>('med');
+  const [due, setDue] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   const submit = async (e?: React.FormEvent) => {
@@ -374,13 +378,16 @@ function QuickStartModal({ onClose, onStarted }: QuickStartModalProps) {
       if (timer) {
         await stopTimer();
       }
+      const trimmedDesc = desc.trim();
       const created = await addTask({
         title: trimmed,
         proj,
         col: 'doing',
-        prio: 'med',
+        prio,
         estH: 0,
         who: currentUser,
+        desc: trimmedDesc.length > 0 ? trimmedDesc : undefined,
+        due: due ?? undefined,
       });
       if (!created) {
         showToast(t('toast.save_failed'));
@@ -407,7 +414,7 @@ function QuickStartModal({ onClose, onStarted }: QuickStartModalProps) {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [title, proj, busy]);
+  }, [title, proj, desc, prio, due, busy]);
 
   const canSubmit = !busy && title.trim().length > 0 && !!proj;
 
@@ -449,6 +456,43 @@ function QuickStartModal({ onClose, onStarted }: QuickStartModalProps) {
             />
             <div className="hint">{t('week.quickstart_project_hint')}</div>
           </div>
+
+          <div className="form-row">
+            <label>{t('week.quickstart_desc_label')}</label>
+            <textarea
+              value={desc}
+              onChange={(e) => setDesc(e.target.value)}
+              placeholder={t('week.quickstart_desc_placeholder')}
+              rows={3}
+              disabled={busy}
+              style={{ resize: 'vertical', minHeight: 64, fontFamily: 'inherit' }}
+            />
+          </div>
+
+          <div className="form-grid-2">
+            <div className="form-row">
+              <label>{t('week.quickstart_prio_label')}</label>
+              <select
+                value={prio}
+                onChange={(e) => setPrio(e.target.value as Priority)}
+                disabled={busy}
+              >
+                <option value="low">{t('task_detail.prio_low')}</option>
+                <option value="med">{t('task_detail.prio_med')}</option>
+                <option value="high">{t('task_detail.prio_high')}</option>
+              </select>
+            </div>
+            <div className="form-row">
+              <label>{t('week.quickstart_due_label')}</label>
+              <DatePicker
+                mode="date"
+                value={due}
+                onChange={(v) => setDue(v ?? null)}
+                placeholder={t('week.quickstart_due_placeholder')}
+              />
+            </div>
+          </div>
+
           {timer && (
             <div className="hint" style={{ marginTop: 12 }}>
               {t('week.quickstart_swap_hint')}
