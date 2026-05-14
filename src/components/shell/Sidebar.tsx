@@ -226,9 +226,8 @@ export function Sidebar({
         ))}
       </div>
 
-      <UpdatePill collapsed={collapsed} />
-
       <div className="sb-foot-wrap" ref={profileRef}>
+        <UpdatePill collapsed={collapsed} />
         <div
           className={`sb-foot ${profileOpen ? 'is-open' : ''}`}
           onClick={() => setProfileOpen((o) => !o)}

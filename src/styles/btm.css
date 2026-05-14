@@ -198,12 +198,13 @@ input:focus, textarea:focus, select:focus, button:focus { outline: none; }
 .app.sidebar-collapsed .sb-section-label { display: none; }
 .app.sidebar-collapsed .sb-item { justify-content: center; padding: 8px; }
 
-/* Update-Pill in der Sidebar — analog Claude-Desktop, sitzt über dem Profil.
-   Akzent-tinted, dezent pulsierend damit klar wird dass es klickbar ist. */
+/* Update-Pill in der Sidebar — analog Claude-Desktop, sitzt direkt über dem
+   Profil-Tile innerhalb von .sb-foot-wrap. Kein margin-top:auto mehr; das
+   wandert auf .sb-foot, sonst hat die Pille einen riesigen Abstand zum Foot
+   (Esref-Feedback: Pille hing irgendwo in der Mitte). */
 .sb-update-pill {
   appearance: none;
-  margin: 0 12px 8px;
-  margin-top: auto;
+  margin: 0 12px 6px;
   padding: 10px 12px;
   display: flex;
   align-items: center;
@@ -264,10 +265,10 @@ input:focus, textarea:focus, select:focus, button:focus { outline: none; }
 body[data-theme='glass-dark'] .sb-update-pill-title,
 body[data-theme='default-dark'] .sb-update-pill-title { color: var(--ink-900); }
 
+/* .sb-foot-wrap-Layout (flex column + margin-top:auto) lebt in
+   sidebar-profile.css. Hier nur die Foot-Tile-Optik selbst. */
 .sb-foot {
-  margin-top: auto;
   padding: 12px 14px;
-  border-top: 1px solid var(--ink-100);
   display: flex;
   align-items: center;
   gap: 10px;

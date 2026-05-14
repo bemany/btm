@@ -1,10 +1,15 @@
 /* Sidebar profile-foot + theme/menu popover.
    Lebt neben sb-foot in btm.css; dort liegt die ursprüngliche Foot-Definition. */
 
+/* Enthält Update-Pille (optional, oben) + Profil-Tile + Profil-Popover.
+   Flex-column damit Pille direkt über dem Tile sitzt und der ganze Block
+   gemeinsam unten klebt. */
 .sb-foot-wrap {
   margin-top: auto;
   position: relative;
   border-top: 1px solid var(--ink-100);
+  display: flex;
+  flex-direction: column;
 }
 
 .sb-foot-wrap .sb-foot {
