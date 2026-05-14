@@ -110,6 +110,7 @@ export const tasksRoute = new Hono<{ Variables: Variables }>()
         projectId: body.projectId ?? null,
         assigneeId: body.assigneeId ?? user.id,
         createdById: user.id,
+        parentTaskId: body.parentTaskId ?? null,
       })
       .returning();
     logActivity({ kind: 'task_created', actorId: user.id, target: id, meta: { title: row.title, projectId: row.projectId } });

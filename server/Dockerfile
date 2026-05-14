@@ -23,8 +23,8 @@ RUN npm prune --omit=dev
 FROM node:22-alpine AS runtime
 WORKDIR /app
 
-# tini als PID-1 für sauberes Signal-Handling
-RUN apk add --no-cache tini
+# tini als PID-1 für sauberes Signal-Handling + postgresql-client für DB-Clone
+RUN apk add --no-cache tini postgresql-client
 
 ENV NODE_ENV=production \
     PORT=3001 \

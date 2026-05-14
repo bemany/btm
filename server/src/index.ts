@@ -21,6 +21,8 @@ import { aiRoute } from './routes/ai.js';
 import { mcpRoute } from './routes/mcp.js';
 import { eventsRoute } from './routes/events.js';
 import { loginCodeRoute } from './routes/login-code.js';
+import { remindersRoute } from './routes/reminders.js';
+import { devAuthRoute } from './routes/dev-auth.js';
 
 const app = new Hono<{ Variables: Variables }>();
 
@@ -80,8 +82,12 @@ app.route('/api/ai', aiRoute);
 app.route('/api/mcp', mcpRoute);
 app.route('/api/events', eventsRoute);
 app.route('/api/login-code', loginCodeRoute);
-
 app.get('/api/healthz', (c) => c.json({ ok: true, ts: Date.now() }));
+
+// devAuthRoute VOR remindersRoute: remindersRoute hat .use('*', requireAuth)
+// das sonst /api/config und /api/auth/dev-pin mit 401 blockieren würde.
+app.route('/api', devAuthRoute);
+app.route('/api', remindersRoute);
 
 const port = Number(process.env.PORT ?? 3001);
 const host = process.env.HOST ?? '127.0.0.1';
@@ -102,3 +108,8 @@ startDigestScheduler();
 // aktivem Sync. Errors werden per User isoliert; Loop läuft weiter.
 import { startCalendarSyncScheduler } from './lib/calendar-sync.js';
 startCalendarSyncScheduler();
+
+// Reminder-Scheduler — prüft jede Minute auf fällige Task-Reminder
+// und schickt In-App-Notification + E-Mail.
+import { startReminderScheduler } from './lib/reminder-scheduler.js';
+startReminderScheduler();

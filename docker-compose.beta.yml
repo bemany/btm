@@ -1,0 +1,90 @@
+# BTM Beta Stack — /opt/btm-beta/ auf DO-VPS.
+# Eigene DB (btm-postgres-beta), eigene API (btm-api-beta).
+# URL: btm-beta.bethesna.org via Caddy.
+# DEV_PIN_AUTH=true → kein Magic-Link-Mail-Versand, PIN-Login aktiv.
+
+services:
+  btm-postgres-beta:
+    image: postgres:16-alpine
+    container_name: btm-postgres-beta
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: btm_beta
+      POSTGRES_USER: btm
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - btm-beta-pgdata:/var/lib/postgresql/data
+    networks:
+      - btm-beta
+      - btm-shared
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U btm -d btm_beta"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  btm-api-beta:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    image: btm-api-beta:latest
+    container_name: btm-api-beta
+    restart: unless-stopped
+    depends_on:
+      btm-postgres-beta:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      NODE_OPTIONS: --max-http-header-size=32768
+      PORT: 3002
+      HOST: 0.0.0.0
+      DATABASE_URL: postgres://btm:${DB_PASSWORD}@btm-postgres-beta:5432/btm_beta
+      # Prod-DB für DB-Clone-Feature (Admin-Widget)
+      PROD_DATABASE_URL: postgres://btm:${DB_PASSWORD}@btm-postgres:5432/btm
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      BETTER_AUTH_URL: https://btm-beta.bethesna.org
+      TRUSTED_ORIGINS: https://btm-beta.bethesna.org
+      INITIAL_ADMIN_EMAIL: ${INITIAL_ADMIN_EMAIL}
+      # DEV-Modus: PIN-Auth aktiv, kein Mail-Versand
+      DEV_PIN_AUTH: "true"
+      DEV_TEST_PIN: ${DEV_TEST_PIN}
+      # SMTP optional (auskommentiert = kein Mailversand im Beta)
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-465}
+      SMTP_SECURE: ${SMTP_SECURE:-true}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM: ${SMTP_FROM:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-}
+      UPLOAD_DIR: /app/uploads
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3002/api/healthz || exit 1"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+    volumes:
+      - btm-beta-uploads:/app/uploads
+    networks:
+      - btm-beta
+      - btm-shared
+      - caddy
+
+networks:
+  btm-beta:
+    name: btm-beta_default
+  btm-shared:
+    name: btm-shared_default
+    external: true
+    # Shared network damit btm-api-beta auf btm-postgres (prod) zugreifen kann
+  caddy:
+    name: n8n-docker-caddy_default
+    external: true
+
+volumes:
+  btm-beta-pgdata:
+    name: btm-beta-pgdata
+  btm-beta-uploads:
+    name: btm-beta-uploads

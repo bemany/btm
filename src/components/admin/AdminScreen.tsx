@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useStore } from '../../store/store';
 import type { AppUser, AppInvitation } from '../../store/types';
@@ -29,6 +29,14 @@ export function AdminScreen() {
   const [userDrawerId, setUserDrawerId] = useState<string | null>(null);
   const [teamsDrawerOpen, setTeamsDrawerOpen] = useState(false);
   const [tvDrawerOpen, setTvDrawerOpen] = useState(false);
+  const [devMode, setDevMode] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/config', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((j: { devMode?: boolean }) => { if (j.devMode) setDevMode(true); })
+      .catch(() => {});
+  }, []);
 
   const counts = {
     all: users.length,
@@ -188,6 +196,8 @@ export function AdminScreen() {
             </div>
             <FeedbackList />
           </section>
+
+          {devMode && <DevCloneWidget />}
         </div>
 
         <aside className="admin-side">
@@ -436,5 +446,58 @@ function ActivitySidebar({ users }: { users: AppUser[] }) {
         })}
       </div>
     </>
+  );
+}
+
+function DevCloneWidget() {
+  const [status, setStatus] = useState<'idle' | 'running' | 'ok' | 'error'>('idle');
+  const [msg, setMsg] = useState('');
+
+  const clone = async () => {
+    if (!confirm('Prod-DB komplett in Beta-DB klonen? Alle bestehenden Beta-Daten werden überschrieben.')) return;
+    setStatus('running');
+    setMsg('');
+    try {
+      const r = await fetch('/api/admin/clone-prod-db', {
+        method: 'POST',
+        credentials: 'include',
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error ?? 'Fehler');
+      setStatus('ok');
+      setMsg(j.note ?? 'Fertig');
+    } catch (e) {
+      setStatus('error');
+      setMsg(e instanceof Error ? e.message : 'Unbekannter Fehler');
+    }
+  };
+
+  return (
+    <section className="admin-section" style={{ borderTop: '2px solid var(--c-accent)', marginTop: '1.5rem' }}>
+      <div className="admin-section-head">
+        <Icon name="database" size={14} />
+        <h3>⚡ Beta-Dev: Prod-DB klonen</h3>
+      </div>
+      <p style={{ fontSize: '0.8rem', color: 'var(--c-text-2)', marginBottom: '0.75rem' }}>
+        Kopiert die komplette Produktions-Datenbank in diese Beta-Instanz. Bestehende Beta-Daten gehen verloren.
+      </p>
+      <button
+        className="admin-invite-btn"
+        onClick={clone}
+        disabled={status === 'running'}
+        style={{ background: status === 'error' ? 'var(--c-danger, #c0392b)' : undefined }}
+      >
+        {status === 'running' ? (
+          <><Icon name="loader-2" size={13} className="login-spin" /> Klone …</>
+        ) : (
+          <><Icon name="download" size={13} /> Prod-DB jetzt klonen</>
+        )}
+      </button>
+      {msg && (
+        <p style={{ marginTop: '0.5rem', fontSize: '0.78rem', color: status === 'ok' ? 'var(--c-accent)' : 'var(--c-danger, #c0392b)' }}>
+          {msg}
+        </p>
+      )}
+    </section>
   );
 }

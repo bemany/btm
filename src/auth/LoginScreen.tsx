@@ -5,6 +5,7 @@ import { useAuth } from './AuthContext';
 import { useT } from '../i18n';
 
 type Phase = 'idle' | 'sending' | 'sent' | 'error';
+type DevPhase = 'idle' | 'submitting' | 'error';
 
 export function LoginScreen() {
   const { signIn } = useAuth();
@@ -14,6 +15,17 @@ export function LoginScreen() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [code, setCode] = useState('');
   const [verifying, setVerifying] = useState(false);
+
+  const [devMode, setDevMode] = useState(false);
+  const [pin, setPin] = useState('');
+  const [devPhase, setDevPhase] = useState<DevPhase>('idle');
+
+  useEffect(() => {
+    fetch('/api/config', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((j: { devMode?: boolean }) => { if (j.devMode) setDevMode(true); })
+      .catch(() => {});
+  }, []);
 
   // Auto-Login wenn URL `?as=email&code=123456` enthält (Admin-Magic-Link).
   // Wird genau einmal pro Mount ausgeführt — danach URL bereinigt.
@@ -60,6 +72,30 @@ export function LoginScreen() {
     } catch (e) {
       setPhase('error');
       setErrorMsg(e instanceof Error ? e.message : t('toast.save_failed'));
+    }
+  };
+
+  const submitPin = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!email.includes('@') || !pin) return;
+    setDevPhase('submitting');
+    setErrorMsg(null);
+    try {
+      const r = await fetch('/api/dev-pin', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, pin }),
+      });
+      if (!r.ok) {
+        const j = await r.json().catch(() => ({}));
+        throw new Error(j.error ?? t('login.pin_invalid'));
+      }
+      window.location.href = '/';
+    } catch (e) {
+      setErrorMsg(e instanceof Error ? e.message : t('login.pin_invalid'));
+      showToast(e instanceof Error ? e.message : t('login.pin_invalid'));
+      setDevPhase('error');
     }
   };
 
@@ -115,7 +151,69 @@ export function LoginScreen() {
           </div>
         </div>
 
-        {phase === 'sent' ? (
+        {devMode ? (
+          <form onSubmit={submitPin} className="login-form">
+            <h1>{t('login.pin_title')}</h1>
+            <p className="login-lead">{t('login.pin_lead')}</p>
+
+            <label className="login-label" htmlFor="login-email-dev">
+              {t('login.email_label')}
+            </label>
+            <input
+              id="login-email-dev"
+              type="email"
+              autoComplete="email"
+              autoFocus
+              required
+              placeholder={t('login.email_placeholder')}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={devPhase === 'submitting'}
+              className="login-input"
+            />
+
+            <label className="login-label" htmlFor="login-pin" style={{ marginTop: '0.75rem' }}>
+              {t('login.pin_label')}
+            </label>
+            <input
+              id="login-pin"
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]{6}"
+              maxLength={6}
+              autoComplete="one-time-code"
+              required
+              placeholder="123456"
+              value={pin}
+              onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              disabled={devPhase === 'submitting'}
+              className="login-input login-code-input"
+            />
+
+            {errorMsg && <div className="login-error">{errorMsg}</div>}
+
+            <button
+              type="submit"
+              disabled={devPhase === 'submitting' || !email.includes('@') || pin.length !== 6}
+              className="login-btn-primary"
+            >
+              {devPhase === 'submitting' ? (
+                <>
+                  <Icon name="loader-2" size={14} className="login-spin" /> {t('login.submitting')}
+                </>
+              ) : (
+                <>
+                  <Icon name="key" size={14} /> {t('login.pin_submit')}
+                </>
+              )}
+            </button>
+
+
+            <p className="login-foot" style={{ color: 'var(--c-accent)' }}>
+              {t('login.pin_badge')}
+            </p>
+          </form>
+        ) : phase === 'sent' ? (
           <div className="login-sent">
             <div className="login-sent-icon">
               <Icon name="mail-check" size={36} />
@@ -219,3 +317,4 @@ export function LoginScreen() {
     </div>
   );
 }
+

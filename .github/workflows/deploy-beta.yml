@@ -1,0 +1,57 @@
+name: Deploy Beta (development branch)
+
+on:
+  push:
+    branches:
+      - development
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Create deploy packages
+        run: |
+          tar --exclude=server/node_modules --exclude=server/dist --exclude=server/.env \
+              -czf /tmp/btm-beta-server.tar.gz server docker-compose.beta.yml
+          tar -czf /tmp/btm-beta-dist.tar.gz dist
+
+      - name: Upload to DO-VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: 142.93.172.15
+          username: root
+          key: ${{ secrets.DO_SSH_KEY }}
+          source: '/tmp/btm-beta-server.tar.gz,/tmp/btm-beta-dist.tar.gz'
+          target: /opt/btm-beta/
+          strip_components: 2
+
+      - name: Deploy on server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 142.93.172.15
+          username: root
+          key: ${{ secrets.DO_SSH_KEY }}
+          script: |
+            cd /opt/btm-beta
+            tar -xzf btm-beta-server.tar.gz
+            tar -xzf btm-beta-dist.tar.gz
+            rm -f btm-beta-server.tar.gz btm-beta-dist.tar.gz
+            mv docker-compose.beta.yml docker-compose.yml 2>/dev/null || true
+            docker compose build btm-api-beta
+            docker compose up -d btm-api-beta
+            echo "✅ BTM Beta deployed"

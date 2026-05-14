@@ -8,7 +8,7 @@ import { db } from '../db/client.js';
 import { notifications } from '../db/schema.js';
 import { emit } from './events.js';
 
-export type NotificationKind = 'mention' | 'review_request' | 'feedback_resolved';
+export type NotificationKind = 'mention' | 'review_request' | 'feedback_resolved' | 'reminder';
 
 export interface MentionPayload {
   commentId: string;

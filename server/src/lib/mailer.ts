@@ -318,6 +318,45 @@ ${opts.unsubscribeUrl}
   return { subject, text, html };
 }
 
+// ── Task-Reminder-Mail ─────────────────────────────────────────────────
+// Wird zum eingestellten Zeitpunkt an den User geschickt.
+export function reminderEmail(opts: {
+  recipientName: string;
+  taskTitle: string;
+  taskUrl: string;
+  remindAt: string; // formatierter Zeitpunkt "Do., 15.05.2026 09:00"
+}): { subject: string; text: string; html: string } {
+  const firstName = opts.recipientName.split(' ')[0];
+  const subject = `Erinnerung: ${opts.taskTitle}`;
+  const text = `Hi ${firstName},\n\ndies ist deine Erinnerung für:\n\n  ${opts.taskTitle}\n\nAufgabe öffnen:\n${opts.taskUrl}\n\n— BTM`;
+  const html = `<!doctype html>
+<html lang="de"><body style="margin:0;padding:0;background:#FAF7F2;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:#1C1A17;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#FAF7F2;padding:40px 16px;">
+  <tr><td align="center">
+    <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;">
+      <tr><td style="padding:0 0 24px;">
+        <div style="font-size:22px;font-weight:700;color:#1C1A17;">⏰ Erinnerung</div>
+        <div style="font-size:13px;color:#6B6359;margin-top:4px;">${opts.remindAt}</div>
+      </td></tr>
+      <tr><td style="background:#fff;border:1px solid #E8E3DC;border-radius:10px;padding:20px 24px;">
+        <div style="font-size:12px;font-weight:600;color:#6B6359;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">Aufgabe</div>
+        <div style="font-size:16px;font-weight:600;color:#1C1A17;margin-bottom:20px;">${opts.taskTitle}</div>
+        <table role="presentation" cellpadding="0" cellspacing="0">
+          <tr><td style="background:#1C1A17;border-radius:8px;">
+            <a href="${opts.taskUrl}" style="display:inline-block;padding:11px 22px;color:#FAF7F2;font-weight:600;font-size:14px;text-decoration:none;">Aufgabe öffnen →</a>
+          </td></tr>
+        </table>
+      </td></tr>
+      <tr><td style="padding:18px 8px 0;text-align:center;">
+        <div style="font-size:11px;color:#A8A097;">Du bekommst diese Mail weil du einen Reminder für diese Aufgabe gesetzt hast. · btm.bethesna.org</div>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>
+</body></html>`;
+  return { subject, text, html };
+}
+
 // ── Daily-Digest-Mail ───────────────────────────────────────────────────
 // Sammelt alles, was der User in den letzten 24h verpasst hat. Wird vom
 // Scheduler (server/src/lib/digest.ts) gerufen.

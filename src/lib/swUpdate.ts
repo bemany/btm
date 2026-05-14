@@ -61,12 +61,16 @@ export function subscribeSwUpdate(cb: (pending: boolean) => void): () => void {
 /** User hat „Relaunch" geklickt — neuen Worker aktivieren + Tab neu laden. */
 export async function applyPendingUpdate(): Promise<void> {
   if (!updateSWFn) {
-    // Kein SW registriert (Dev oder unsupported) → trotzdem reload, damit
-    // ein Token-/Auth-Refresh greift.
     window.location.reload();
     return;
   }
-  await updateSWFn(true);
+  try {
+    await updateSWFn(true);
+  } catch {
+    // ignore
+  }
+  // Fallback: SW-skipWaiting löst nicht immer einen Reload aus.
+  window.location.reload();
 }
 
 /** React-Hook: liefert true wenn eine neue Version bereit liegt. */
