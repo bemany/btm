@@ -9,6 +9,92 @@ import {
 } from '../../data/apiTokens';
 import { useT, useLocale } from '../../i18n';
 
+// Setup-Prompt für Claude (Feature FTTMD2R8-LH). Wird in die Zwischenablage
+// kopiert und vom User in Claude Desktop eingefügt. Claude liest die
+// Anweisungen, schreibt die Config selbst (Filesystem-MCP), bittet um
+// Neustart und ruft danach me + list_week auf — User sieht direkt seine
+// geplanten Aufgaben. Token wird inline eingebettet, sonst muss der User
+// hinterher noch suchen + tauschen → reibungsärmster Pfad.
+function buildSetupPrompt(token: string, locale: 'de' | 'en'): string {
+  const tokenLine = token || (locale === 'en' ? '<YOUR-BTM-TOKEN>' : '<DEIN-BTM-TOKEN>');
+  if (locale === 'en') {
+    return `Hey Claude, please help me connect BTM (my internal task tool) so you can manage my tasks, projects and timers.
+
+**Step 1 — Update the Claude Desktop config**
+
+The file lives at:
+- macOS: \`~/Library/Application Support/Claude/claude_desktop_config.json\`
+- Windows: \`%APPDATA%\\Claude\\claude_desktop_config.json\`
+- Linux: \`~/.config/Claude/claude_desktop_config.json\`
+
+If the file does not exist yet, create it. If it exists, **only add the \`btm\` entry inside \`mcpServers\`** — don't overwrite other servers.
+
+\`\`\`json
+{
+  "mcpServers": {
+    "btm": {
+      "url": "https://btm.bethesna.org/api/mcp",
+      "headers": {
+        "Authorization": "Bearer ${tokenLine}"
+      }
+    }
+  }
+}
+\`\`\`
+
+If you don't have filesystem access, show me the exact file path + JSON and I'll paste it myself.
+
+**Step 2 — Ask me to restart**
+
+Tell me: "Please quit Claude Desktop (menu Claude → Quit) and open it again."
+
+**Step 3 — After the restart**
+
+Once you see the \`btm\` tools in your toolset:
+1. Call \`me\` and greet me by my first name.
+2. Call \`list_week\` and show me my planned tasks for this week as a short list — one line per task with project · title · planned hours.
+
+Let's go.`;
+  }
+  return `Hey Claude, hilf mir bitte BTM (mein internes Task-Tool) mit dir zu verbinden, damit du meine Aufgaben, Projekte und Timer verwalten kannst.
+
+**Schritt 1 — Claude-Desktop-Konfig aktualisieren**
+
+Die Datei liegt hier:
+- macOS: \`~/Library/Application Support/Claude/claude_desktop_config.json\`
+- Windows: \`%APPDATA%\\Claude\\claude_desktop_config.json\`
+- Linux: \`~/.config/Claude/claude_desktop_config.json\`
+
+Falls die Datei noch nicht existiert: leg sie an. Falls schon vorhanden: **füge nur den \`btm\`-Eintrag im \`mcpServers\`-Block hinzu** — überschreib keine anderen Server.
+
+\`\`\`json
+{
+  "mcpServers": {
+    "btm": {
+      "url": "https://btm.bethesna.org/api/mcp",
+      "headers": {
+        "Authorization": "Bearer ${tokenLine}"
+      }
+    }
+  }
+}
+\`\`\`
+
+Wenn du keinen Filesystem-Zugriff hast, zeig mir den exakten Pfad + JSON und ich pflege ihn selber ein.
+
+**Schritt 2 — Bitte mich um Neustart**
+
+Sag mir: „Bitte beende Claude Desktop einmal (Menü Claude → Quit) und öffne es wieder."
+
+**Schritt 3 — Nach dem Neustart**
+
+Sobald du die \`btm\`-Tools im Toolset siehst:
+1. Ruf \`me\` auf und begrüß mich mit Vornamen.
+2. Ruf \`list_week\` auf und zeig mir meine geplanten Aufgaben dieser Woche als kurze Liste — eine Zeile pro Task mit Projekt · Titel · geplante Stunden.
+
+Los geht's.`;
+}
+
 export function ApiTokensTab() {
   const t = useT();
   const [locale] = useLocale();
@@ -64,9 +150,70 @@ export function ApiTokensTab() {
     }
   };
 
+  const copyPrompt = async () => {
+    const prompt = buildSetupPrompt(freshlyCreated?.plain ?? '', locale);
+    try {
+      await navigator.clipboard.writeText(prompt);
+      showToast(t('api_tokens.wizard_prompt_copied'));
+    } catch {
+      showToast(t('api_tokens.copy_failed_toast'));
+    }
+  };
+
+  const hasFreshToken = !!freshlyCreated;
+
   return (
     <div className="set-pane">
       <p className="set-intro">{t('api_tokens.drawer_sub')}</p>
+
+      {/* ── Claude-Setup-Wizard ───────────────────────────────────────── */}
+      <div className="apit-wizard">
+        <div className="apit-wizard-head">
+          <Icon name="sparkles" size={16} style={{ color: 'var(--accent-500)' }} />
+          <h4>{t('api_tokens.wizard_title')}</h4>
+        </div>
+        <p className="apit-wizard-sub">{t('api_tokens.wizard_sub')}</p>
+
+        <ol className="apit-wizard-steps">
+          <li className={hasFreshToken ? 'is-done' : ''}>
+            <div className="apit-wizard-step-num">{hasFreshToken ? '✓' : '1'}</div>
+            <div className="apit-wizard-step-text">
+              <div className="apit-wizard-step-title">
+                {hasFreshToken ? t('api_tokens.wizard_step1_done') : t('api_tokens.wizard_step1')}
+              </div>
+              <div className="apit-wizard-step-body">{t('api_tokens.wizard_step1_body')}</div>
+            </div>
+          </li>
+          <li>
+            <div className="apit-wizard-step-num">2</div>
+            <div className="apit-wizard-step-text">
+              <div className="apit-wizard-step-title">{t('api_tokens.wizard_step2')}</div>
+              <div className="apit-wizard-step-body">
+                {hasFreshToken
+                  ? t('api_tokens.wizard_step2_body')
+                  : t('api_tokens.wizard_step2_btn_placeholder_hint')}
+              </div>
+              <button
+                type="button"
+                className={`tb-btn ${hasFreshToken ? 'accent' : ''} apit-wizard-cta`}
+                onClick={copyPrompt}
+              >
+                <Icon name="copy" size={12} />
+                {hasFreshToken
+                  ? t('api_tokens.wizard_step2_btn')
+                  : t('api_tokens.wizard_step2_btn_placeholder')}
+              </button>
+            </div>
+          </li>
+          <li>
+            <div className="apit-wizard-step-num">3</div>
+            <div className="apit-wizard-step-text">
+              <div className="apit-wizard-step-title">{t('api_tokens.wizard_step3')}</div>
+              <div className="apit-wizard-step-body">{t('api_tokens.wizard_step3_body')}</div>
+            </div>
+          </li>
+        </ol>
+      </div>
 
       {freshlyCreated && (
         <div className="apit-fresh">
@@ -172,19 +319,14 @@ export function ApiTokensTab() {
 
       <details className="apit-mcp">
         <summary className="apit-mcp-head">
-          <Icon name="sparkles" size={14} style={{ color: 'var(--accent-500)' }} />
-          <span>Mit Claude verbinden (MCP)</span>
+          <Icon name="settings-2" size={14} style={{ color: 'var(--ink-500)' }} />
+          <span>{t('api_tokens.wizard_advanced')}</span>
           <Icon name="chevron-down" size={13} style={{ marginLeft: 'auto' }} />
         </summary>
         <div className="apit-mcp-body">
-          <p>
-            BTM hat einen eingebauten MCP-Server. Damit kannst du in Claude Desktop oder Claude Web direkt
-            Aufgaben anlegen, planen und abhaken — per natürlicher Sprache.
-          </p>
-
-          <div className="apit-mcp-step-label">A · Claude Desktop (empfohlen)</div>
+          <div className="apit-mcp-step-label">A · Claude Desktop (manuell)</div>
           <p style={{ fontSize: 12.5, lineHeight: 1.55, color: 'var(--ink-700)' }}>
-            Verlässlichster Weg. Datei <code>claude_desktop_config.json</code> ergänzen:
+            Datei <code>claude_desktop_config.json</code> ergänzen:
           </p>
           <pre className="apit-mcp-code">{`{
   "mcpServers": {
@@ -222,15 +364,7 @@ Remote MCP URL    https://btm.bethesna.org/api/mcp?token=<dein-token-oben>`}</pr
             URL wie ein Passwort.
           </p>
 
-          <div className="apit-mcp-step-label">C · Beispiel-Prompts</div>
-          <ul style={{ margin: '4px 0 14px 18px', padding: 0, fontSize: 12.5, color: 'var(--ink-700)', lineHeight: 1.6 }}>
-            <li>„Was hab ich diese Woche offen?"</li>
-            <li>„Leg eine Aufgabe an: Lighthouse-Audit fertigmachen, Projekt P1, 1.5h."</li>
-            <li>„Schieb meine erste In-Arbeit-Task auf Erledigt."</li>
-            <li>„Starte den Timer für die og:image-Task."</li>
-          </ul>
-
-          <div className="apit-mcp-step-label">D · Verfügbare Tools (14)</div>
+          <div className="apit-mcp-step-label">C · Verfügbare Tools (14)</div>
           <p style={{ fontSize: 12, lineHeight: 1.55, color: 'var(--ink-700)' }}>
             <code>me</code> · <code>list_tasks</code> · <code>create_task</code> · <code>update_task</code> ·{' '}
             <code>move_task</code> · <code>delete_task</code> · <code>list_projects</code> ·{' '}
@@ -239,7 +373,7 @@ Remote MCP URL    https://btm.bethesna.org/api/mcp?token=<dein-token-oben>`}</pr
             <code>list_activity</code>
           </p>
 
-          <div className="apit-mcp-step-label">E · Quick-Test</div>
+          <div className="apit-mcp-step-label">D · Quick-Test (curl)</div>
           <pre className="apit-mcp-code">{`curl "https://btm.bethesna.org/api/mcp?token=<dein-token>" \\
   -H "Content-Type: application/json" \\
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'`}</pre>
