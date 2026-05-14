@@ -6,8 +6,10 @@ import { AuthProvider } from './auth/AuthContext';
 import { AppGate } from './auth/AppGate';
 import { I18nProvider } from './i18n';
 import { installErrorToaster } from './lib/errorToaster';
+import { registerServiceWorker } from './lib/swUpdate';
 
 installErrorToaster();
+registerServiceWorker();
 
 import './styles/globio-tokens.css';
 import './styles/btm.css';

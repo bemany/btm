@@ -25,6 +25,14 @@ const createSchema = z.object({
   contextPath: z.string().max(2000).optional().nullable(),
   contextTheme: z.string().max(80).optional().nullable(),
   contextUserAgent: z.string().max(500).optional().nullable(),
+  // Data-URI eines optionalen Screenshots (~8 MB base64 max).
+  // Drag&drop + Clipboard-Paste im FeedbackModal.
+  screenshotBase64: z
+    .string()
+    .max(10_000_000)
+    .regex(/^data:image\/(png|jpe?g|gif|webp);base64,/i, 'invalid screenshot data URI')
+    .optional()
+    .nullable(),
 });
 
 const updateSchema = z.object({
@@ -70,6 +78,7 @@ export const feedbackRoute = new Hono<{ Variables: Variables }>()
         contextPath: body.contextPath ?? null,
         contextTheme: body.contextTheme ?? null,
         contextUserAgent: body.contextUserAgent ?? null,
+        screenshotBase64: body.screenshotBase64 ?? null,
         submitterId: me.id,
       })
       .returning();

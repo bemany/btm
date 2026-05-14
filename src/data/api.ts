@@ -531,6 +531,8 @@ export async function createFeedback(input: {
   contextPath?: string | null;
   contextTheme?: string | null;
   contextUserAgent?: string | null;
+  /** Data-URI eines optionalen Screenshots (~8 MB base64 max). */
+  screenshotBase64?: string | null;
 }): Promise<FeedbackEntry> {
   const { feedback } = await apiFetch<{ feedback: FeedbackEntry }>('/feedback', {
     method: 'POST',

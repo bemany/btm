@@ -6,7 +6,12 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      // 'prompt': neue SW wartet auf User-Klick statt sofort zu übernehmen.
+      // Permanenter Toast in der Sidebar nutzt das (siehe src/lib/swUpdate.ts).
+      registerType: 'prompt',
+      // Wir registrieren den SW selbst in main.tsx — der Auto-Inject vom
+      // Plugin würde ohne User-Prompt direkt aktivieren wollen.
+      injectRegister: false,
       includeAssets: [
         'app-icon.svg',
         'apple-touch-icon.png',
@@ -43,8 +48,11 @@ export default defineConfig({
         // erreichbar wenn der SW selbst kaputt ist (Henne/Ei).
         globIgnores: ['**/reset.html'],
         cleanupOutdatedCaches: true,
-        clientsClaim: true,
-        skipWaiting: true,
+        // clientsClaim/skipWaiting deaktiviert — sonst übernimmt der neue
+        // SW sofort und unsere „Relaunch to update"-UX greift nicht mehr.
+        // Der User triggert die Übernahme manuell über applyPendingUpdate().
+        clientsClaim: false,
+        skipWaiting: false,
         navigateFallback: '/index.html',
         // /api/* darf NIE gecacht werden — Auth-State ist sensibel.
         // /reset.html muss IMMER frisch vom Server kommen (SW-Reset-Tool).

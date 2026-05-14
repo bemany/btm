@@ -441,6 +441,9 @@ export const feedback = pgTable(
     contextPath: text('context_path'),
     contextTheme: text('context_theme'),
     contextUserAgent: text('context_user_agent'),
+    // Optionaler Screenshot als Data-URI (PNG/JPEG, max ~8 MB).
+    // Drag&drop + Clipboard-Paste im Modal.
+    screenshotBase64: text('screenshot_base64'),
     submitterId: text('submitter_id').references(() => users.id, { onDelete: 'set null' }),
     status: text('status', { enum: ['open', 'in_progress', 'done', 'wontfix'] })
       .notNull()

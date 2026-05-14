@@ -134,6 +134,13 @@
       "when": 1778830000000,
       "tag": "0018_api_token_plain",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1778840000000,
+      "tag": "0019_feedback_screenshot",
+      "breakpoints": true
     }
   ]
 }

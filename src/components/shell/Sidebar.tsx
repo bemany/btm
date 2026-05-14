@@ -11,6 +11,7 @@ import { getLastSeenRelease, unseenReleases } from '../../data/releases';
 import * as api from '../../data/api';
 import { SYNC_KEYS } from '../../data/sync';
 import { useT, useLocale } from '../../i18n';
+import { applyPendingUpdate, useUpdatePending } from '../../lib/swUpdate';
 
 export interface SidebarProps {
   active: ScreenId;
@@ -116,7 +117,15 @@ export function Sidebar({
     { id: 'board', label: t('sidebar.board'), icon: 'kanban-square', count: null },
     { id: 'capacity', label: t('sidebar.capacity'), icon: 'gauge', count: null },
     { id: 'times', label: t('sidebar.times'), icon: 'clock', count: null },
-    { id: 'projects', label: t('sidebar.projects'), icon: 'folder', count: projects.length },
+    {
+      id: 'projects',
+      label: t('sidebar.projects'),
+      icon: 'folder',
+      // Chip zeigt nur Favoriten — sonst dominiert die Gesamtzahl (z.B. 18)
+      // den Sidebar-Look obwohl die meisten Projekte für den User
+      // uninteressant sind.
+      count: projects.filter((p) => p.isFavorite).length,
+    },
   ];
   const adminItem: Item = { id: 'admin', label: t('sidebar.admin'), icon: 'shield-check' };
   const itemsBottom: Item[] = [
@@ -216,6 +225,8 @@ export function Sidebar({
           </button>
         ))}
       </div>
+
+      <UpdatePill collapsed={collapsed} />
 
       <div className="sb-foot-wrap" ref={profileRef}>
         <div
@@ -427,5 +438,36 @@ export function Sidebar({
         )}
       </div>
     </aside>
+  );
+}
+
+// Permanenter „Update verfügbar"-Toast oberhalb des Profil-Buttons. Erscheint
+// nur wenn der SW eine neue Version bereit hält (siehe lib/swUpdate.ts).
+// Klick triggert skipWaiting + reload. Inspiration: Claude-Desktop unten
+// links über dem Account-Tile.
+function UpdatePill({ collapsed }: { collapsed: boolean }) {
+  const t = useT();
+  const pending = useUpdatePending();
+  if (!pending) return null;
+  return (
+    <button
+      type="button"
+      className={`sb-update-pill ${collapsed ? 'is-collapsed' : ''}`}
+      onClick={() => {
+        void applyPendingUpdate();
+      }}
+      title={t('sidebar.update_available')}
+    >
+      <span className="sb-update-pill-icon">
+        <Icon name="sparkles" size={14} />
+      </span>
+      {!collapsed && (
+        <span className="sb-update-pill-text">
+          <span className="sb-update-pill-title">{t('sidebar.update_available')}</span>
+          <span className="sb-update-pill-sub">{t('sidebar.update_relaunch')}</span>
+        </span>
+      )}
+      {!collapsed && <Icon name="arrow-right" size={13} className="sb-update-pill-chev" />}
+    </button>
   );
 }

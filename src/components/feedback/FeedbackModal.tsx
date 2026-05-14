@@ -21,12 +21,27 @@ export interface FeedbackModalProps {
   onClose: () => void;
 }
 
+// Image-Größenlimit (8 MB Data-URI). Etwas mehr als das übliche „Bild von
+// Chrome-Screenshot" (1-3 MB) — die Größe geht 1:1 in die DB.
+const MAX_SCREENSHOT_BYTES = 8 * 1024 * 1024;
+
+function fileToDataUri(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result ?? ''));
+    r.onerror = () => reject(r.error ?? new Error('read failed'));
+    r.readAsDataURL(file);
+  });
+}
+
 export function FeedbackModal({ initialType = 'bug', onClose }: FeedbackModalProps) {
   const t = useT();
   const [type, setType] = useState<FeedbackType>(initialType);
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [busy, setBusy] = useState(false);
+  const [screenshot, setScreenshot] = useState<string | null>(null);
+  const [dragOver, setDragOver] = useState(false);
 
   // Escape schließt
   useEffect(() => {
@@ -39,6 +54,54 @@ export function FeedbackModal({ initialType = 'bug', onClose }: FeedbackModalPro
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
+
+  // Clipboard-Paste-Listener (Cmd/Ctrl+V): wenn ein Bild im Clipboard ist,
+  // hängen wir es an. Auf Image-Items reagieren, Text-Pastes ins Textfeld
+  // wie gewohnt durchlassen.
+  useEffect(() => {
+    const onPaste = (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (let i = 0; i < items.length; i++) {
+        const it = items[i];
+        if (it.kind === 'file' && it.type.startsWith('image/')) {
+          const f = it.getAsFile();
+          if (f) {
+            e.preventDefault();
+            void ingestFile(f);
+            return;
+          }
+        }
+      }
+    };
+    window.addEventListener('paste', onPaste);
+    return () => window.removeEventListener('paste', onPaste);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const ingestFile = async (f: File) => {
+    if (!f.type.startsWith('image/')) {
+      showToast(t('feedback.screenshot_not_image'));
+      return;
+    }
+    if (f.size > MAX_SCREENSHOT_BYTES) {
+      showToast(t('feedback.screenshot_too_large'));
+      return;
+    }
+    try {
+      const uri = await fileToDataUri(f);
+      setScreenshot(uri);
+    } catch {
+      showToast(t('common.error_generic'));
+    }
+  };
+
+  const onDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    const f = e.dataTransfer.files?.[0];
+    if (f) void ingestFile(f);
+  };
 
   const canSubmit = title.trim().length > 0 && body.trim().length > 0 && !busy;
 
@@ -53,6 +116,7 @@ export function FeedbackModal({ initialType = 'bug', onClose }: FeedbackModalPro
         contextPath: window.location.pathname + window.location.search,
         contextTheme: document.body.dataset.theme ?? null,
         contextUserAgent: navigator.userAgent.slice(0, 500),
+        screenshotBase64: screenshot ?? null,
       });
       showToast(t('feedback.sent_toast'));
       onClose();
@@ -134,6 +198,47 @@ export function FeedbackModal({ initialType = 'bug', onClose }: FeedbackModalPro
               maxLength={20_000}
             />
           </label>
+          <div
+            className={`feedback-screenshot-zone ${dragOver ? 'is-drag' : ''} ${screenshot ? 'has-image' : ''}`}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragOver(true);
+            }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={onDrop}
+          >
+            {screenshot ? (
+              <>
+                <img src={screenshot} alt="" className="feedback-screenshot-preview" />
+                <button
+                  type="button"
+                  className="feedback-screenshot-remove"
+                  onClick={() => setScreenshot(null)}
+                  aria-label={t('feedback.screenshot_remove')}
+                  title={t('feedback.screenshot_remove')}
+                >
+                  <Icon name="x" size={12} />
+                </button>
+              </>
+            ) : (
+              <label className="feedback-screenshot-empty">
+                <Icon name="image-plus" size={18} />
+                <span className="feedback-screenshot-empty-title">{t('feedback.screenshot_drop_hint')}</span>
+                <span className="feedback-screenshot-empty-sub">{t('feedback.screenshot_paste_hint')}</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  hidden
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) void ingestFile(f);
+                    e.target.value = '';
+                  }}
+                />
+              </label>
+            )}
+          </div>
+
           <div className="feedback-context-hint">
             <Icon name="info" size={11} />
             <span>{t('feedback.context_hint')}</span>
