@@ -41,6 +41,17 @@ export function FeedbackList() {
     type: 'bug',
   });
   const [savingEdit, setSavingEdit] = useState(false);
+  // Multi-Select für Sammel-Prompt (FwQQWBHfTid). Set von Feedback-IDs.
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+  const clearSelection = () => setSelectedIds(new Set());
 
   const { data: items = [], isLoading } = useQuery({
     queryKey: FEEDBACK_KEY,
@@ -209,6 +220,110 @@ export function FeedbackList() {
     }
   };
 
+  // Sammel-Prompt für mehrere Feedbacks — gemeinsamer Repo-Kontext-Header,
+  // dann pro Feedback ein Block, am Ende einmalig die Resolve-Curl-Templates.
+  // Reihenfolge: gleiche Sort wie in der Liste (neueste zuerst aus der API,
+  // im UI in `filtered` durchgereicht).
+  const buildBatchPrompt = (items: FeedbackEntry[]): string => {
+    const lines: string[] = [];
+    const n = items.length;
+    const bugs = items.filter((i) => i.type === 'bug').length;
+    const features = items.filter((i) => i.type === 'feature').length;
+    lines.push(`# ${n} Feedbacks aus BTM — Sammelbearbeitung`);
+    lines.push('');
+    lines.push(`**Mix:** ${bugs} Bug-Report${bugs === 1 ? '' : 's'} + ${features} Feature-Request${features === 1 ? '' : 's'}`);
+    lines.push('');
+    lines.push('## Kontext zum BTM-Repo');
+    lines.push('');
+    lines.push('- Repo: https://github.com/bemany/btm (privat)');
+    lines.push('- Lokal: ~/Documents/GitHub/btm');
+    lines.push('- Frontend: Vite + React + TypeScript, Backend: Hono + Drizzle + Postgres');
+    lines.push('- Live-URL: https://btm.bethesna.org');
+    lines.push('- Setup-Doku: ~/Documents/GitHub/btm/CLAUDE.md');
+    lines.push('');
+    lines.push('## Aufgabe (für alle unten gelisteten Feedbacks)');
+    lines.push('');
+    lines.push('Arbeite die Feedbacks der Reihe nach durch. Verwandte Items (z.B. mehrere CSS-Bugs am gleichen Screen) dürfen in einem Commit zusammengefasst werden, müssen aber einzeln resolved werden damit jeder Submitter eine Inbox- + Mail-Benachrichtigung bekommt.');
+    lines.push('');
+    lines.push('Pro Feedback:');
+    lines.push('1. Code implementieren');
+    lines.push('2. `npm run build` + Deploy nach DO-VPS (siehe CLAUDE.md → Deploy-Workflow)');
+    lines.push('3. Feedback per `POST /api/feedback/{id}/resolve` als done markieren — mit kurzer Resolution-Note (1–2 Sätze) was du gemacht hast');
+    lines.push('4. `git push origin main`');
+    lines.push('');
+    items.forEach((item, idx) => {
+      const submitter = users.find((u) => u.id === item.submitterId);
+      const submitterName = submitter?.name ?? 'Unbekannt';
+      const submitterEmail = submitter?.email ?? '—';
+      lines.push('---');
+      lines.push('');
+      lines.push(`## ${idx + 1}/${n} · ${item.type === 'bug' ? '🐛 Bug' : '✨ Feature'} · \`${item.id}\``);
+      lines.push('');
+      lines.push(`**Titel:** ${item.title}`);
+      lines.push(`**Status:** ${item.status}`);
+      lines.push(`**Eingereicht von:** ${submitterName} (${submitterEmail})`);
+      lines.push(`**Datum:** ${new Date(item.createdAt).toLocaleString('de-DE')}`);
+      if (item.contextPath) lines.push(`**War auf Seite:** \`${item.contextPath}\``);
+      if (item.contextTheme) lines.push(`**Aktives Theme:** \`${item.contextTheme}\``);
+      lines.push('');
+      lines.push('### Beschreibung');
+      lines.push('');
+      lines.push(item.body);
+      lines.push('');
+    });
+    lines.push('---');
+    lines.push('');
+    lines.push('## Resolve-Template (pro Feedback)');
+    lines.push('');
+    lines.push('```bash');
+    lines.push('curl -X POST https://btm.bethesna.org/api/feedback/<ID>/resolve \\');
+    lines.push('  -H "Authorization: Bearer btm_DEIN_ADMIN_TOKEN" \\');
+    lines.push('  -H "Content-Type: application/json" \\');
+    lines.push('  -d \'{"resolutionNote": "..."}\'');
+    lines.push('```');
+    lines.push('');
+    lines.push('Wontfix-Variante (kein Mail/Notification an Submitter):');
+    lines.push('');
+    lines.push('```bash');
+    lines.push('curl -X PATCH https://btm.bethesna.org/api/feedback/<ID> \\');
+    lines.push('  -H "Authorization: Bearer btm_DEIN_ADMIN_TOKEN" \\');
+    lines.push('  -H "Content-Type: application/json" \\');
+    lines.push('  -d \'{"status": "wontfix", "adminNote": "..."}\'');
+    lines.push('```');
+    return lines.join('\n');
+  };
+
+  const copyBatchPrompt = async () => {
+    const items = filtered.filter((i) => selectedIds.has(i.id));
+    if (items.length === 0) return;
+    try {
+      await navigator.clipboard.writeText(buildBatchPrompt(items));
+      showToast(t('feedback.batch_prompt_copied', { count: items.length }));
+    } catch {
+      showToast(t('common.error_generic'));
+    }
+  };
+
+  // „Alle sichtbaren auswählen" — beachtet die aktuellen Filter (Type/Status).
+  const allVisibleSelected =
+    filtered.length > 0 && filtered.every((i) => selectedIds.has(i.id));
+  const toggleAllVisible = () => {
+    if (allVisibleSelected) {
+      // Nur die sichtbaren abwählen (andere ggf. selektierte erhalten bleiben).
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        for (const i of filtered) next.delete(i.id);
+        return next;
+      });
+    } else {
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        for (const i of filtered) next.add(i.id);
+        return next;
+      });
+    }
+  };
+
   const openInClaudeCloud = (item: FeedbackEntry) => {
     const prompt = buildPrompt(item);
     // Claude.ai akzeptiert ?q= Query-Parameter im Web — kürzen falls zu lang
@@ -269,6 +384,36 @@ export function FeedbackList() {
         </div>
       </div>
 
+      {selectedIds.size > 0 && (
+        <div className="fb-admin-bulkbar" role="region" aria-label={t('feedback.bulk_label')}>
+          <label className="fb-admin-bulkbar-toggle">
+            <input
+              type="checkbox"
+              checked={allVisibleSelected}
+              ref={(el) => {
+                if (el) el.indeterminate = !allVisibleSelected && selectedIds.size > 0;
+              }}
+              onChange={toggleAllVisible}
+              aria-label={t('feedback.bulk_select_all_visible')}
+            />
+            <span>
+              {t('feedback.bulk_selected', { count: selectedIds.size })}
+            </span>
+          </label>
+          <div style={{ flex: 1 }} />
+          <button type="button" className="fb-action-btn" onClick={clearSelection}>
+            <Icon name="x" size={11} /> {t('feedback.bulk_clear')}
+          </button>
+          <button
+            type="button"
+            className="fb-action-btn fb-action-primary"
+            onClick={copyBatchPrompt}
+          >
+            <Icon name="copy" size={11} /> {t('feedback.bulk_copy_prompt')}
+          </button>
+        </div>
+      )}
+
       {isLoading && filtered.length === 0 ? (
         <div className="fb-admin-empty">{t('common.loading')}</div>
       ) : filtered.length === 0 ? (
@@ -278,8 +423,21 @@ export function FeedbackList() {
           {filtered.map((item) => {
             const submitter = users.find((u) => u.id === item.submitterId);
             return (
-              <article key={item.id} className={`fb-admin-card status-${item.status} ${editingId === item.id ? 'is-editing' : ''}`}>
+              <article
+                key={item.id}
+                className={`fb-admin-card status-${item.status} ${editingId === item.id ? 'is-editing' : ''} ${selectedIds.has(item.id) ? 'is-selected' : ''}`}
+              >
                 <header className="fb-admin-card-head">
+                  {editingId !== item.id && (
+                    <input
+                      type="checkbox"
+                      className="fb-admin-card-checkbox"
+                      checked={selectedIds.has(item.id)}
+                      onChange={() => toggleSelect(item.id)}
+                      aria-label={t('feedback.bulk_select_one', { title: item.title })}
+                      title={t('feedback.bulk_select_one', { title: item.title })}
+                    />
+                  )}
                   {editingId === item.id ? (
                     <select
                       className="fb-type-select"
