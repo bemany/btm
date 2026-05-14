@@ -157,8 +157,8 @@ export function ApiTokensTab() {
   const fallbackPlain = tokens.find((t) => !!t.tokenPlain)?.tokenPlain ?? '';
   const promptToken = freshlyCreated?.plain ?? fallbackPlain ?? '';
 
-  const copyPrompt = async (tokenOverride?: string) => {
-    const prompt = buildSetupPrompt(tokenOverride ?? promptToken, locale);
+  const copyPrompt = async (tokenPlain: string) => {
+    const prompt = buildSetupPrompt(tokenPlain, locale);
     try {
       await navigator.clipboard.writeText(prompt);
       showToast(t('api_tokens.wizard_prompt_copied'));
@@ -170,6 +170,7 @@ export function ApiTokensTab() {
   const hasFreshToken = !!freshlyCreated;
   const hasAnyPlainToken = !!promptToken;
   const [revealedIds, setRevealedIds] = useState<Set<string>>(new Set());
+  const [pickerOpen, setPickerOpen] = useState(false);
   const toggleReveal = (id: string) => {
     setRevealedIds((prev) => {
       const next = new Set(prev);
@@ -177,6 +178,57 @@ export function ApiTokensTab() {
       else next.add(id);
       return next;
     });
+  };
+
+  // Pop-Outside-Click schließt
+  useEffect(() => {
+    if (!pickerOpen) return;
+    const onDown = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('.apit-picker-wrap')) setPickerOpen(false);
+    };
+    document.addEventListener('mousedown', onDown);
+    return () => document.removeEventListener('mousedown', onDown);
+  }, [pickerOpen]);
+
+  // Wizard-Picker-Actions: einen existierenden Token nutzen, einen Legacy-
+  // Token ersetzen (Hash ist one-way → wir können den Klartext nicht
+  // wiederherstellen, also revoke + recreate mit gleichem Namen), oder
+  // einen komplett neuen Token erstellen.
+  const onPickerUse = async (tokenPlain: string) => {
+    setPickerOpen(false);
+    await copyPrompt(tokenPlain);
+  };
+  const onPickerReplace = async (legacy: ApiTokenRow) => {
+    setPickerOpen(false);
+    const ok = window.confirm(t('api_tokens.wizard_replace_confirm', { name: legacy.name }));
+    if (!ok) return;
+    try {
+      await revokeApiToken(legacy.id);
+      const { token, plain } = await createApiToken({ name: legacy.name });
+      setFreshlyCreated({ plain, row: token });
+      await refresh();
+      await navigator.clipboard.writeText(buildSetupPrompt(plain, locale)).catch(() => {});
+      showToast(t('api_tokens.wizard_replaced_toast', { name: legacy.name }));
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : t('api_tokens.create_failed'));
+    }
+  };
+  const onPickerNew = async () => {
+    setPickerOpen(false);
+    const suggested = locale === 'en' ? 'Claude (Desktop)' : 'Claude (Desktop)';
+    const requested = window.prompt(t('api_tokens.wizard_new_prompt'), suggested);
+    const name = requested?.trim();
+    if (!name) return;
+    try {
+      const { token, plain } = await createApiToken({ name });
+      setFreshlyCreated({ plain, row: token });
+      await refresh();
+      await navigator.clipboard.writeText(buildSetupPrompt(plain, locale)).catch(() => {});
+      showToast(t('api_tokens.wizard_prompt_copied'));
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : t('api_tokens.create_failed'));
+    }
   };
 
   return (
@@ -205,21 +257,57 @@ export function ApiTokensTab() {
             <div className="apit-wizard-step-num">2</div>
             <div className="apit-wizard-step-text">
               <div className="apit-wizard-step-title">{t('api_tokens.wizard_step2')}</div>
-              <div className="apit-wizard-step-body">
-                {hasAnyPlainToken
-                  ? t('api_tokens.wizard_step2_body')
-                  : t('api_tokens.wizard_step2_btn_placeholder_hint')}
+              <div className="apit-wizard-step-body">{t('api_tokens.wizard_step2_body')}</div>
+              <div className="apit-picker-wrap">
+                <button
+                  type="button"
+                  className="tb-btn accent apit-wizard-cta"
+                  onClick={() => setPickerOpen((v) => !v)}
+                  aria-haspopup="menu"
+                  aria-expanded={pickerOpen}
+                >
+                  <Icon name="copy" size={12} />
+                  {t('api_tokens.wizard_step2_btn')}
+                  <Icon name="chevron-down" size={11} style={{ marginLeft: 4, opacity: 0.7 }} />
+                </button>
+                {pickerOpen && (
+                  <div className="apit-picker" role="menu">
+                    <div className="apit-picker-label">{t('api_tokens.wizard_picker_label')}</div>
+                    {tokens.filter((tk) => !!tk.tokenPlain).map((tk) => (
+                      <button
+                        key={`use-${tk.id}`}
+                        type="button"
+                        className="apit-picker-item"
+                        onClick={() => onPickerUse(tk.tokenPlain!)}
+                      >
+                        <Icon name="sparkles" size={12} className="apit-picker-icon" />
+                        <span>{t('api_tokens.wizard_picker_use', { name: tk.name })}</span>
+                        <code className="apit-picker-hint">{tk.prefix}…</code>
+                      </button>
+                    ))}
+                    {tokens.filter((tk) => !tk.tokenPlain).map((tk) => (
+                      <button
+                        key={`replace-${tk.id}`}
+                        type="button"
+                        className="apit-picker-item is-warn"
+                        onClick={() => onPickerReplace(tk)}
+                      >
+                        <Icon name="rotate-ccw" size={12} className="apit-picker-icon" />
+                        <span>{t('api_tokens.wizard_picker_replace', { name: tk.name })}</span>
+                        <code className="apit-picker-hint">{tk.prefix}…</code>
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      className="apit-picker-item is-new"
+                      onClick={onPickerNew}
+                    >
+                      <Icon name="plus" size={12} className="apit-picker-icon" />
+                      <span>{t('api_tokens.wizard_picker_new')}</span>
+                    </button>
+                  </div>
+                )}
               </div>
-              <button
-                type="button"
-                className={`tb-btn ${hasAnyPlainToken ? 'accent' : ''} apit-wizard-cta`}
-                onClick={() => copyPrompt()}
-              >
-                <Icon name="copy" size={12} />
-                {hasAnyPlainToken
-                  ? t('api_tokens.wizard_step2_btn')
-                  : t('api_tokens.wizard_step2_btn_placeholder')}
-              </button>
             </div>
           </li>
           <li>

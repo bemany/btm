@@ -197,6 +197,14 @@ export const de = {
     hide_token: 'Token verbergen',
     plain_unavailable: 'Klartext nicht mehr verfügbar — Token neu erstellen, um ihn im Wizard zu nutzen.',
     copy_prompt_for_token: 'Setup-Prompt mit diesem Token kopieren',
+    // Wizard-Picker (FTTMD2R8-LH iteration 2)
+    wizard_picker_label: 'Welcher Token soll in den Prompt?',
+    wizard_picker_use: 'Mit „{name}" kopieren',
+    wizard_picker_replace: 'Token „{name}" ersetzen (Klartext neu erstellen)',
+    wizard_picker_new: 'Neuen Token erstellen + Prompt kopieren',
+    wizard_replace_confirm: 'Token „{name}" wird widerrufen und mit demselben Namen neu erstellt. Alle MCP-Clients mit dem alten Token müssen neu konfiguriert werden. Fortfahren?',
+    wizard_new_prompt: 'Name für den neuen Token:',
+    wizard_replaced_toast: '„{name}" ersetzt — Prompt mit neuem Klartext-Token kopiert.',
   },
   topbar: {
     search_placeholder: 'Aufgaben durchsuchen…',

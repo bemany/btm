@@ -195,6 +195,14 @@ export const en: Translations = {
     hide_token: 'Hide token',
     plain_unavailable: 'Plain text no longer available — recreate the token to use it in the wizard.',
     copy_prompt_for_token: 'Copy setup prompt with this token',
+    // Wizard picker (FTTMD2R8-LH iteration 2)
+    wizard_picker_label: 'Which token should be used in the prompt?',
+    wizard_picker_use: 'Copy with "{name}"',
+    wizard_picker_replace: 'Replace "{name}" (re-create with plain text)',
+    wizard_picker_new: 'Create new token + copy prompt',
+    wizard_replace_confirm: 'Token "{name}" will be revoked and re-created with the same name. All MCP clients using the old token must be re-configured. Continue?',
+    wizard_new_prompt: 'Name for the new token:',
+    wizard_replaced_toast: '"{name}" replaced — prompt copied with the new plain-text token.',
   },
   topbar: {
     search_placeholder: 'Search tasks…',
