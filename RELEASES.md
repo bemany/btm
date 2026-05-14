@@ -9,6 +9,52 @@ im Repo.
 
 ---
 
+## 0.12.0 — 2026-05-14
+
+**Per-User-Akzentfarbe, OpenAI-AI, Claude-MCP-Wizard, Archiv & 20+ Bug-/Feature-Fixes**
+
+### Features
+
+- **Per-User-Akzentfarbe** — Einstellungen → Aussehen → 7 Presets (Orange / Lila / Blau / Petrol / Grün / Pink / Rot) oder eigener Hex via Color-Picker. Live-Preview, server-side gespeichert. Alle Buttons, Pills, Hover, Focus-Rings, Mention-Tags und Glass-Dark-Ambient-Gradient färben mit (5 Accent-Shades + RGB-Triplet als CSS-Variablen, ~125 Hardcode-Orange-Stellen umgezogen). _F7JzZf65SzX + FatbLooqY9-_
+- **AI-Backend auf OpenAI** — Default `gpt-4o-mini`. Planungs-KI-Chatbubble + AI-Drawer-Aufgaben-Extract nutzen jetzt Function-Calling ohne die alten Gemma-Channel-Marker-Probleme. Provider-Switch über `.env`. _FkqjgMk6RH6_
+- **Claude-MCP-Setup-Wizard** in Einstellungen → API-Tokens — 3-Schritte-Wizard mit „Setup-Prompt kopieren"-Button. Picker-Dropdown wählt existierenden Token, ersetzt Legacy oder erstellt neuen. API-Tokens werden im Klartext angezeigt (Eye/Copy/Sparkles-Buttons pro Zeile). _FTTMD2R8-LH_
+- **Archiv-Funktion** für erledigte Aufgaben — Drawer-Button + „Alle erledigten archivieren" im Kanban-Done-Header. Archivierte verschwinden aus Board, bleiben in Stunden-Reports. Migration 0020 + `?archived=archived|all`-Query. _FgPjnOpBdCX_
+- **Sammel-Prompt für Admin-Feedbacks** — Multi-Select-Checkboxen + sticky Bulk-Action-Bar. Generiert kombinierten Prompt mit einmaligem Repo-Header und einem Block pro Feedback. _FwQQWBHfTid_
+- **Screenshot im Feedback-Modal** — Drag&Drop oder ⌘V, der letzte Clipboard-Screenshot wird automatisch angehängt (PNG/JPEG/GIF/WebP, max 8 MB). Migration 0019. _Esref-Idee_
+- **Update-Pille statt Force-Reload** — Claude-Desktop-Style: bei neuer Version erscheint eine pulsierende Pille direkt über dem Profil-Tile. Klick lädt neu. PWA-Strategie auf `registerType: 'prompt'` umgestellt.
+- **Globaler Feedback-Shortcut ⌘⇧F** — öffnet/schließt das Feedback-Modal von überall. _F2AMngaOedK_
+- **„Alle Aufgaben dieser Woche"-Liste** unter den KPIs auf Meine Woche, sortiert nach Priorität → Fälligkeit → Anlage. _F7OAFqRLy5R_
+- **Quickstart-Modal mit Beschreibung, Priorität und Fälligkeit** — neue Aufgabe direkt komplett anlegen statt Detail-Drawer nachzubearbeiten.
+- **Task → Wochenansicht-Shortcut** im Detail-Drawer (Calendar-Icon oben rechts). _FRr66InEsBQ_
+- **Sidebar restrukturiert** — Updates wandert direkt über das Profil, Mobile-Vorschau + Chrome-Plugin + TV-Dashboard in zusammenklappbare „Extras"-Gruppe. Projekte-Chip zeigt nur Favoriten-Anzahl. _FR0_IIsrpwo_
+- **Odoo-Kalender-Vorlage für Bethesna** — ein Klick füllt URL + Datenbank + Email. Video-Tutorial-Placeholder unter dem API-Key-Feld. _FystBwbvLnW_
+- **OpenAI-Key auf Production aktiv** — `gpt-4o-mini`, alte LMSTUDIO_*-Variablen entfernt.
+
+### Fixes
+
+- **Kalender-Duplikate** (Dev Standup + Automation-Stammtisch doppelt). Master+RECURRENCE-ID-Override in iCal-Client gemerged via `ICAL.Event({ exceptions })`. Cross-Source-Dedup im Calendar-Route (Odoo+iCal Title+Start+End).
+- **TV-Dashboard-Stuck** auf „Verbinde …" — Watchdog macht Reload nach 90 s ohne erste Daten oder 5 Min ohne Refetch-Erfolg.
+- **Termine/Timeline-Toggle Kontrast** auf Meine Woche im Dark-Mode (weiß auf weiß). _F2qEnzlswSt_
+- **Aufgabenkarten-Kontrast** im Glass-Dark bei hellen Akzentfarben — Cards bekommen feste Cream-100-Base statt nur 4.5%-White. _Fyrf31EWVGt_
+- **Review→Done-Permission** — Admin-Override wird jetzt per Confirm-Dialog mit Owner-Name bestätigt statt stiller Bypass. _F0vR8mfjrwv_
+- **Feedback-Modal verwirft nicht mehr aus Versehen** — Discard-Confirm bei Backdrop-Klick / X / Escape / Abbrechen wenn Inhalt vorhanden. _FHwNHtIY5Xe_
+- **Admin-Login-Link** landete im Inkognito auf Landing statt Login. URL gibt jetzt `/login?as=…` aus, AppGate erkennt Magic-Params auch auf `/`. _FKMsD4WmmOX_
+- **DatePicker** im QuickStart-Modal klippte am Modal-Rand — jetzt via React-Portal in `<body>` mit Smart-Placement.
+
+### Changes
+
+- Settings-Modal größer (1120 × 820 statt 920 × 680).
+- API-Token-Schema: neue `token_plain`-Spalte (Migration 0018), bestehende „Legacy"-Tokens zeigen Re-Create-Hinweis.
+- Feedback-Schema: `screenshot_base64`-Spalte (Migration 0019).
+- Tasks-Schema: `archived_at`-Spalte + Index (Migration 0020).
+- Frontend-PWA: `autoUpdate` → `prompt` Mode, `skipWaiting: false`.
+
+### Resolved Feedbacks
+
+`F7JzZf65SzX` (Akzentfarbe), `FKMsD4WmmOX` (Login-Link), `F2qEnzlswSt` (Toggle-Kontrast), `FatbLooqY9-` (Akzent-Override), `FkqjgMk6RH6` (OpenAI), `FTTMD2R8-LH` (MCP-Wizard), `FwQQWBHfTid` (Sammel-Prompt), `Fyrf31EWVGt` (Card-Kontrast), `F0vR8mfjrwv` (Permission), `F2AMngaOedK` (Shortcut), `FgPjnOpBdCX` (Archiv), `FHwNHtIY5Xe` (Discard-Confirm), `FR0_IIsrpwo` (Sidebar), `FystBwbvLnW` (Odoo-Preset), `FRr66InEsBQ` (Week-Shortcut), `F7OAFqRLy5R` (Week-Overview).
+
+---
+
 ## 0.11.0 — 2026-05-13
 
 **Kalender-Sync, schneller Aufgaben-Start, Wochenboard-Politur und Multi-Team**

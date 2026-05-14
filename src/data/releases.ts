@@ -49,6 +49,170 @@ export function tx(value: Localizable, locale: 'de' | 'en'): string {
 
 export const RELEASES: Release[] = [
   {
+    version: '0.12.0',
+    date: '2026-05-14',
+    title: {
+      de: 'Per-User-Akzentfarbe, OpenAI-AI, Claude-MCP-Wizard, Archiv & 20+ Bug-/Feature-Fixes',
+      en: 'Per-user accent color, OpenAI AI, Claude-MCP wizard, archive & 20+ bug/feature fixes',
+    },
+    changes: [
+      {
+        kind: 'feature',
+        text: {
+          de: '**Per-User-Akzentfarbe**: Einstellungen → Aussehen → 7 Presets (Orange/Lila/Blau/Petrol/Grün/Pink/Rot) oder eigener Hex-Wert via Color-Picker. Wird live übernommen und auf dem Server gespeichert — gilt auf jedem Gerät. Alle Buttons, Pills, Hover, Focus, Mention-Tags, Glass-Dark-Gradient und Highlights mitfärben jetzt (5 Accent-Shades + RGB-Triplet auf Body als CSS-Variable, ~125 Hardcode-Orange-Stellen umgezogen).',
+          en: '**Per-user accent color**: Settings → Appearance → 7 presets (orange / purple / blue / teal / green / pink / red) or a custom hex via color picker. Live preview + saved server-side. Buttons, pills, hovers, focus rings, mention tags, glass-dark ambient gradient and highlights all follow your choice.',
+        },
+      },
+      {
+        kind: 'change',
+        text: {
+          de: '**AI-Backend von Gemma auf OpenAI umgestellt** (Default `gpt-4o-mini`). Planungs-KI-Chatbubble + AI-Drawer-Aufgaben-Extract laufen jetzt verlässlich mit Tool-Calling, ohne die alten Gemma-Channel-Marker-Probleme. Provider-Switch über `.env` — kein Code-Change nötig.',
+          en: 'AI backend switched from Gemma to **OpenAI** (default `gpt-4o-mini`). The planning chat bubble + AI drawer task-extract now use reliable function calling without the old Gemma channel-marker quirks. Provider switch via `.env` — no code change required.',
+        },
+      },
+      {
+        kind: 'feature',
+        text: {
+          de: '**Claude-MCP-Setup-Wizard** in Einstellungen → API-Tokens: drei klare Schritte mit „Setup-Prompt für Claude kopieren"-Button. Picker-Dropdown wählt entweder einen bestehenden Token, ersetzt einen Legacy-Token, oder erstellt direkt einen neuen. Bestehende Tokens werden im Klartext angezeigt (mit Eye/Copy/Sparkles-Buttons pro Zeile) — internes Tool, kein Datenschutz-Risiko.',
+          en: '**Claude MCP setup wizard** in Settings → API tokens: three clear steps with a "Copy setup prompt for Claude" button. Picker dropdown selects an existing token, replaces a legacy token, or creates a fresh one. Existing tokens are now shown in plain text (with eye/copy/sparkles icon buttons per row) — internal tool, no privacy risk.',
+        },
+      },
+      {
+        kind: 'feature',
+        text: {
+          de: '**Archiv-Funktion für erledigte Aufgaben**: Drawer-Button am Detail + „Alle erledigten archivieren" im Kanban-Done-Header. Archivierte Tasks verschwinden aus dem Board, bleiben aber in Stunden-Reports + Times-Screen. `GET /api/tasks?archived=archived|all` für Power-User.',
+          en: '**Archive for completed tasks**: drawer button on details + "Archive all done" in the kanban done column header. Archived tasks disappear from the board but stay in hour reports + Times screen. `GET /api/tasks?archived=archived|all` for power users.',
+        },
+      },
+      {
+        kind: 'feature',
+        text: {
+          de: '**Sammel-Prompt für Admin-Feedbacks**: Multi-Select per Checkbox + sticky Bulk-Action-Bar. Ein Klick generiert einen kombinierten Prompt für Claude Code mit einmaligem Repo-Header und einem Block pro Feedback — perfekt für verwandte CSS-Bugs oder zusammen-implementierbare Features.',
+          en: '**Batch prompt for admin feedbacks**: multi-select via checkbox + sticky bulk action bar. One click generates a combined Claude-Code prompt with a single repo header and one section per feedback — perfect for related CSS bugs or features that can ship together.',
+        },
+      },
+      {
+        kind: 'feature',
+        text: {
+          de: '**Screenshot im Feedback-Modal**: Drag & Drop oder ⌘V — der letzte Clipboard-Screenshot wird automatisch angehängt (PNG/JPEG, max 8 MB). Wird in der DB mitgespeichert, Admin sieht das Bild im Feedback-Drawer.',
+          en: '**Screenshot in feedback modal**: drag & drop or ⌘V — the last clipboard image is auto-attached (PNG/JPEG, max 8 MB). Stored alongside the feedback, admin sees it in the feedback drawer.',
+        },
+      },
+      {
+        kind: 'feature',
+        text: {
+          de: '**Update-Pille statt Force-Reload**: bei einer neuen Version erscheint Claude-Desktop-Style eine Pille direkt über dem Profil-Tile mit „Update verfügbar". Klick lädt die neue Version — kein erzwungener Reload mehr mid-task.',
+          en: '**Update pill instead of force-reload**: when a new version ships, a Claude-Desktop-style pill appears right above the profile tile saying "Update available". Click to reload — no more forced mid-task reloads.',
+        },
+      },
+      {
+        kind: 'feature',
+        text: {
+          de: '**Globaler Feedback-Shortcut ⌘⇧F**: öffnet/schließt das Feedback-Modal von jeder Seite.',
+          en: '**Global feedback shortcut ⌘⇧F**: opens/closes the feedback modal from anywhere.',
+        },
+      },
+      {
+        kind: 'feature',
+        text: {
+          de: '**„Alle Aufgaben dieser Woche"-Liste** direkt unter den KPIs auf Meine Woche. Sortiert nach Priorität → Fälligkeit → Anlage-Datum. Pro Zeile: Status, Titel, Projekt, Fälligkeit, Prio.',
+          en: '**"All tasks this week" list** right under the KPIs on My Week. Sorted by priority → due → created. Each row: status, title, project, due, priority.',
+        },
+      },
+      {
+        kind: 'feature',
+        text: {
+          de: '**Quickstart-Modal mit Beschreibung, Priorität und Fälligkeit**: neue Aufgabe direkt mit allen wichtigen Feldern anlegen, ohne hinterher in den Detail-Drawer wechseln zu müssen.',
+          en: '**Quickstart modal with description, priority and due date**: create a new task with all the important fields up front — no need to open the detail drawer afterwards.',
+        },
+      },
+      {
+        kind: 'feature',
+        text: {
+          de: '**Task → Wochenansicht-Shortcut** im Detail-Drawer: Calendar-Icon-Button oben rechts springt direkt zu Meine Woche.',
+          en: '**Task → week view shortcut** in the detail drawer: calendar icon button at top right jumps straight to My Week.',
+        },
+      },
+      {
+        kind: 'feature',
+        text: {
+          de: '**Sidebar restrukturiert**: Updates wandert nach unten direkt über das Profil. Mobile-Vorschau + Chrome-Plugin + TV-Dashboard in zusammenklappbare Extras-Gruppe. Projekte-Chip zeigt nur noch Favoriten-Anzahl statt aller Projekte.',
+          en: '**Sidebar restructure**: Updates moves down right above the profile. Mobile preview + Chrome plugin + TV dashboard into a collapsible "Extras" group. Projects chip now shows only the favorites count instead of all projects.',
+        },
+      },
+      {
+        kind: 'feature',
+        text: {
+          de: '**Odoo-Kalender-Vorlage** für Bethesna-Instanz: ein Klick füllt URL + Datenbank vor und schlägt deine Login-Email als Username vor. Platzhalter für ein zukünftiges Video-Tutorial direkt unter dem API-Key-Feld.',
+          en: '**Odoo calendar preset** for the Bethesna instance: one click fills URL + database and proposes your login email as the username. Placeholder for a future video tutorial below the API key field.',
+        },
+      },
+      {
+        kind: 'fix',
+        text: {
+          de: '**Kalender-Duplikate**: Dev Standup + Automation-Stammtisch tauchten doppelt auf. Ursache: Google-Kalender exportiert geänderte Serientermine als zwei VEVENTs (Master mit RRULE + Override mit RECURRENCE-ID), die wurden separat emittiert. Plus Cross-Source-Overlap, wenn Odoo den Google-Kalender spiegelt UND der gleiche Google-Kalender als iCal-Feed hängt. Beides ist jetzt deduped.',
+          en: '**Calendar duplicates** fixed: Dev Standup + Automation-Stammtisch showed up twice. Google exports modified recurring instances as two VEVENTs (master with RRULE + override with RECURRENCE-ID) which got emitted separately. Plus cross-source overlap when Odoo mirrors Google and Google also runs as an iCal feed. Both are now deduped.',
+        },
+      },
+      {
+        kind: 'fix',
+        text: {
+          de: '**TV-Dashboard-Stuck**: nach Stunden Laufzeit hing der Pi-Tab manchmal auf „Verbinde …" und musste manuell rebooted werden. Watchdog macht jetzt automatisch einen Reload nach 90 s ohne erste Daten oder 5 Min ohne erfolgreichen Refetch.',
+          en: '**TV dashboard stuck screen**: after hours of uptime the Pi tab sometimes hung on "Connecting…" and needed a manual reboot. Watchdog now auto-reloads after 90 s without initial data or 5 min without a successful refetch.',
+        },
+      },
+      {
+        kind: 'fix',
+        text: {
+          de: '**Termine/Timeline-Toggle** auf Meine Woche zeigte im Dark-Theme weißen Hintergrund mit weißem Text — Base-CSS-Regel war nicht für Dark-Mode überschrieben. Jetzt Accent-Tint in Studio-Dark, Frosted-White-Pill in Glass-Dark.',
+          en: '**Dates/Timeline toggle** on My Week showed white-on-white text in dark themes — base CSS had no dark-mode override. Now uses an accent tint in Studio Dark and a frosted-white pill in Glass Dark.',
+        },
+      },
+      {
+        kind: 'fix',
+        text: {
+          de: '**Aufgabenkarten-Kontrast** im Glass-Dark: bei hellen Akzentfarben (Lila/Türkis/Gelb) drückte der akzent-getintete Ambient-Gradient den Card-Untergrund unleserlich. Karten haben jetzt einen festen Cream-100-Base-Layer + Frost-Overlay.',
+          en: '**Task card contrast** in glass-dark: with light accents (purple/teal/yellow) the accent-tinted ambient gradient washed out the card background. Cards now have a solid cream-100 base + frost overlay.',
+        },
+      },
+      {
+        kind: 'fix',
+        text: {
+          de: '**Review→Done-Permission**: Admins konnten still Reviews von Kolleg:innen durchwinken. Jetzt erscheint ein Confirm-Dialog mit Owner-Name. Non-Admin-Nicht-Owner = wie vorher hart geblockt.',
+          en: '**Review→done permission**: admins could silently push other people\'s reviews through. Now a confirm dialog with the owner\'s name. Non-admins who aren\'t the owner are still hard-blocked as before.',
+        },
+      },
+      {
+        kind: 'fix',
+        text: {
+          de: '**Feedback-Modal verwirft nicht mehr aus Versehen**: Backdrop-Klick, X, Escape und Abbrechen fragen jetzt nach, wenn Titel, Body oder Screenshot etwas drin haben.',
+          en: '**Feedback modal no longer discards by accident**: backdrop click, X, escape and cancel now confirm if you\'ve typed anything or attached a screenshot.',
+        },
+      },
+      {
+        kind: 'fix',
+        text: {
+          de: '**Admin-Login-Link** für andere User landete im Inkognito-Browser auf der Landing-Page statt am Login. URL und AppGate jetzt korrekt verkabelt.',
+          en: '**Admin login link** for other users used to land on the landing page in incognito instead of the login screen. URL and AppGate are now wired correctly.',
+        },
+      },
+      {
+        kind: 'fix',
+        text: {
+          de: '**DatePicker** im QuickStart-Modal klippte am Modal-Rand — jetzt via React-Portal direkt in `<body>` mit Smart-Placement (oben/unten je nach Platz).',
+          en: '**DatePicker** in the quickstart modal used to clip at the modal edge — now portals to `<body>` with smart placement (above/below depending on space).',
+        },
+      },
+      {
+        kind: 'change',
+        text: {
+          de: 'Settings-Modal etwas größer (max-width 1120 statt 920, height 820 statt 680) — mit dem neuen MCP-Wizard + Color-Picker-Tab war es vorher zu eng.',
+          en: 'Settings modal bumped a notch larger (max-width 1120 instead of 920, height 820 instead of 680) — felt cramped with the new MCP wizard + color picker tab.',
+        },
+      },
+    ],
+  },
+  {
     version: '0.11.0',
     date: '2026-05-13',
     title: {

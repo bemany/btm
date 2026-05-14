@@ -1,9 +1,11 @@
 # BTM — Bethesna Task Management
 
 Internes Task-, Zeit- und Kapazitäts-Tool für ~5–25 Mitarbeiter.
-Stand v0.10.0 (10.05.2026): voll multi-user, Server-State persistent, MCP über `/api/mcp`,
+Stand v0.12.0 (14.05.2026): voll multi-user, Server-State persistent, MCP über `/api/mcp`,
+Per-User-Akzentfarbe, OpenAI-Tool-Use, Kalender (Odoo + iCal), Archiv für Tasks, Claude-MCP-Setup-Wizard,
 Mail-Notifications + Daily-Digest, Comments + Mentions + Inbox, Subtasks, Projekt-Owner,
-Feedback-System, animierte Glass-Hintergründe. Siehe [`RELEASES.md`](./RELEASES.md) für Versions-Historie.
+Feedback-System (mit Screenshot-Upload + Sammel-Prompt), animierte Glass-Hintergründe.
+Siehe [`RELEASES.md`](./RELEASES.md) für Versions-Historie.
 
 ---
 
