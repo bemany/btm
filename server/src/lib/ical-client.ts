@@ -103,9 +103,44 @@ export async function fetchIcalEvents(url: string, from: Date, to: Date): Promis
   const vevents = comp.getAllSubcomponents('vevent');
   const out: IcalEvent[] = [];
 
+  // Recurrence-Exception-Setup: Google Calendar (und andere) exportieren bei
+  // einem geänderten Einzeltermin BEIDE — den Master mit RRULE UND einen
+  // zweiten VEVENT mit demselben UID + RECURRENCE-ID-Property. Ohne Special-
+  // Handling iteriert der Master expansion mit der unveränderten Zeit weiter,
+  // und der Override-VEVENT wird zusätzlich als eigenes Event emittiert →
+  // Doppelanzeige. Fix: VEVENTs nach UID gruppieren, Master mit `exceptions`-
+  // Array konstruieren (ICAL.js mergt dann beim Iterieren), Overrides nicht
+  // mehr als Standalone behandeln.
+  const exceptionsByUid = new Map<string, ICAL.Component[]>();
+  const masters: ICAL.Component[] = [];
   for (const ve of vevents) {
     try {
-      const ev = new ICAL.Event(ve);
+      const probe = new ICAL.Event(ve);
+      if (probe.isRecurrenceException()) {
+        const list = exceptionsByUid.get(probe.uid) ?? [];
+        list.push(ve);
+        exceptionsByUid.set(probe.uid, list);
+      } else {
+        masters.push(ve);
+      }
+    } catch {
+      // Bei Parse-Fehler in der Probe: trotzdem als Master einreihen,
+      // unterer Block tut sein Best-Effort.
+      masters.push(ve);
+    }
+  }
+
+  for (const ve of masters) {
+    try {
+      const exceptions = exceptionsByUid.get(
+        ve.getFirstPropertyValue('uid') as string,
+      );
+      // `exceptions` Option wird beim Iterieren berücksichtigt (Override-
+      // Instanzen ersetzen die Master-Expansion am gleichen Datum, kein
+      // Doppelevent mehr).
+      const ev = exceptions && exceptions.length > 0
+        ? new ICAL.Event(ve, { exceptions })
+        : new ICAL.Event(ve);
       const uid = ev.uid || `${ve.getFirstPropertyValue('summary')}-${ev.startDate?.toString()}`;
       const title = ev.summary || '(no title)';
       const asStr = (v: unknown): string | null => {

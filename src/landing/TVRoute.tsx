@@ -1,7 +1,7 @@
 // /tv?token=… Fullscreen — Sidebar-/Topbar-los, eigener API-Modus mit Bearer-Token.
 // Damit kann ein dediziertes Office-Display die Wand bespielen ohne Login.
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useStore } from '../store/store';
 import { setApiTokenOverride, ApiError } from '../lib/api';
 import { TVDashboardScreen } from '../components/drawers/TVDashboardScreen';
@@ -24,6 +24,15 @@ const TV_RETRY_DELAY = (attemptIndex: number) =>
 function isAuthError(err: unknown): boolean {
   return err instanceof ApiError && (err.status === 401 || err.status === 403);
 }
+
+// Wenn der TV länger als BOOTSTRAP_TIMEOUT auf „Verbinde …" hängt
+// (initial-load schafft keinen Erfolg) ODER länger als STALE_TIMEOUT
+// keinen erfolgreichen Refetch hatte, machen wir einen Hard-Reload.
+// Realwelt-Symptom (Raspberry Pi am Office-TV): Chromium-Tab degradiert
+// nach Stunden, fetch hängt ohne Error → ohne diesen Watchdog muss der
+// Pi physisch neugestartet werden.
+const BOOTSTRAP_TIMEOUT_MS = 90_000;  // 1.5 Min ohne erste Daten → Reload
+const STALE_TIMEOUT_MS = 5 * 60_000;  // 5 Min ohne Refetch-Erfolg → Reload
 
 export function TVRoute({ token }: Props) {
   const setTasks = useStore((s) => s.setTasks);
@@ -99,6 +108,44 @@ export function TVRoute({ token }: Props) {
   useEffect(() => {
     if (usersQ.data) setUsers(usersQ.data);
   }, [usersQ.data, setUsers]);
+
+  // ── Watchdog ─────────────────────────────────────────────────────────
+  // Bootstrap-Timeout: nach BOOTSTRAP_TIMEOUT_MS ohne erste Daten → Reload.
+  // Stale-Timeout: nach STALE_TIMEOUT_MS ohne erfolgreichen Refetch → Reload.
+  // React-Query liefert `dataUpdatedAt` (timestamp ms) bei letztem Erfolg.
+  const mountedAtRef = useRef<number>(Date.now());
+  const lastSuccessRef = useRef<number>(Date.now());
+  const hasInitialData = !!tasksQ.data && !!usersQ.data;
+  useEffect(() => {
+    const latest = Math.max(
+      tasksQ.dataUpdatedAt || 0,
+      projectsQ.dataUpdatedAt || 0,
+      timerQ.dataUpdatedAt || 0,
+      usersQ.dataUpdatedAt || 0,
+    );
+    if (latest > lastSuccessRef.current) lastSuccessRef.current = latest;
+  }, [tasksQ.dataUpdatedAt, projectsQ.dataUpdatedAt, timerQ.dataUpdatedAt, usersQ.dataUpdatedAt]);
+
+  useEffect(() => {
+    if (!token) return;
+    const interval = setInterval(() => {
+      const now = Date.now();
+      const sinceMount = now - mountedAtRef.current;
+      const sinceSuccess = now - lastSuccessRef.current;
+      // Bootstrap: noch nie Daten gesehen UND zu lange schon
+      if (!hasInitialData && sinceMount > BOOTSTRAP_TIMEOUT_MS) {
+        console.warn('[tv] bootstrap timeout — reloading');
+        window.location.reload();
+        return;
+      }
+      // Stale: Daten waren mal da, aber Refetch klappt seit X nicht
+      if (hasInitialData && sinceSuccess > STALE_TIMEOUT_MS) {
+        console.warn('[tv] stale data — reloading');
+        window.location.reload();
+      }
+    }, 15_000);
+    return () => clearInterval(interval);
+  }, [token, hasInitialData]);
 
   if (!token) {
     return (

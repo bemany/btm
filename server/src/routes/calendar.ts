@@ -47,7 +47,7 @@ export const calendarRoute = new Hono<{ Variables: Variables }>()
         lt(calendarEvents.startAt, to),
       ))
       .orderBy(asc(calendarEvents.startAt));
-    return c.json({ events: rows });
+    return c.json({ events: dedupAcrossSources(rows) });
   })
 
   .get('/all', async (c) => {
@@ -136,5 +136,47 @@ export const calendarRoute = new Hono<{ Variables: Variables }>()
         userColor: r.userColor,
       };
     });
-    return c.json({ events });
+    // Cross-source-Dedup auch auf TV: pro User dieselbe Schlüsselung wie /my,
+    // sonst tauchen Odoo+iCal-Overlaps doppelt im Quadrant auf.
+    const eventsByUser = new Map<string, typeof events>();
+    for (const ev of events) {
+      const list = eventsByUser.get(ev.userId) ?? [];
+      list.push(ev);
+      eventsByUser.set(ev.userId, list);
+    }
+    const deduped: typeof events = [];
+    for (const list of eventsByUser.values()) {
+      deduped.push(...dedupAcrossSources(list));
+    }
+    deduped.sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime());
+    return c.json({ events: deduped });
   });
+
+// Cross-source-Deduplikation: wenn dieselbe Veranstaltung sowohl via Odoo-
+// Sync ALS AUCH via iCal-Feed gepullt wird (z.B. ein Termin, der in Odoo
+// als calendar.event existiert UND zusätzlich im Google-Kalender liegt, der
+// als iCal-Feed angebunden ist), zeigen wir sie nur einmal an.
+// Heuristik: gleicher (normalized title, startAt-Sekunde, endAt-Sekunde) →
+// behalte die iCal-Variante (meist die aktuellere; Quelle ist häufig die
+// Original-Source und Odoo spiegelt nur).
+function dedupAcrossSources<T extends {
+  source: string;
+  title: string;
+  startAt: Date | string;
+  endAt: Date | string;
+}>(rows: T[]): T[] {
+  const seen = new Map<string, T>();
+  for (const r of rows) {
+    const titleNorm = (r.title ?? '').trim().toLowerCase().replace(/\s+/g, ' ');
+    const startSec = Math.floor(new Date(r.startAt).getTime() / 1000);
+    const endSec = Math.floor(new Date(r.endAt).getTime() / 1000);
+    const key = `${titleNorm}|${startSec}|${endSec}`;
+    const prev = seen.get(key);
+    if (!prev) {
+      seen.set(key, r);
+    } else if (prev.source === 'odoo' && r.source === 'ical') {
+      seen.set(key, r);
+    }
+  }
+  return Array.from(seen.values());
+}
