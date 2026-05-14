@@ -64,7 +64,7 @@ export function TVRoute({ token }: Props) {
   // Display ja immer aktuell sein soll.
   const tasksQ = useQuery({
     queryKey: ['btm', 'tv', 'tasks'],
-    queryFn: api.listTasks,
+    queryFn: () => api.listTasks(),
     enabled: !!token,
     refetchInterval: 15_000,
     refetchOnWindowFocus: true,

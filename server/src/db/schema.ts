@@ -213,11 +213,15 @@ export const tasks = pgTable(
     // Hierarchien (Subtask von Subtask) sind technisch erlaubt, im UI
     // visualisieren wir aktuell nur eine Ebene.
     parentTaskId: text('parent_task_id'),
+    // Archiv-Status (FgPjnOpBdCX). NULL = aktiv. Default-Listen blenden
+    // archivierte aus; nur Done-Tasks dürfen archiviert werden.
+    archivedAt: timestamp('archived_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
     index('tasks_assignee_col_idx').on(t.assigneeId, t.column),
+    index('tasks_archived_idx').on(t.archivedAt),
     index('tasks_parent_idx').on(t.parentTaskId),
     index('tasks_project_idx').on(t.projectId),
   ],

@@ -13,6 +13,7 @@ import { TaskTimeline } from '../sessions/TaskTimeline';
 import { DatePicker } from '../shared/DatePicker';
 import { SubtasksSection } from './SubtasksSection';
 import { AttachmentsSection } from './AttachmentsSection';
+import { checkMarkDone } from '../../lib/taskPermissions';
 
 export interface TaskDetailDrawerProps {
   id: string;
@@ -26,6 +27,7 @@ export function TaskDetailDrawer({ id }: TaskDetailDrawerProps) {
   const setUI = useStore((s) => s.setUI);
   const updateTask = useStore((s) => s.updateTask);
   const deleteTask = useStore((s) => s.deleteTask);
+  const archiveTask = useStore((s) => s.archiveTask);
   const startTimer = useStore((s) => s.startTimer);
   const stopTimer = useStore((s) => s.stopTimer);
   const tr = useT();
@@ -41,8 +43,17 @@ export function TaskDetailDrawer({ id }: TaskDetailDrawerProps) {
   // Wenn das Projekt keinen Owner hat → niemand wird blockiert.
   const currentUserId = useStore.getState().currentUser;
   const meIsAdmin = users.find((u) => u.id === currentUserId)?.role === 'admin';
-  const projOfTask = t ? projects.find((p) => p.id === t.proj) : null;
-  const canMarkDone = meIsAdmin || !projOfTask?.ownerId || projOfTask.ownerId === currentUserId;
+  // Berechtigung wird zentral via checkMarkDone() berechnet (F0vR8mfjrwv).
+  // `canPickDone` steuert das `disabled` am Option, das Confirm passiert
+  // dann erst beim tatsächlichen onChange — sonst kann der Admin Done
+  // nicht mehr im Dropdown sehen.
+  const markDonePerm = t
+    ? checkMarkDone(
+        { task: t, projects, currentUserId: currentUserId ?? '', meIsAdmin },
+        (ownerId) => users.find((u) => u.id === ownerId)?.name ?? null,
+      )
+    : { kind: 'allow' as const };
+  const canPickDone = markDonePerm.kind !== 'blocked';
 
   // Lokale Text-Drafts für Title + Description: KEIN Auto-Save während des
   // Tippens (sonst ruckelt's Buchstabe-für-Buchstabe weil jeder PATCH +
@@ -122,6 +133,19 @@ export function TaskDetailDrawer({ id }: TaskDetailDrawerProps) {
             {t.id}
           </span>
           <div style={{ flex: 1 }} />
+          {t.col === 'done' && !t.archivedAt && (
+            <button
+              className="x"
+              onClick={() => {
+                void archiveTask(t.id);
+                showToast(tr('toast.archived'));
+                close();
+              }}
+              title={tr('task_detail.archive')}
+            >
+              <Icon name="archive" size={14} />
+            </button>
+          )}
           <button
             className="x"
             onClick={() => {
@@ -179,9 +203,21 @@ export function TaskDetailDrawer({ id }: TaskDetailDrawerProps) {
               value={t.col}
               onChange={(e) => {
                 const newCol = e.target.value as ColumnId;
-                if (newCol === 'done' && !canMarkDone) {
-                  showToast(tr('toast.only_owner_can_mark_done'));
-                  return;
+                if (newCol === 'done' && t.col !== 'done') {
+                  if (markDonePerm.kind === 'blocked') {
+                    showToast(tr('toast.only_owner_can_mark_done'));
+                    return;
+                  }
+                  if (markDonePerm.kind === 'admin_override') {
+                    const msg = markDonePerm.ownerName
+                      ? tr('toast.admin_confirm_done', { owner: markDonePerm.ownerName })
+                      : tr('toast.admin_confirm_done_no_owner');
+                    if (!window.confirm(msg)) {
+                      // Select-Wert zurückspulen — onChange hat den Wert schon übernommen
+                      e.target.value = t.col;
+                      return;
+                    }
+                  }
                 }
                 updateTask(t.id, { col: newCol });
               }}
@@ -194,7 +230,7 @@ export function TaskDetailDrawer({ id }: TaskDetailDrawerProps) {
               }}
             >
               {COLUMNS.map((c) => (
-                <option key={c.id} value={c.id} disabled={c.id === 'done' && !canMarkDone && t.col !== 'done'}>
+                <option key={c.id} value={c.id} disabled={c.id === 'done' && !canPickDone && t.col !== 'done'}>
                   {tr(`column.${c.id}` as 'column.todo')}
                 </option>
               ))}

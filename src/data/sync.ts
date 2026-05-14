@@ -37,7 +37,7 @@ export function useServerSync(): void {
 
   const tasksQ = useQuery({
     queryKey: TASKS_KEY,
-    queryFn: api.listTasks,
+    queryFn: () => api.listTasks(),
     staleTime: 15_000,
     refetchInterval: 30_000,
     refetchOnWindowFocus: true,

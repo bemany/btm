@@ -68,6 +68,8 @@ export interface Task {
   attachments?: Array<{ name: string; size?: number }>;
   /** Wenn gesetzt: diese Aufgabe ist Subtask einer anderen. */
   parentTaskId?: string | null;
+  /** ISO-Timestamp wenn archiviert, sonst null/undef. (FgPjnOpBdCX) */
+  archivedAt?: string | null;
 }
 
 export type PomodoroMode = 'focus' | 'short' | 'long';

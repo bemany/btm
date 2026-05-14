@@ -46,6 +46,15 @@ export const tasksRoute = new Hono<{ Variables: Variables }>()
   .use('*', requireAuth)
   .get('/', async (c) => {
     const me = c.get('user')!;
+    // Archiv-Filter (FgPjnOpBdCX): default 'active'. ?archived=1 → nur
+    // archivierte. ?archived=all → beides. Default räumt Listen/Boards auf.
+    const archivedParam = c.req.query('archived');
+    const archiveMode: 'active' | 'archived' | 'all' =
+      archivedParam === '1' || archivedParam === 'true'
+        ? 'archived'
+        : archivedParam === 'all'
+          ? 'all'
+          : 'active';
     // Sichtbarkeit gemäß Project-Membership: Tasks aus Projekten die der
     // User nicht sehen darf werden ausgeblendet. Tasks ohne Projekt
     // bleiben weiterhin sichtbar (z.B. ad-hoc-Aufgaben).
@@ -68,14 +77,20 @@ export const tasksRoute = new Hono<{ Variables: Variables }>()
         createdById: tasks.createdById,
         sortOrder: tasks.sortOrder,
         parentTaskId: tasks.parentTaskId,
+        archivedAt: tasks.archivedAt,
         createdAt: tasks.createdAt,
         updatedAt: tasks.updatedAt,
       })
       .from(tasks)
       .orderBy(asc(tasks.sortOrder), asc(tasks.createdAt));
-    const filtered = isAdmin
+    const filteredByVis = isAdmin
       ? rows
       : rows.filter((t) => !t.projectId || visibleProjectIds.includes(t.projectId));
+    const filtered = filteredByVis.filter((t) => {
+      if (archiveMode === 'all') return true;
+      if (archiveMode === 'archived') return !!t.archivedAt;
+      return !t.archivedAt;
+    });
     return c.json({ tasks: filtered });
   })
   .post('/', async (c) => {
@@ -199,6 +214,41 @@ export const tasksRoute = new Hono<{ Variables: Variables }>()
     if (!result.length) return c.json({ error: 'not found' }, 404);
     logActivity({ kind: 'task_deleted', actorId: me.id, target: id, meta: { title: before?.title } });
     return c.json({ ok: true });
+  })
+
+  // ── Archiv (FgPjnOpBdCX) ────────────────────────────────────────────
+  // archive: nur Tasks in column='done' dürfen archiviert werden — wir
+  // wollen nicht versehentlich unerledigte Aufgaben aus dem Board räumen.
+  .post('/:id/archive', async (c) => {
+    const me = c.get('user')!;
+    const id = c.req.param('id');
+    const [before] = await db.select().from(tasks).where(eq(tasks.id, id)).limit(1);
+    if (!before) return c.json({ error: 'not found' }, 404);
+    if (before.column !== 'done') {
+      return c.json({ error: 'invalid_state', message: 'Nur erledigte Aufgaben können archiviert werden.' }, 400);
+    }
+    if (before.archivedAt) return c.json({ task: before });
+    const [row] = await db
+      .update(tasks)
+      .set({ archivedAt: new Date(), updatedAt: new Date() })
+      .where(eq(tasks.id, id))
+      .returning();
+    logActivity({ kind: 'task_archived', actorId: me.id, target: id, meta: { title: before.title } });
+    return c.json({ task: row });
+  })
+  .post('/:id/unarchive', async (c) => {
+    const me = c.get('user')!;
+    const id = c.req.param('id');
+    const [before] = await db.select().from(tasks).where(eq(tasks.id, id)).limit(1);
+    if (!before) return c.json({ error: 'not found' }, 404);
+    if (!before.archivedAt) return c.json({ task: before });
+    const [row] = await db
+      .update(tasks)
+      .set({ archivedAt: null, updatedAt: new Date() })
+      .where(eq(tasks.id, id))
+      .returning();
+    logActivity({ kind: 'task_unarchived', actorId: me.id, target: id, meta: { title: before.title } });
+    return c.json({ task: row });
   })
 
   // ── Live-Timer ──────────────────────────────────────────────────────

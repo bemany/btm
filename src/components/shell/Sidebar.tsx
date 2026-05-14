@@ -403,6 +403,7 @@ export function Sidebar({
                 <div className="sb-profile-item-text">
                   <div className="sb-profile-item-title">{t('feedback.trigger_label')}</div>
                 </div>
+                <span className="sb-profile-kbd" aria-hidden="true">⌘⇧F</span>
               </button>
             )}
 

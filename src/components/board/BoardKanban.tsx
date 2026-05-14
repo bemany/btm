@@ -8,6 +8,7 @@ import { TaskCard } from './TaskCard';
 import { QuickAdd } from './QuickAdd';
 import { showToast } from '../shared/Toast';
 import { useT } from '../../i18n';
+import { checkMarkDone } from '../../lib/taskPermissions';
 
 // Priority-Score für Kanban-Sortierung (niedriger = weiter oben).
 // 0 = überfällig, 1 = heute fällig, 2 = in nächsten 3 Tagen, 3 = später,
@@ -45,6 +46,7 @@ interface KanbanColumnProps {
   onDragStart: (e: DragEvent<HTMLDivElement>, task: Task) => void;
   onDragEnd: () => void;
   onTaskClick: (t: Task) => void;
+  onArchiveAllDone?: () => void;
 }
 
 function KanbanColumn({
@@ -58,6 +60,7 @@ function KanbanColumn({
   onDragStart,
   onDragEnd,
   onTaskClick,
+  onArchiveAllDone,
 }: KanbanColumnProps) {
   const t = useT();
   const [adding, setAdding] = useState(false);
@@ -70,9 +73,20 @@ function KanbanColumn({
           <span className="ttl">{colLabel}</span>
           <span className="ct">{tasks.length}</span>
         </div>
-        <button className="add" onClick={() => setAdding(true)} title={t('board.add_task')}>
-          <Icon name="plus" size={12} />
-        </button>
+        {col.id === 'done' && onArchiveAllDone && tasks.length > 0 ? (
+          <button
+            className="add"
+            onClick={onArchiveAllDone}
+            title={t('board.archive_all_done')}
+            aria-label={t('board.archive_all_done')}
+          >
+            <Icon name="archive" size={12} />
+          </button>
+        ) : (
+          <button className="add" onClick={() => setAdding(true)} title={t('board.add_task')}>
+            <Icon name="plus" size={12} />
+          </button>
+        )}
       </div>
       <div
         className={`k-col-body ${dragOver ? 'drop-target' : ''} ${tasks.length === 0 && dragOver ? 'empty' : ''}`}
@@ -119,13 +133,26 @@ export function BoardKanban({ tasks }: BoardKanbanProps) {
   const setUI = useStore((s) => s.setUI);
   const t = useT();
   // Berechtigung: nur der Projekt-Owner oder ein Admin darf Aufgaben auf
-  // 'done' setzen. Wenn das Projekt keinen Owner hat → alle dürfen.
+  // 'done' setzen. Admin bekommt einen Confirm-Dialog wenn er nicht selbst
+  // Owner ist (F0vR8mfjrwv) — vorher konnten Admins Reviews stumm durch-
+  // schwitzen ohne dass der Owner es bemerkt hat.
   const meIsAdmin = users.find((u) => u.id === currentUser)?.role === 'admin';
-  const canMarkDone = (task: Task): boolean => {
-    if (meIsAdmin) return true;
-    const proj = projects.find((p) => p.id === task.proj);
-    if (!proj?.ownerId) return true;
-    return proj.ownerId === currentUser;
+  const resolveOwnerName = (ownerId: string) => users.find((u) => u.id === ownerId)?.name ?? null;
+  const guardMarkDone = (task: Task): boolean => {
+    const perm = checkMarkDone(
+      { task, projects, currentUserId: currentUser, meIsAdmin },
+      resolveOwnerName,
+    );
+    if (perm.kind === 'allow') return true;
+    if (perm.kind === 'blocked') {
+      showToast(t('toast.only_owner_can_mark_done'));
+      return false;
+    }
+    // admin_override → Confirm
+    const msg = perm.ownerName
+      ? t('toast.admin_confirm_done', { owner: perm.ownerName })
+      : t('toast.admin_confirm_done_no_owner');
+    return window.confirm(msg);
   };
   const [dragTask, setDragTask] = useState<Task | null>(null);
   const [dragOverCol, setDragOverCol] = useState<ColumnId | null>(null);
@@ -148,9 +175,8 @@ export function BoardKanban({ tasks }: BoardKanbanProps) {
   const onDrop = (col: ColumnId) => {
     if (!dragTask) return;
     if (dragTask.col !== col) {
-      // Permission-Check für 'done'
-      if (col === 'done' && !canMarkDone(dragTask)) {
-        showToast(t('toast.only_owner_can_mark_done'));
+      // Permission-Check für 'done' — Toast/Confirm wird in guardMarkDone gehandhabt.
+      if (col === 'done' && !guardMarkDone(dragTask)) {
         setDragTask(null);
         setDragOverCol(null);
         return;
@@ -186,6 +212,22 @@ export function BoardKanban({ tasks }: BoardKanbanProps) {
     return byCol;
   }, [tasks]);
 
+  const archiveTask = useStore((s) => s.archiveTask);
+  const onArchiveAllDone = async () => {
+    const done = tasksByCol.get('done') ?? [];
+    if (done.length === 0) return;
+    if (!window.confirm(t('board.archive_all_done_confirm', { count: done.length }))) return;
+    // Sequenziell um Race-Conditions im Store zu vermeiden.
+    for (const tk of done) {
+      try {
+        await archiveTask(tk.id);
+      } catch (e) {
+        console.warn('archive failed', tk.id, e);
+      }
+    }
+    showToast(t('board.archive_all_done_toast', { count: done.length }));
+  };
+
   return (
     <div className="kanban">
       {COLUMNS.map((col) => (
@@ -201,6 +243,7 @@ export function BoardKanban({ tasks }: BoardKanbanProps) {
           onDragLeave={onDragLeave}
           onDrop={onDrop}
           onTaskClick={onTaskClick}
+          onArchiveAllDone={col.id === 'done' ? onArchiveAllDone : undefined}
         />
       ))}
     </div>

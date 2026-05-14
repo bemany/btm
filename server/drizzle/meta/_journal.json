@@ -141,6 +141,13 @@
       "when": 1778840000000,
       "tag": "0019_feedback_screenshot",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1778850000000,
+      "tag": "0020_task_archived",
+      "breakpoints": true
     }
   ]
 }

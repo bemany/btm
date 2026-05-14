@@ -223,6 +223,12 @@ export function App() {
         e.preventDefault();
         setSettingsTab((v) => (v ? null : 'appearance'));
       }
+      // Cmd/Ctrl+Shift+F → Feedback-Modal (F2AMngaOedK).
+      // Achtung: nicht ohne Shift mappen, sonst kollidiert mit Browser-Find.
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && (e.key === 'f' || e.key === 'F')) {
+        e.preventDefault();
+        setFeedbackOpen((v) => !v);
+      }
       if (
         e.key === '/' &&
         document.activeElement?.tagName !== 'INPUT' &&

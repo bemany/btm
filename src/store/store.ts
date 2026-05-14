@@ -39,6 +39,9 @@ interface BTMActions {
   addTask: (partial: Partial<Task> & { title: string }) => Promise<Task | null>;
   updateTask: (id: string, patch: Partial<Task>) => Promise<void>;
   deleteTask: (id: string) => Promise<void>;
+  /** Archiviert eine erledigte Aufgabe (FgPjnOpBdCX). */
+  archiveTask: (id: string) => Promise<void>;
+  unarchiveTask: (id: string) => Promise<void>;
 
   startTimer: (taskId: string, withPomodoro?: boolean) => Promise<void>;
   stopTimer: () => Promise<void>;
@@ -171,6 +174,30 @@ export const useStore = create<BTMStore>()(
         } catch (e) {
           set({ tasks: before });
           console.error('deleteTask failed', e);
+        }
+      },
+
+      // Archiv: optimistisch aus der lokalen Liste rausnehmen (Default-Liste
+      // zeigt nur active). Bei Fehler reinrollen.
+      archiveTask: async (id) => {
+        const before = get().tasks;
+        set({ tasks: before.filter((t) => t.id !== id) });
+        try {
+          await api.archiveTask(id);
+        } catch (e) {
+          set({ tasks: before });
+          console.error('archiveTask failed', e);
+          throw e;
+        }
+      },
+      unarchiveTask: async (id) => {
+        try {
+          await api.unarchiveTask(id);
+          // Liste neu laden ist Aufgabe des Aufrufers (Archiv-Screen invalidet
+          // die TanStack-Query nach diesem Call).
+        } catch (e) {
+          console.error('unarchiveTask failed', e);
+          throw e;
         }
       },
 

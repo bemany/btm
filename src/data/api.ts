@@ -34,6 +34,8 @@ export interface ServerTask {
   createdById: string | null;
   sortOrder: number;
   parentTaskId: string | null;
+  /** ISO-Timestamp wenn archiviert, sonst null. (FgPjnOpBdCX) */
+  archivedAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -101,6 +103,7 @@ export function fromServerTask(s: ServerTask, sessions: ServerSession[] = []): T
     sessions: sessions.map(fromServerSession),
     createdAt: new Date(s.createdAt).getTime(),
     parentTaskId: s.parentTaskId,
+    archivedAt: s.archivedAt ?? null,
   };
 }
 
@@ -147,9 +150,20 @@ export function fromServerLiveTimer(s: ServerLiveTimer | null): Timer | null {
 
 // ── Reads ──────────────────────────────────────────────────────────────
 
-export async function listTasks(): Promise<ServerTask[]> {
-  const { tasks } = await apiFetch<{ tasks: ServerTask[] }>('/tasks');
+export async function listTasks(
+  opts: { archived?: 'active' | 'archived' | 'all' } = {},
+): Promise<ServerTask[]> {
+  // Default 'active' = ohne Archivierte. 'archived' nur archivierte, 'all' beide.
+  const q = opts.archived && opts.archived !== 'active' ? `?archived=${opts.archived}` : '';
+  const { tasks } = await apiFetch<{ tasks: ServerTask[] }>(`/tasks${q}`);
   return tasks;
+}
+
+export async function archiveTask(id: string): Promise<void> {
+  await apiFetch(`/tasks/${id}/archive`, { method: 'POST' });
+}
+export async function unarchiveTask(id: string): Promise<void> {
+  await apiFetch(`/tasks/${id}/unarchive`, { method: 'POST' });
 }
 
 export async function listProjects(): Promise<ServerProject[]> {

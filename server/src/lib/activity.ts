@@ -11,6 +11,8 @@ const TOPIC_BY_KIND: Record<string, EventTopic[]> = {
   task_moved: ['tasks', 'activity'],
   task_done: ['tasks', 'activity'],
   task_deleted: ['tasks', 'activity'],
+  task_archived: ['tasks', 'activity'],
+  task_unarchived: ['tasks', 'activity'],
   project_created: ['projects', 'activity'],
   project_updated: ['projects', 'activity'],
   project_deleted: ['projects', 'activity'],
@@ -39,6 +41,8 @@ export type ActivityKind =
   | 'task_moved'
   | 'task_done'
   | 'task_deleted'
+  | 'task_archived'
+  | 'task_unarchived'
   | 'project_created'
   | 'project_updated'
   | 'project_deleted'
