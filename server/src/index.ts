@@ -60,6 +60,10 @@ app.use('/api/*', async (c, next) => {
   return restCors(c, next);
 });
 
+// devAuthRoute zuerst: /api/auth/dev-pin muss VOR Better-Auth registriert sein,
+// weil Better-Auth /api/auth/* als Wildcard abfängt.
+app.route('/api/auth', devAuthRoute);
+
 // Better-Auth übernimmt /api/auth/* selbst (Sign-In, Sign-Out, Sessions, Magic-Link).
 app.on(['POST', 'GET'], '/api/auth/*', (c) => auth.handler(c.req.raw));
 
