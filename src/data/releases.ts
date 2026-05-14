@@ -115,13 +115,6 @@ export const RELEASES: Release[] = [
       {
         kind: 'feature',
         text: {
-          de: '**„Alle Aufgaben dieser Woche"-Liste** direkt unter den KPIs auf Meine Woche. Sortiert nach Priorität → Fälligkeit → Anlage-Datum. Pro Zeile: Status, Titel, Projekt, Fälligkeit, Prio.',
-          en: '**"All tasks this week" list** right under the KPIs on My Week. Sorted by priority → due → created. Each row: status, title, project, due, priority.',
-        },
-      },
-      {
-        kind: 'feature',
-        text: {
           de: '**Quickstart-Modal mit Beschreibung, Priorität und Fälligkeit**: neue Aufgabe direkt mit allen wichtigen Feldern anlegen, ohne hinterher in den Detail-Drawer wechseln zu müssen.',
           en: '**Quickstart modal with description, priority and due date**: create a new task with all the important fields up front — no need to open the detail drawer afterwards.',
         },

@@ -23,7 +23,6 @@ im Repo.
 - **Screenshot im Feedback-Modal** — Drag&Drop oder ⌘V, der letzte Clipboard-Screenshot wird automatisch angehängt (PNG/JPEG/GIF/WebP, max 8 MB). Migration 0019. _Esref-Idee_
 - **Update-Pille statt Force-Reload** — Claude-Desktop-Style: bei neuer Version erscheint eine pulsierende Pille direkt über dem Profil-Tile. Klick lädt neu. PWA-Strategie auf `registerType: 'prompt'` umgestellt.
 - **Globaler Feedback-Shortcut ⌘⇧F** — öffnet/schließt das Feedback-Modal von überall. _F2AMngaOedK_
-- **„Alle Aufgaben dieser Woche"-Liste** unter den KPIs auf Meine Woche, sortiert nach Priorität → Fälligkeit → Anlage. _F7OAFqRLy5R_
 - **Quickstart-Modal mit Beschreibung, Priorität und Fälligkeit** — neue Aufgabe direkt komplett anlegen statt Detail-Drawer nachzubearbeiten.
 - **Task → Wochenansicht-Shortcut** im Detail-Drawer (Calendar-Icon oben rechts). _FRr66InEsBQ_
 - **Sidebar restrukturiert** — Updates wandert direkt über das Profil, Mobile-Vorschau + Chrome-Plugin + TV-Dashboard in zusammenklappbare „Extras"-Gruppe. Projekte-Chip zeigt nur Favoriten-Anzahl. _FR0_IIsrpwo_
@@ -51,7 +50,9 @@ im Repo.
 
 ### Resolved Feedbacks
 
-`F7JzZf65SzX` (Akzentfarbe), `FKMsD4WmmOX` (Login-Link), `F2qEnzlswSt` (Toggle-Kontrast), `FatbLooqY9-` (Akzent-Override), `FkqjgMk6RH6` (OpenAI), `FTTMD2R8-LH` (MCP-Wizard), `FwQQWBHfTid` (Sammel-Prompt), `Fyrf31EWVGt` (Card-Kontrast), `F0vR8mfjrwv` (Permission), `F2AMngaOedK` (Shortcut), `FgPjnOpBdCX` (Archiv), `FHwNHtIY5Xe` (Discard-Confirm), `FR0_IIsrpwo` (Sidebar), `FystBwbvLnW` (Odoo-Preset), `FRr66InEsBQ` (Week-Shortcut), `F7OAFqRLy5R` (Week-Overview).
+`F7JzZf65SzX` (Akzentfarbe), `FKMsD4WmmOX` (Login-Link), `F2qEnzlswSt` (Toggle-Kontrast), `FatbLooqY9-` (Akzent-Override), `FkqjgMk6RH6` (OpenAI), `FTTMD2R8-LH` (MCP-Wizard), `FwQQWBHfTid` (Sammel-Prompt), `Fyrf31EWVGt` (Card-Kontrast), `F0vR8mfjrwv` (Permission), `F2AMngaOedK` (Shortcut), `FgPjnOpBdCX` (Archiv), `FHwNHtIY5Xe` (Discard-Confirm), `FR0_IIsrpwo` (Sidebar), `FystBwbvLnW` (Odoo-Preset), `FRr66InEsBQ` (Week-Shortcut).
+
+> ⚠️ `F7OAFqRLy5R` (Week-Overview-Liste auf „Meine Woche") wurde nach kurzer Live-Phase zurückgenommen — die Liste hat den Screen visuell zu sehr dominiert. Die Funktionalität lebt weiter im Wochenboard (`/board`).
 
 ---
 

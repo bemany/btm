@@ -197,8 +197,6 @@ export function MyWeekScreen({ setActive }: MyWeekScreenProps) {
         </div>
       </div>
 
-      <WeekTasksOverview tasks={myTasks} />
-
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 20 }}>
         <div>
           <div className="eyebrow" style={{ marginBottom: 10 }}>
@@ -573,63 +571,3 @@ function QuickStartProjectSelect({
   );
 }
 
-// ── Wochenübersicht: alle offenen Tasks der Woche (F7OAFqRLy5R) ──────
-// Liste aller eigenen Tasks mit col != 'done', sortiert nach (prio desc,
-// due asc, created asc). Klick → öffnet TaskDetailDrawer. Compact-Layout,
-// damit auch 15+ Aufgaben übersichtlich bleiben.
-function WeekTasksOverview({ tasks }: { tasks: import('../../store/types').Task[] }) {
-  const t = useT();
-  const setUI = useStore((s) => s.setUI);
-  const open = tasks.filter((tk) => tk.col !== 'done');
-  if (open.length === 0) return null;
-  const prioRank: Record<string, number> = { high: 0, med: 1, low: 2 };
-  const dueRank = (due: string | null | undefined): number => {
-    if (!due) return 99999;
-    if (due === 'today') return 0;
-    if (due === 'tomorrow') return 1;
-    const d = new Date(due).getTime();
-    return Number.isFinite(d) ? d / (24 * 3600 * 1000) : 99999;
-  };
-  const sorted = [...open].sort((a, b) => {
-    const pa = prioRank[a.prio] ?? 1;
-    const pb = prioRank[b.prio] ?? 1;
-    if (pa !== pb) return pa - pb;
-    const da = dueRank(a.due);
-    const db = dueRank(b.due);
-    if (da !== db) return da - db;
-    return a.createdAt - b.createdAt;
-  });
-  return (
-    <div className="week-overview">
-      <div className="eyebrow" style={{ marginBottom: 10, display: 'flex', gap: 10, alignItems: 'center' }}>
-        <span style={{ flex: 1 }}>{t('week.overview_section', { count: open.length })}</span>
-      </div>
-      <div className="week-overview-list">
-        {sorted.map((tk) => (
-          <button
-            key={tk.id}
-            type="button"
-            className="week-overview-row"
-            onClick={() => setUI({ taskDetailId: tk.id })}
-          >
-            <span className={`pill ${tk.col}`}>{t(`column.${tk.col}` as 'column.todo')}</span>
-            <span className="week-overview-title">{tk.title}</span>
-            <ProjTag id={tk.proj} />
-            {tk.due && (
-              <span className="mono week-overview-due">
-                {tk.due === 'today'
-                  ? t('week.due_today')
-                  : tk.due === 'tomorrow'
-                    ? t('week.due_tomorrow')
-                    : new Date(tk.due).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })}
-              </span>
-            )}
-            <span className={`week-overview-prio prio-${tk.prio}`}>
-              {t(`task_detail.prio_${tk.prio}` as 'task_detail.prio_high')}
-            </span>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
