@@ -1,5 +1,11 @@
-// AI-Backend-Proxy für LM-Studio (OpenAI-kompatibel).
+// AI-Backend-Proxy. Wir sprechen das OpenAI-Chat-Completions-Protokoll —
+// das schließt OpenAI selbst (Default) UND OpenAI-kompatible Endpunkte
+// wie LM-Studio, vLLM, Anyscale oder selbstgehostete Modelle ein.
 // Token + URL nur server-seitig, niemals client-side.
+//
+// Feature FkqjgMk6RH6: Umstellung von LM-Studio/Gemma auf OpenAI. Wir lesen
+// jetzt primär die OPENAI_*-Umgebungsvariablen, bleiben aber rückwärts-
+// kompatibel zu LMSTUDIO_* (Setup-Übergang ohne Downtime).
 
 import { Hono } from 'hono';
 import { z } from 'zod';
@@ -8,9 +14,17 @@ import { projects as projectsTable, users as usersTable } from '../db/schema.js'
 import { requireAuth, type Variables } from '../lib/context.js';
 import { TOOLS as MCP_TOOLS, handlers as toolHandlers, type ToolCtx } from './mcp.js';
 
-const LMSTUDIO_URL = process.env.LMSTUDIO_URL ?? 'https://llm1.bemany.tech';
-const LMSTUDIO_TOKEN = process.env.LMSTUDIO_TOKEN ?? '';
-const LMSTUDIO_MODEL = process.env.LMSTUDIO_MODEL ?? 'google/gemma-4-e4b';
+// Provider-Config: OpenAI > LM-Studio-Legacy. Wenn OPENAI_API_KEY gesetzt
+// ist, fahren wir gegen OpenAI. Sonst Fallback auf die alten LMSTUDIO_*-
+// Variablen (für Roll-back ohne Code-Änderung).
+const AI_API_KEY = process.env.OPENAI_API_KEY ?? process.env.LMSTUDIO_TOKEN ?? '';
+const AI_BASE_URL = (process.env.OPENAI_BASE_URL
+  ?? (process.env.OPENAI_API_KEY ? 'https://api.openai.com' : process.env.LMSTUDIO_URL)
+  ?? 'https://api.openai.com').replace(/\/+$/, '');
+const AI_MODEL = process.env.OPENAI_MODEL
+  ?? process.env.LMSTUDIO_MODEL
+  ?? 'gpt-4o-mini';
+const AI_PROVIDER_LABEL = process.env.OPENAI_API_KEY ? 'openai' : 'lmstudio';
 
 interface ChatMessage {
   role: 'system' | 'user' | 'assistant';
@@ -127,9 +141,9 @@ async function callLMStudio(opts: {
   topP?: number;
   signal?: AbortSignal;
 }): Promise<string> {
-  if (!LMSTUDIO_TOKEN) throw new Error('LMSTUDIO_TOKEN nicht gesetzt');
+  if (!AI_API_KEY) throw new Error('OPENAI_API_KEY (oder Legacy LMSTUDIO_TOKEN) nicht gesetzt');
   const body: Record<string, unknown> = {
-    model: LMSTUDIO_MODEL,
+    model: AI_MODEL,
     messages: opts.messages,
     temperature: opts.temperature ?? 0.3,
     max_tokens: opts.maxTokens ?? 1024,
@@ -148,10 +162,10 @@ async function callLMStudio(opts: {
     };
   }
 
-  const res = await fetch(`${LMSTUDIO_URL}/v1/chat/completions`, {
+  const res = await fetch(`${AI_BASE_URL}/v1/chat/completions`, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${LMSTUDIO_TOKEN}`,
+      Authorization: `Bearer ${AI_API_KEY}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(body),
@@ -159,13 +173,13 @@ async function callLMStudio(opts: {
   });
   if (!res.ok) {
     const txt = await res.text().catch(() => '');
-    throw new Error(`LM-Studio: HTTP ${res.status} ${txt.slice(0, 200)}`);
+    throw new Error(`AI (${AI_PROVIDER_LABEL}): HTTP ${res.status} ${txt.slice(0, 200)}`);
   }
   const data = (await res.json()) as {
     choices?: Array<{ message?: { content?: string } }>;
   };
   const content = data.choices?.[0]?.message?.content;
-  if (!content) throw new Error('LM-Studio: keine Antwort');
+  if (!content) throw new Error(`AI (${AI_PROVIDER_LABEL}): keine Antwort`);
   return content;
 }
 
@@ -240,7 +254,7 @@ async function chatWithTools(opts: {
   temperature?: number;
   maxTokens?: number;
 }): Promise<{ content: string; toolCalls: ToolCallTrace[] }> {
-  if (!LMSTUDIO_TOKEN) throw new Error('LMSTUDIO_TOKEN nicht gesetzt');
+  if (!AI_API_KEY) throw new Error('OPENAI_API_KEY (oder Legacy LMSTUDIO_TOKEN) nicht gesetzt');
   const conversation: LMSMessage[] = [...opts.messages];
   const trace: ToolCallTrace[] = [];
   // Dedup-Schutz: wenn das Modell denselben Tool-Aufruf wiederholt (kommt
@@ -250,7 +264,7 @@ async function chatWithTools(opts: {
 
   for (let iter = 0; iter < 5; iter++) {
     const body: Record<string, unknown> = {
-      model: LMSTUDIO_MODEL,
+      model: AI_MODEL,
       messages: conversation,
       temperature: opts.temperature ?? 0.4,
       max_tokens: opts.maxTokens ?? 1500,
@@ -258,14 +272,14 @@ async function chatWithTools(opts: {
       tools: CHAT_TOOLS,
       tool_choice: 'auto',
     };
-    const res = await fetch(`${LMSTUDIO_URL}/v1/chat/completions`, {
+    const res = await fetch(`${AI_BASE_URL}/v1/chat/completions`, {
       method: 'POST',
-      headers: { Authorization: `Bearer ${LMSTUDIO_TOKEN}`, 'Content-Type': 'application/json' },
+      headers: { Authorization: `Bearer ${AI_API_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
     if (!res.ok) {
       const txt = await res.text().catch(() => '');
-      throw new Error(`LM-Studio: HTTP ${res.status} ${txt.slice(0, 200)}`);
+      throw new Error(`AI (${AI_PROVIDER_LABEL}): HTTP ${res.status} ${txt.slice(0, 200)}`);
     }
     const data = (await res.json()) as {
       choices?: Array<{
@@ -274,7 +288,7 @@ async function chatWithTools(opts: {
       }>;
     };
     const msg = data.choices?.[0]?.message;
-    if (!msg) throw new Error('LM-Studio: leere Antwort');
+    if (!msg) throw new Error(`AI (${AI_PROVIDER_LABEL}): leere Antwort`);
 
     const calls = msg.tool_calls ?? [];
     if (calls.length === 0) {
@@ -490,7 +504,7 @@ ${usrs.map((u) => `- ${u.id} · ${u.name} · ${u.email}`).join('\n') || '(keine)
           parsed = { tasks: [] };
         }
       }
-      return c.json({ result: parsed, model: LMSTUDIO_MODEL, byUser: me.id });
+      return c.json({ result: parsed, model: AI_MODEL, byUser: me.id });
     } catch (e) {
       console.error('[ai] extract failed', e);
       return c.json({ error: e instanceof Error ? e.message : 'extract failed' }, 502);
@@ -538,7 +552,7 @@ Antworte als reiner Text. Keine Markdown-Tabellen außer der User fragt explizit
       return c.json({
         reply: { role: 'assistant', content: normalized },
         toolCalls: result.toolCalls,
-        model: LMSTUDIO_MODEL,
+        model: AI_MODEL,
       });
     } catch (e) {
       console.error('[ai] chat failed', e);

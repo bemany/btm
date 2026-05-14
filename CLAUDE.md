@@ -30,7 +30,7 @@ Feedback-System, animierte Glass-Hintergründe. Siehe [`RELEASES.md`](./RELEASES
 - **Postgres**: 16-alpine, Datenbank `btm`, User `btm`. Passwort + Secrets in `/opt/btm/.env` (chmod 600, nur root). Compose injiziert per `environment:` → kein Read im Container.
 - **Initial-Admin**: `esref@bemany.de` (Magic-Link → automatisch role=admin durch DB-Hook).
 - **SMTP** für Magic-Links: `smtp.ionos.de:465 SSL`, User `portal@meinfahrer.app`.
-- **LM-Studio**: `https://llm1.bemany.tech` mit Token `sk-lm-…` für Chat (`google/gemma-4-e4b`) — Tool-Use im Chat aktiv.
+- **AI**: OpenAI (`https://api.openai.com`, Default-Modell `gpt-4o-mini`) für AI-Drawer + Chat-Bubble, OpenAI-Chat-Completions-Protokoll mit Function-Calling. Seit 2026-05-14 (Feature FkqjgMk6RH6) — vorher LM-Studio mit Gemma 4 (Tool-Use unzuverlässig). Provider-Switch über Env: `OPENAI_API_KEY` + optional `OPENAI_MODEL` / `OPENAI_BASE_URL`. Code in `server/src/routes/ai.ts` bleibt rückwärtskompatibel zu `LMSTUDIO_*` als Fallback.
 - **Backup**: `/opt/btm/backup.sh` (cron 03:30 UTC täglich), pg_dump.gz in `/opt/btm/backups/`, 14 Tage Retention.
 
 ### Alte Setup (LXC 139) — Rollback-Fallback (auslaufend)

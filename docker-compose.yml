@@ -63,9 +63,14 @@ services:
       SMTP_USER: ${SMTP_USER}
       SMTP_PASS: ${SMTP_PASS}
       SMTP_FROM: ${SMTP_FROM}
-      LMSTUDIO_URL: ${LMSTUDIO_URL}
-      LMSTUDIO_TOKEN: ${LMSTUDIO_TOKEN}
-      LMSTUDIO_MODEL: ${LMSTUDIO_MODEL}
+      # AI-Provider: OpenAI (Default) bzw. OpenAI-kompatibler Endpunkt
+      # via OPENAI_BASE_URL. Legacy LMSTUDIO_*-Vars greifen als Fallback.
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-}
+      LMSTUDIO_URL: ${LMSTUDIO_URL:-}
+      LMSTUDIO_TOKEN: ${LMSTUDIO_TOKEN:-}
+      LMSTUDIO_MODEL: ${LMSTUDIO_MODEL:-}
       # Persistent storage für Task-Attachments (siehe Migration 0016).
       UPLOAD_DIR: /app/uploads
     volumes:
