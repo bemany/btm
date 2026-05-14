@@ -17,13 +17,20 @@ import { TOOLS as MCP_TOOLS, handlers as toolHandlers, type ToolCtx } from './mc
 // Provider-Config: OpenAI > LM-Studio-Legacy. Wenn OPENAI_API_KEY gesetzt
 // ist, fahren wir gegen OpenAI. Sonst Fallback auf die alten LMSTUDIO_*-
 // Variablen (für Roll-back ohne Code-Änderung).
-const AI_API_KEY = process.env.OPENAI_API_KEY ?? process.env.LMSTUDIO_TOKEN ?? '';
-const AI_BASE_URL = (process.env.OPENAI_BASE_URL
-  ?? (process.env.OPENAI_API_KEY ? 'https://api.openai.com' : process.env.LMSTUDIO_URL)
-  ?? 'https://api.openai.com').replace(/\/+$/, '');
+//
+// `||` statt `??` ist hier wichtig: docker-compose ersetzt nicht-gesetzte
+// Variablen via `${VAR:-}` durch den leeren String `""` — der ist nicht
+// null/undefined, würde `??` aber durchreichen und uns einen leeren URL/
+// Token bescheren.
+const AI_API_KEY = process.env.OPENAI_API_KEY || process.env.LMSTUDIO_TOKEN || '';
+const AI_BASE_URL = (
+  process.env.OPENAI_BASE_URL
+  || (process.env.OPENAI_API_KEY ? 'https://api.openai.com' : process.env.LMSTUDIO_URL)
+  || 'https://api.openai.com'
+).replace(/\/+$/, '');
 const AI_MODEL = process.env.OPENAI_MODEL
-  ?? process.env.LMSTUDIO_MODEL
-  ?? 'gpt-4o-mini';
+  || process.env.LMSTUDIO_MODEL
+  || 'gpt-4o-mini';
 const AI_PROVIDER_LABEL = process.env.OPENAI_API_KEY ? 'openai' : 'lmstudio';
 
 interface ChatMessage {
