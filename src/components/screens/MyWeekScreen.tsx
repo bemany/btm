@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { Project } from '../../store/types';
 import { useStore } from '../../store/store';
 import type { ScreenId } from '../../store/types';
@@ -201,14 +201,8 @@ export function MyWeekScreen({ setActive }: MyWeekScreenProps) {
           <div className="eyebrow" style={{ marginBottom: 10 }}>
             {t('week.in_progress_now')}
           </div>
-          {quickStartOpen && (
-            <QuickStartForm
-              onClose={() => setQuickStartOpen(false)}
-              onStarted={() => setQuickStartOpen(false)}
-            />
-          )}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {today.length === 0 && !quickStartOpen && (
+            {today.length === 0 && (
               <div className="empty-state">
                 <Icon name="check-circle-2" size={36} className="icon" />
                 <h4>{t('week.empty_doing_title')}</h4>
@@ -302,10 +296,10 @@ export function MyWeekScreen({ setActive }: MyWeekScreenProps) {
               type="button"
               className="tb-btn"
               style={{ flex: 1, justifyContent: 'center', padding: 12, minWidth: 0 }}
-              onClick={() => setQuickStartOpen((v) => !v)}
+              onClick={() => setQuickStartOpen(true)}
             >
-              <Icon name={quickStartOpen ? 'x' : 'play'} size={13} />
-              {quickStartOpen ? t('common.cancel') : t('week.quickstart_btn')}
+              <Icon name="play" size={13} />
+              {t('week.quickstart_btn')}
             </button>
             <button
               type="button"
@@ -325,22 +319,31 @@ export function MyWeekScreen({ setActive }: MyWeekScreenProps) {
           window.dispatchEvent(new CustomEvent('btm:open-settings', { detail: { tab: 'calendar' } }));
         }}
       />
+
+      {quickStartOpen && (
+        <QuickStartModal
+          onClose={() => setQuickStartOpen(false)}
+          onStarted={() => setQuickStartOpen(false)}
+        />
+      )}
     </div>
   );
 }
 
-// ── QuickStart-Form (auf Meine Woche) ──────────────────────────────────
+// ── QuickStart-Modal (auf Meine Woche) ─────────────────────────────────
 // Schnellster Weg eine neue Aufgabe zu starten:
 //   1. Title-Input (required, auto-fokussiert)
 //   2. Projekt-Select (required, kein Default — User MUSS wählen)
 //   3. „Starten" → laufenden Timer stoppen, Task in col='doing' anlegen,
 //      Timer auf die neue Task starten
-// Bug-Report Fvyh_H5dNy3 (Benjamin Fiens).
-interface QuickStartFormProps {
+// Bug-Report Fvyh_H5dNy3 (Benjamin Fiens). Seit 2026-05-14 als Modal —
+// vorher inline-Form über der In-Arbeit-Liste, war auf der Seite leicht
+// zu übersehen und konkurrierte visuell mit den Task-Cards.
+interface QuickStartModalProps {
   onClose: () => void;
   onStarted: () => void;
 }
-function QuickStartForm({ onClose, onStarted }: QuickStartFormProps) {
+function QuickStartModal({ onClose, onStarted }: QuickStartModalProps) {
   const t = useT();
   const projects = useStore((s) => s.projects);
   const currentUser = useStore((s) => s.currentUser);
@@ -352,9 +355,9 @@ function QuickStartForm({ onClose, onStarted }: QuickStartFormProps) {
   const [title, setTitle] = useState('');
   const [proj, setProj] = useState<string>(''); // explizit leer → User muss wählen
   const [busy, setBusy] = useState(false);
-  const inputRef = (el: HTMLInputElement | null) => { el?.focus(); };
 
-  const submit = async () => {
+  const submit = async (e?: React.FormEvent) => {
+    e?.preventDefault?.();
     const trimmed = title.trim();
     if (!trimmed) {
       showToast(t('week.quickstart_need_title'));
@@ -394,37 +397,76 @@ function QuickStartForm({ onClose, onStarted }: QuickStartFormProps) {
     }
   };
 
+  // Escape + ⌘↵ Shortcuts auf Modal-Ebene, gleiches Pattern wie
+  // NewProjectModal / FeedbackModal.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') void submit();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [title, proj, busy]);
+
+  const canSubmit = !busy && title.trim().length > 0 && !!proj;
+
   return (
-    <div className="qs-form" onClick={(e) => e.stopPropagation()}>
-      <input
-        ref={inputRef}
-        className="qs-title"
-        placeholder={t('week.quickstart_title_placeholder')}
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') void submit();
-          if (e.key === 'Escape') onClose();
-        }}
-        disabled={busy}
-      />
-      <QuickStartProjectSelect
-        value={proj}
-        projects={projects}
-        currentUserId={currentUser}
-        onChange={setProj}
-        disabled={busy}
-        placeholder={t('week.quickstart_pick_project')}
-      />
-      <button
-        type="button"
-        className="qs-go"
-        onClick={() => void submit()}
-        disabled={busy || !title.trim() || !proj}
-      >
-        <Icon name="play" size={12} />
-        {timer ? t('week.quickstart_swap_btn') : t('week.quickstart_start_btn')}
-      </button>
+    <div
+      className="modal-backdrop"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <form className="modal" onSubmit={submit}>
+        <div className="modal-head">
+          <h3>{t('week.quickstart_btn')}</h3>
+          <button type="button" className="x" onClick={onClose} aria-label={t('common.close')}>
+            <Icon name="x" size={16} />
+          </button>
+        </div>
+        <div className="modal-body">
+          <div className="form-row">
+            <label>{t('week.quickstart_title_label')}</label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder={t('week.quickstart_title_placeholder')}
+              autoFocus
+              disabled={busy}
+            />
+          </div>
+          <div className="form-row">
+            <label>{t('week.quickstart_project_label')}</label>
+            <QuickStartProjectSelect
+              value={proj}
+              projects={projects}
+              currentUserId={currentUser}
+              onChange={setProj}
+              disabled={busy}
+              placeholder={t('week.quickstart_pick_project')}
+            />
+            <div className="hint">{t('week.quickstart_project_hint')}</div>
+          </div>
+          {timer && (
+            <div className="hint" style={{ marginTop: 12 }}>
+              {t('week.quickstart_swap_hint')}
+            </div>
+          )}
+        </div>
+        <div className="modal-foot">
+          <div style={{ flex: 1 }} />
+          <button type="button" className="btn-ghost" onClick={onClose}>
+            {t('common.cancel')}
+          </button>
+          <button type="submit" className="btn-primary" disabled={!canSubmit}>
+            <Icon name="play" size={12} />
+            {timer ? t('week.quickstart_swap_btn') : t('week.quickstart_start_btn')}
+            <span style={{ opacity: 0.6, marginLeft: 8, fontFamily: 'var(--font-mono)', fontSize: 10 }}>⌘↵</span>
+          </button>
+        </div>
+      </form>
     </div>
   );
 }
