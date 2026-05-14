@@ -26,6 +26,11 @@ export const apiTokensRoute = new Hono<{ Variables: Variables }>()
         id: apiTokens.id,
         name: apiTokens.name,
         prefix: apiTokens.prefix,
+        // Klartext für eigene Tokens (FTTMD2R8-LH). Bei Legacy-Tokens null.
+        // Nur Session-Auth: über API-Token den eigenen Klartext zu listen
+        // wäre OK aber irreführend (Token ist eh schon bekannt) — wir
+        // liefern es trotzdem, weil's intern ist.
+        tokenPlain: apiTokens.tokenPlain,
         scopes: apiTokens.scopes,
         lastUsedAt: apiTokens.lastUsedAt,
         expiresAt: apiTokens.expiresAt,
@@ -62,6 +67,9 @@ export const apiTokensRoute = new Hono<{ Variables: Variables }>()
         userId: user.id,
         name: body.name,
         tokenHash: hash,
+        // Plain wird zusätzlich gespeichert (intern, FTTMD2R8-LH). Der
+        // Hash bleibt der Auth-Pfad — Plain ist nur fürs UI-Anzeigen.
+        tokenPlain: plain,
         prefix,
         scopes: body.scopes,
         expiresAt,

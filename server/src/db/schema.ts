@@ -346,6 +346,9 @@ export const apiTokens = pgTable(
       .references(() => users.id, { onDelete: 'cascade' }),
     name: text('name').notNull(),
     tokenHash: text('token_hash').notNull().unique(),
+    // Klartext-Token (FTTMD2R8-LH). Internes Tool, kein Datenschutz-Risiko,
+    // Hash bleibt der Auth-Pfad. Legacy-Tokens (vor 2026-05-14) sind null.
+    tokenPlain: text('token_plain'),
     prefix: text('prefix').notNull(), // erste 8 Zeichen für die UI ("btm_xxxx…")
     scopes: text('scopes').array().notNull().default(['read', 'write']),
     lastUsedAt: timestamp('last_used_at', { withTimezone: true }),

@@ -193,6 +193,10 @@ export const de = {
     wizard_step3_body: 'Claude schreibt die Config selbst, bittet dich um Neustart und ruft danach `me` + `list_week` auf — du siehst sofort deine geplanten Aufgaben.',
     wizard_prompt_copied: 'Setup-Prompt kopiert — jetzt in Claude Desktop einfügen.',
     wizard_advanced: 'Manuelle Einrichtung & Quick-Test',
+    show_token: 'Token anzeigen',
+    hide_token: 'Token verbergen',
+    plain_unavailable: 'Klartext nicht mehr verfügbar — Token neu erstellen, um ihn im Wizard zu nutzen.',
+    copy_prompt_for_token: 'Setup-Prompt mit diesem Token kopieren',
   },
   topbar: {
     search_placeholder: 'Aufgaben durchsuchen…',

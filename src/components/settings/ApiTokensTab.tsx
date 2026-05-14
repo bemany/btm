@@ -150,8 +150,15 @@ export function ApiTokensTab() {
     }
   };
 
-  const copyPrompt = async () => {
-    const prompt = buildSetupPrompt(freshlyCreated?.plain ?? '', locale);
+  // Wir greifen für den Wizard-Button auf das Klartext-Token zurück. Vorrang
+  // hat ein gerade frisch erstellter Token (UI-State), sonst der erste in
+  // der Liste, der einen `tokenPlain` hat (interner Trade-off — wir
+  // speichern Klartext, siehe Schema-Kommentar).
+  const fallbackPlain = tokens.find((t) => !!t.tokenPlain)?.tokenPlain ?? '';
+  const promptToken = freshlyCreated?.plain ?? fallbackPlain ?? '';
+
+  const copyPrompt = async (tokenOverride?: string) => {
+    const prompt = buildSetupPrompt(tokenOverride ?? promptToken, locale);
     try {
       await navigator.clipboard.writeText(prompt);
       showToast(t('api_tokens.wizard_prompt_copied'));
@@ -161,6 +168,16 @@ export function ApiTokensTab() {
   };
 
   const hasFreshToken = !!freshlyCreated;
+  const hasAnyPlainToken = !!promptToken;
+  const [revealedIds, setRevealedIds] = useState<Set<string>>(new Set());
+  const toggleReveal = (id: string) => {
+    setRevealedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   return (
     <div className="set-pane">
@@ -175,11 +192,11 @@ export function ApiTokensTab() {
         <p className="apit-wizard-sub">{t('api_tokens.wizard_sub')}</p>
 
         <ol className="apit-wizard-steps">
-          <li className={hasFreshToken ? 'is-done' : ''}>
-            <div className="apit-wizard-step-num">{hasFreshToken ? '✓' : '1'}</div>
+          <li className={hasAnyPlainToken ? 'is-done' : ''}>
+            <div className="apit-wizard-step-num">{hasAnyPlainToken ? '✓' : '1'}</div>
             <div className="apit-wizard-step-text">
               <div className="apit-wizard-step-title">
-                {hasFreshToken ? t('api_tokens.wizard_step1_done') : t('api_tokens.wizard_step1')}
+                {hasAnyPlainToken ? t('api_tokens.wizard_step1_done') : t('api_tokens.wizard_step1')}
               </div>
               <div className="apit-wizard-step-body">{t('api_tokens.wizard_step1_body')}</div>
             </div>
@@ -189,17 +206,17 @@ export function ApiTokensTab() {
             <div className="apit-wizard-step-text">
               <div className="apit-wizard-step-title">{t('api_tokens.wizard_step2')}</div>
               <div className="apit-wizard-step-body">
-                {hasFreshToken
+                {hasAnyPlainToken
                   ? t('api_tokens.wizard_step2_body')
                   : t('api_tokens.wizard_step2_btn_placeholder_hint')}
               </div>
               <button
                 type="button"
-                className={`tb-btn ${hasFreshToken ? 'accent' : ''} apit-wizard-cta`}
-                onClick={copyPrompt}
+                className={`tb-btn ${hasAnyPlainToken ? 'accent' : ''} apit-wizard-cta`}
+                onClick={() => copyPrompt()}
               >
                 <Icon name="copy" size={12} />
-                {hasFreshToken
+                {hasAnyPlainToken
                   ? t('api_tokens.wizard_step2_btn')
                   : t('api_tokens.wizard_step2_btn_placeholder')}
               </button>
@@ -275,45 +292,89 @@ export function ApiTokensTab() {
         </div>
       ) : (
         <div className="apit-list">
-          {tokens.map((tok) => (
-            <div key={tok.id} className="apit-row">
-              <div className="apit-row-main">
-                <div className="apit-row-name">{tok.name}</div>
-                <div className="apit-row-meta">
-                  <code>{tok.prefix}…</code>
-                  <span>·</span>
-                  <span>
-                    {t('api_tokens.created_label', {
-                      date: new Date(tok.createdAt).toLocaleDateString(locale === 'en' ? 'en-US' : 'de-DE'),
-                    })}
-                  </span>
-                  {tok.lastUsedAt ? (
-                    <>
-                      <span>·</span>
-                      <span>
-                        {t('api_tokens.last_used_label', {
-                          when: new Date(tok.lastUsedAt).toLocaleString(locale === 'en' ? 'en-US' : 'de-DE', {
-                            day: '2-digit',
-                            month: '2-digit',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          }),
-                        })}
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <span>·</span>
-                      <span style={{ color: 'var(--ink-400)' }}>{t('api_tokens.never_used')}</span>
-                    </>
+          {tokens.map((tok) => {
+            const revealed = revealedIds.has(tok.id);
+            const hasPlain = !!tok.tokenPlain;
+            return (
+              <div key={tok.id} className="apit-row">
+                <div className="apit-row-main">
+                  <div className="apit-row-name">{tok.name}</div>
+                  <div className="apit-row-meta">
+                    {hasPlain && revealed ? (
+                      <code className="apit-row-plain">{tok.tokenPlain}</code>
+                    ) : (
+                      <code>{tok.prefix}…</code>
+                    )}
+                    <span>·</span>
+                    <span>
+                      {t('api_tokens.created_label', {
+                        date: new Date(tok.createdAt).toLocaleDateString(locale === 'en' ? 'en-US' : 'de-DE'),
+                      })}
+                    </span>
+                    {tok.lastUsedAt ? (
+                      <>
+                        <span>·</span>
+                        <span>
+                          {t('api_tokens.last_used_label', {
+                            when: new Date(tok.lastUsedAt).toLocaleString(locale === 'en' ? 'en-US' : 'de-DE', {
+                              day: '2-digit',
+                              month: '2-digit',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            }),
+                          })}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <span>·</span>
+                        <span style={{ color: 'var(--ink-400)' }}>{t('api_tokens.never_used')}</span>
+                      </>
+                    )}
+                  </div>
+                  {!hasPlain && (
+                    <div className="apit-row-legacy-hint">{t('api_tokens.plain_unavailable')}</div>
                   )}
                 </div>
+                <div className="apit-row-actions">
+                  {hasPlain && (
+                    <>
+                      <button
+                        type="button"
+                        className="apit-row-iconbtn"
+                        onClick={() => toggleReveal(tok.id)}
+                        title={revealed ? t('api_tokens.hide_token') : t('api_tokens.show_token')}
+                        aria-label={revealed ? t('api_tokens.hide_token') : t('api_tokens.show_token')}
+                      >
+                        <Icon name={revealed ? 'eye-off' : 'eye'} size={13} />
+                      </button>
+                      <button
+                        type="button"
+                        className="apit-row-iconbtn"
+                        onClick={() => copy(tok.tokenPlain!)}
+                        title={t('api_tokens.copy')}
+                        aria-label={t('api_tokens.copy')}
+                      >
+                        <Icon name="copy" size={13} />
+                      </button>
+                      <button
+                        type="button"
+                        className="apit-row-iconbtn"
+                        onClick={() => copyPrompt(tok.tokenPlain!)}
+                        title={t('api_tokens.copy_prompt_for_token')}
+                        aria-label={t('api_tokens.copy_prompt_for_token')}
+                      >
+                        <Icon name="sparkles" size={13} />
+                      </button>
+                    </>
+                  )}
+                  <button className="apit-revoke" onClick={() => onRevoke(tok.id)} title={t('api_tokens.revoke')}>
+                    <Icon name="trash-2" size={13} /> {t('api_tokens.revoke')}
+                  </button>
+                </div>
               </div>
-              <button className="apit-revoke" onClick={() => onRevoke(tok.id)} title={t('api_tokens.revoke')}>
-                <Icon name="trash-2" size={13} /> {t('api_tokens.revoke')}
-              </button>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 

@@ -272,3 +272,61 @@ body[data-theme="default-dark"] .apit-wizard-step-num {
   border-color: rgba(255, 255, 255, 0.12);
   color: var(--ink-700);
 }
+
+/* ── Row-Erweiterungen für Klartext + Aktionen (FTTMD2R8-LH) ──────── */
+.apit-row-plain {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--accent-700);
+  background: var(--accent-50);
+  border: 1px solid var(--accent-100);
+  padding: 2px 6px;
+  border-radius: 4px;
+  user-select: all;
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.apit-row-legacy-hint {
+  font-size: 11px;
+  color: var(--ink-500);
+  font-style: italic;
+  margin-top: 4px;
+}
+.apit-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.apit-row-iconbtn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--ink-200);
+  background: var(--cream-50);
+  color: var(--ink-700);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background .12s ease, color .12s ease, border-color .12s ease;
+}
+.apit-row-iconbtn:hover {
+  background: var(--cream-100);
+  color: var(--ink-900);
+  border-color: var(--ink-300);
+}
+body[data-theme="glass-dark"] .apit-row-iconbtn,
+body[data-theme="default-dark"] .apit-row-iconbtn {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.10);
+  color: var(--ink-700);
+}
+body[data-theme="glass-dark"] .apit-row-iconbtn:hover,
+body[data-theme="default-dark"] .apit-row-iconbtn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--ink-900);
+}

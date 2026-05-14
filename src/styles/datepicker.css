@@ -61,12 +61,14 @@
   color: var(--ink-900);
 }
 
-/* Popover — frosted glass, transluzent */
+/* Popover — frosted glass, transluzent.
+   Wird über React-Portal in <body> gerendert, position: fixed kommt inline
+   aus dem JS. Statisches `position: absolute` + `top`/`left` weiter unten
+   greifen nur falls jemand das Portal ausbaut. z-index muss über Modal-
+   Backdrop (200) liegen. */
 .dp-pop {
-  position: absolute;
-  z-index: 1100;
-  top: calc(100% + 6px);
-  left: 0;
+  position: fixed;
+  z-index: 2000;
   width: 280px;
   background: rgba(250, 247, 242, 0.62);
   border: 1px solid rgba(28, 26, 23, 0.08);

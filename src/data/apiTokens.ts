@@ -4,6 +4,8 @@ export interface ApiTokenRow {
   id: string;
   name: string;
   prefix: string;
+  /** Klartext-Token (FTTMD2R8-LH). Bei Legacy-Tokens (vor 2026-05-14) null. */
+  tokenPlain?: string | null;
   scopes: ('read' | 'write')[];
   lastUsedAt: string | null;
   expiresAt: string | null;

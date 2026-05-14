@@ -20,6 +20,7 @@
 // vermeidet eine Bundle-Inflation um >100 kB.
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Icon } from './Icon';
 import { useT, useLocale } from '../../i18n';
 
@@ -102,6 +103,13 @@ export function DatePicker({
   const [draftMinute, setDraftMinute] = useState(() => parsed?.getMinutes() ?? 0);
   const [draftDay, setDraftDay] = useState<Date | null>(parsed);
   const popRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  // Popover wird über React-Portal in <body> gerendert, sonst clipt sie an
+  // .modal-body overflow:auto (siehe QuickStart-Modal). Position wird per
+  // getBoundingClientRect aus dem Trigger berechnet und bei Scroll/Resize
+  // refreshed. Defaults sind off-screen, damit der erste Render nicht
+  // kurz oben links flickered.
+  const [popPos, setPopPos] = useState<{ top: number; left: number } | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -111,11 +119,44 @@ export function DatePicker({
     setDraftMinute(parsed?.getMinutes() ?? 0);
   }, [open, parsed]);
 
-  // Outside-Klick schließt
+  // Pop-Position berechnen + bei Scroll/Resize refreshen. 6px Spacing
+  // unter dem Trigger; wenn unten kein Platz mehr ist, klappen wir
+  // oberhalb auf.
+  useEffect(() => {
+    if (!open) return;
+    const recompute = () => {
+      const r = triggerRef.current?.getBoundingClientRect();
+      if (!r) return;
+      const POP_W = 280;
+      const POP_H = 360;
+      const margin = 12;
+      let top = r.bottom + 6;
+      if (top + POP_H > window.innerHeight - margin) {
+        top = Math.max(margin, r.top - POP_H - 6);
+      }
+      let left = r.left;
+      if (left + POP_W > window.innerWidth - margin) {
+        left = Math.max(margin, window.innerWidth - POP_W - margin);
+      }
+      setPopPos({ top, left });
+    };
+    recompute();
+    window.addEventListener('scroll', recompute, true);
+    window.addEventListener('resize', recompute);
+    return () => {
+      window.removeEventListener('scroll', recompute, true);
+      window.removeEventListener('resize', recompute);
+    };
+  }, [open]);
+
+  // Outside-Klick schließt (Trigger ODER Pop sind „inside")
   useEffect(() => {
     if (!open) return;
     const onDown = (e: MouseEvent) => {
-      if (popRef.current && !popRef.current.contains(e.target as Node)) setOpen(false);
+      const target = e.target as Node;
+      if (popRef.current?.contains(target)) return;
+      if (triggerRef.current?.contains(target)) return;
+      setOpen(false);
     };
     document.addEventListener('mousedown', onDown);
     return () => document.removeEventListener('mousedown', onDown);
@@ -185,6 +226,7 @@ export function DatePicker({
   return (
     <div className={`dp-wrap ${className}`}>
       <button
+        ref={triggerRef}
         type="button"
         className={`dp-trigger ${compact ? 'is-compact' : ''} ${mono ? 'is-mono' : ''} ${parsed ? 'has-value' : 'is-empty'}`}
         onClick={() => setOpen((v) => !v)}
@@ -216,8 +258,13 @@ export function DatePicker({
         )}
       </button>
 
-      {open && (
-        <div ref={popRef} className="dp-pop" role="dialog">
+      {open && popPos && createPortal(
+        <div
+          ref={popRef}
+          className="dp-pop"
+          role="dialog"
+          style={{ position: 'fixed', top: popPos.top, left: popPos.left }}
+        >
           <div className="dp-head">
             <button
               type="button"
@@ -339,7 +386,8 @@ export function DatePicker({
               </button>
             )}
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   );

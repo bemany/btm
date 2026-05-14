@@ -191,6 +191,10 @@ export const en: Translations = {
     wizard_step3_body: 'Claude writes the config itself, asks you to restart it, then calls `me` + `list_week` — you immediately see your planned tasks.',
     wizard_prompt_copied: 'Setup prompt copied — paste it into Claude Desktop now.',
     wizard_advanced: 'Manual setup & quick test',
+    show_token: 'Show token',
+    hide_token: 'Hide token',
+    plain_unavailable: 'Plain text no longer available — recreate the token to use it in the wizard.',
+    copy_prompt_for_token: 'Copy setup prompt with this token',
   },
   topbar: {
     search_placeholder: 'Search tasks…',
