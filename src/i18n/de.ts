@@ -241,7 +241,7 @@ export const de = {
     pill_doing: 'In Arbeit',
     timer_pomo_started: 'Timer + Pomodoro gestartet',
     task_meta_short: 'geplant {plan}h · erfasst {logged}h',
-    quickstart_btn: 'Aufgabe starten',
+    quickstart_btn: 'Neue Aufgabe starten',
     quickstart_start_btn: 'Starten',
     quickstart_swap_btn: 'Wechseln (alte pausieren)',
     quickstart_title_placeholder: 'Titel der neuen Aufgabe…',

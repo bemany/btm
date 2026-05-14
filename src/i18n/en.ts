@@ -239,7 +239,7 @@ export const en: Translations = {
     pill_doing: 'In progress',
     timer_pomo_started: 'Timer + Pomodoro started',
     task_meta_short: 'planned {plan}h · logged {logged}h',
-    quickstart_btn: 'Start task',
+    quickstart_btn: 'Start new task',
     quickstart_start_btn: 'Start',
     quickstart_swap_btn: 'Switch (pause current)',
     quickstart_title_placeholder: 'Title of the new task…',

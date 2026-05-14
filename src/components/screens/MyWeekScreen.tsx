@@ -198,19 +198,8 @@ export function MyWeekScreen({ setActive }: MyWeekScreenProps) {
 
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 20 }}>
         <div>
-          <div
-            className="eyebrow"
-            style={{ marginBottom: 10, display: 'flex', alignItems: 'center', gap: 10 }}
-          >
-            <span style={{ flex: 1 }}>{t('week.in_progress_now')}</span>
-            <button
-              type="button"
-              className="qs-toggle-btn"
-              onClick={() => setQuickStartOpen((v) => !v)}
-            >
-              <Icon name={quickStartOpen ? 'x' : 'play'} size={11} />
-              {quickStartOpen ? t('common.cancel') : t('week.quickstart_btn')}
-            </button>
+          <div className="eyebrow" style={{ marginBottom: 10 }}>
+            {t('week.in_progress_now')}
           </div>
           {quickStartOpen && (
             <QuickStartForm
@@ -308,14 +297,26 @@ export function MyWeekScreen({ setActive }: MyWeekScreenProps) {
           <div className="eyebrow" style={{ margin: '20px 0 10px' }}>
             {t('week.quick_action')}
           </div>
-          <button
-            className="tb-btn accent"
-            style={{ width: '100%', justifyContent: 'center', padding: 12 }}
-            onClick={() => setUI({ drawer: 'ai' })}
-          >
-            <Icon name="sparkles" size={14} />
-            {t('week.plan_tasks')}
-          </button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              type="button"
+              className="tb-btn"
+              style={{ flex: 1, justifyContent: 'center', padding: 12, minWidth: 0 }}
+              onClick={() => setQuickStartOpen((v) => !v)}
+            >
+              <Icon name={quickStartOpen ? 'x' : 'play'} size={13} />
+              {quickStartOpen ? t('common.cancel') : t('week.quickstart_btn')}
+            </button>
+            <button
+              type="button"
+              className="tb-btn accent"
+              style={{ flex: 1, justifyContent: 'center', padding: 12, minWidth: 0 }}
+              onClick={() => setUI({ drawer: 'ai' })}
+            >
+              <Icon name="sparkles" size={14} />
+              {t('week.plan_tasks')}
+            </button>
+          </div>
         </div>
       </div>
 
