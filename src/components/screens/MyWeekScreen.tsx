@@ -101,7 +101,7 @@ export function MyWeekScreen({ setActive }: MyWeekScreenProps) {
                 height: 64,
                 display: 'grid',
                 placeItems: 'center',
-                background: 'rgba(255,255,255,0.06)',
+                background: 'rgba(255,255,255,0.3)',
                 borderRadius: 8,
               }}
             >
@@ -135,7 +135,7 @@ export function MyWeekScreen({ setActive }: MyWeekScreenProps) {
                     />
                   ))}
                 </span>
-                <span className="mono" style={{ fontSize: 10, color: 'var(--cream-100)' }}>
+                <span className="mono" style={{ fontSize: 10, opacity: 0.6 }}>
                   {t('week.pomo_legend')}
                 </span>
               </div>
@@ -197,7 +197,7 @@ export function MyWeekScreen({ setActive }: MyWeekScreenProps) {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 20 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 20 }}>
         <div>
           <div className="eyebrow" style={{ marginBottom: 10 }}>
             {t('week.in_progress_now')}
@@ -213,19 +213,10 @@ export function MyWeekScreen({ setActive }: MyWeekScreenProps) {
             {today.map((tk) => (
               <div
                 key={tk.id}
+                className="task-card"
                 onClick={() => setUI({ taskDetailId: tk.id })}
-                style={{
-                  background: 'var(--cream-50)',
-                  border: '1px solid var(--ink-100)',
-                  borderRadius: 8,
-                  padding: 12,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 12,
-                  cursor: 'pointer',
-                }}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 12, cursor: 'pointer' }}
               >
-                <span className="pill doing">{t('week.pill_doing')}</span>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 13.5, fontWeight: 500 }}>{tk.title}</div>
                   <div style={{ display: 'flex', gap: 8, marginTop: 3 }}>
@@ -274,52 +265,24 @@ export function MyWeekScreen({ setActive }: MyWeekScreenProps) {
           {inReview.map((tk) => (
             <div
               key={tk.id}
+              className="task-card"
               onClick={() => setUI({ taskDetailId: tk.id })}
-              style={{
-                background: 'var(--cream-50)',
-                border: '1px solid var(--ink-100)',
-                borderRadius: 6,
-                padding: 10,
-                marginBottom: 8,
-                cursor: 'pointer',
-              }}
+              style={{ cursor: 'pointer', marginBottom: 8 }}
             >
               <ProjTag id={tk.proj} />
               <div style={{ fontSize: 13, marginTop: 6 }}>{tk.title}</div>
             </div>
           ))}
+        </div>
 
-          <div className="eyebrow" style={{ margin: '20px 0 10px' }}>
-            {t('week.quick_action')}
-          </div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button
-              type="button"
-              className="tb-btn"
-              style={{ flex: 1, justifyContent: 'center', padding: 12, minWidth: 0 }}
-              onClick={() => setQuickStartOpen(true)}
-            >
-              <Icon name="play" size={13} />
-              {t('week.quickstart_btn')}
-            </button>
-            <button
-              type="button"
-              className="tb-btn accent"
-              style={{ flex: 1, justifyContent: 'center', padding: 12, minWidth: 0 }}
-              onClick={() => setUI({ drawer: 'ai' })}
-            >
-              <Icon name="sparkles" size={14} />
-              {t('week.plan_tasks')}
-            </button>
-          </div>
+        <div>
+          <CalendarWidget
+            onOpenSettings={() => {
+              window.dispatchEvent(new CustomEvent('btm:open-settings', { detail: { tab: 'calendar' } }));
+            }}
+          />
         </div>
       </div>
-
-      <CalendarWidget
-        onOpenSettings={() => {
-          window.dispatchEvent(new CustomEvent('btm:open-settings', { detail: { tab: 'calendar' } }));
-        }}
-      />
 
       {quickStartOpen && (
         <QuickStartModal
