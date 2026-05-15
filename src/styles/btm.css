@@ -3594,13 +3594,17 @@ body[data-theme="default-dark"] .tl-card {
 }
 .cal-widget-inactive { /* gleicher Stil, nur damit wir hooken können */ }
 
-/* CalendarWidget eingebettet in k-col — eigene Card-Shell entfernen */
+/* CalendarWidget eingebettet in k-col — eigene Card-Shell entfernen,
+   internes 2-Spalten-Grid auf Einspalter reduzieren (passt in schmale col) */
 .k-col .cal-widget,
 .k-col .cal-widget-inactive {
   margin: 0;
   border: none;
   background: transparent;
   border-radius: 0;
+}
+.k-col .cal-widget-grid {
+  grid-template-columns: 1fr;
 }
 
 /* Dark/Glass overrides */
