@@ -202,16 +202,18 @@ export function MyWeekScreen({ setActive }: MyWeekScreenProps) {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 20 }}>
-        <div>
-          <div className="eyebrow" style={{ marginBottom: 10 }}>
-            {t('week.in_progress_now')}
+        <div className="k-col">
+          <div className="k-col-head">
+            <div className="title-row">
+              <span className="dot" style={{ background: 'var(--accent-500)' }} />
+              <span className="ttl">{t('week.in_progress_now')}</span>
+              <span className="ct">{today.length}</span>
+            </div>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div className="k-col-body">
             {today.length === 0 && (
-              <div className="empty-state">
-                <Icon name="check-circle-2" size={36} className="icon" />
-                <h4>{t('week.empty_doing_title')}</h4>
-                <p>{t('week.empty_doing_body')}</p>
+              <div style={{ fontSize: 12, color: 'var(--ink-400)', fontStyle: 'italic' }}>
+                {t('week.empty_doing_body')}
               </div>
             )}
             {today.map((tk) => (
@@ -257,29 +259,35 @@ export function MyWeekScreen({ setActive }: MyWeekScreenProps) {
           </div>
         </div>
 
-        <div>
-          <div className="eyebrow" style={{ marginBottom: 10 }}>
-            {t('week.review_section')}
+        <div className="k-col">
+          <div className="k-col-head">
+            <div className="title-row">
+              <span className="dot" style={{ background: 'var(--info-500, #5B8DB8)' }} />
+              <span className="ttl">{t('week.review_section')}</span>
+              <span className="ct">{inReview.length}</span>
+            </div>
           </div>
-          {inReview.length === 0 && (
-            <div style={{ fontSize: 12, color: 'var(--ink-500)', fontStyle: 'italic' }}>
-              {t('week.review_empty')}
-            </div>
-          )}
-          {inReview.map((tk) => (
-            <div
-              key={tk.id}
-              className="task-card"
-              onClick={() => setUI({ taskDetailId: tk.id })}
-              style={{ cursor: 'pointer', marginBottom: 8 }}
-            >
-              <ProjTag id={tk.proj} />
-              <div style={{ fontSize: 13, marginTop: 6 }}>{tk.title}</div>
-            </div>
-          ))}
+          <div className="k-col-body">
+            {inReview.length === 0 && (
+              <div style={{ fontSize: 12, color: 'var(--ink-400)', fontStyle: 'italic' }}>
+                {t('week.review_empty')}
+              </div>
+            )}
+            {inReview.map((tk) => (
+              <div
+                key={tk.id}
+                className="task-card"
+                onClick={() => setUI({ taskDetailId: tk.id })}
+                style={{ cursor: 'pointer' }}
+              >
+                <ProjTag id={tk.proj} />
+                <div style={{ fontSize: 13, marginTop: 6 }}>{tk.title}</div>
+              </div>
+            ))}
+          </div>
         </div>
 
-        <div>
+        <div className="k-col" style={{ overflow: 'hidden' }}>
           <CalendarWidget
             onOpenSettings={() => {
               window.dispatchEvent(new CustomEvent('btm:open-settings', { detail: { tab: 'calendar' } }));

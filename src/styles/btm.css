@@ -3594,11 +3594,29 @@ body[data-theme="default-dark"] .tl-card {
 }
 .cal-widget-inactive { /* gleicher Stil, nur damit wir hooken können */ }
 
+/* CalendarWidget eingebettet in k-col — eigene Card-Shell entfernen */
+.k-col .cal-widget,
+.k-col .cal-widget-inactive {
+  margin: 0;
+  border: none;
+  background: transparent;
+  border-radius: 0;
+}
+
 /* Dark/Glass overrides */
 body[data-theme="default-dark"] .cal-widget,
 body[data-theme="glass-dark"] .cal-widget {
   background: rgba(255, 255, 255, 0.03);
   border-color: rgba(255, 255, 255, 0.08);
+}
+body[data-theme="default-dark"] .k-col .cal-widget,
+body[data-theme="glass-dark"]   .k-col .cal-widget,
+body[data-theme="default-dark"] .k-col .cal-widget-inactive,
+body[data-theme="glass-dark"]   .k-col .cal-widget-inactive {
+  background: transparent;
+  border: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 body[data-theme="default-dark"] .cal-event-row,
 body[data-theme="glass-dark"] .cal-event-row {
@@ -3618,6 +3636,15 @@ body[data-theme="glass-dark"] .cal-widget {
   background: rgba(28, 26, 23, 0.5);
   backdrop-filter: blur(20px) saturate(140%);
   -webkit-backdrop-filter: blur(20px) saturate(140%);
+}
+body[data-theme="glass"] .k-col .cal-widget,
+body[data-theme="glass"] .k-col .cal-widget-inactive,
+body[data-theme="glass-dark"] .k-col .cal-widget,
+body[data-theme="glass-dark"] .k-col .cal-widget-inactive {
+  background: transparent;
+  border: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 /* ── Calendar Settings-Tab ─────────────────────────────────────────── */
