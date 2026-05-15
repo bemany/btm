@@ -12,8 +12,15 @@ import { apiFetch } from '../../lib/api';
 import { SYNC_KEYS } from '../../data/sync';
 import type { Priority } from '../../store/types';
 import { useT, useLocale } from '../../i18n';
+import {
+  isPushSupported,
+  getPushPermission,
+  subscribeToPush,
+  unsubscribeFromPush,
+  getCurrentSubscription,
+} from '../../lib/pushNotifications';
 
-type Tab = 'heute' | 'timer' | 'ki';
+type Tab = 'heute' | 'timer' | 'ki' | 'mehr';
 
 export function MobileApp() {
   const t = useT();
@@ -24,12 +31,89 @@ export function MobileApp() {
         {tab === 'heute' && <HeuteScreen onNeedTimer={() => setTab('timer')} />}
         {tab === 'timer' && <TimerScreen onNoTimer={() => setTab('heute')} />}
         {tab === 'ki' && <KiScreen />}
+        {tab === 'mehr' && <MehrScreen />}
       </div>
       <nav className="ma-tabs" role="tablist">
         <TabBtn id="heute" active={tab} setTab={setTab} icon="list-todo" label={t('mobile.today')} />
         <TabBtn id="timer" active={tab} setTab={setTab} icon="timer" label={t('mobile.timer')} />
         <TabBtn id="ki" active={tab} setTab={setTab} icon="sparkles" label={t('mobile.ki')} />
+        <TabBtn id="mehr" active={tab} setTab={setTab} icon="more-horizontal" label={t('mobile.more')} />
       </nav>
+    </div>
+  );
+}
+
+function MehrScreen() {
+  const t = useT();
+  const pushSupported = isPushSupported();
+  const [pushActive, setPushActive] = useState(false);
+  const [pushBusy, setPushBusy] = useState(false);
+  const perm = getPushPermission();
+
+  useEffect(() => {
+    if (!pushSupported) return;
+    getCurrentSubscription().then((sub) => setPushActive(!!sub));
+  }, [pushSupported]);
+
+  const togglePush = async () => {
+    if (pushBusy) return;
+    setPushBusy(true);
+    try {
+      if (pushActive) {
+        await unsubscribeFromPush();
+        setPushActive(false);
+        showToast(t('settings.push_disabled'));
+      } else {
+        const result = await subscribeToPush();
+        if (result === 'granted') { setPushActive(true); showToast(t('settings.push_enabled')); }
+        else if (result === 'denied') showToast(t('mobile.more_push_denied'));
+        else showToast(t('common.error_generic'));
+      }
+    } finally {
+      setPushBusy(false);
+    }
+  };
+
+  return (
+    <div className="ma-mehr">
+      {pushSupported && (
+        <div className="ma-mehr-card">
+          <div className="ma-mehr-icon"><Icon name="smartphone" size={18} /></div>
+          <div className="ma-mehr-text">
+            <div className="ma-mehr-title">{t('mobile.more_push_title')}</div>
+            <div className="ma-mehr-sub">{t('mobile.more_push_body')}</div>
+          </div>
+          {perm === 'denied' ? (
+            <span className="ma-mehr-hint">{t('mobile.more_push_denied')}</span>
+          ) : (
+            <button
+              type="button"
+              className={`ma-mehr-btn ${pushActive ? 'is-active' : ''}`}
+              onClick={togglePush}
+              disabled={pushBusy}
+            >
+              {pushBusy
+                ? <Icon name="loader-2" size={13} className="login-spin" />
+                : pushActive ? t('mobile.more_push_disable') : t('mobile.more_push_enable')}
+            </button>
+          )}
+        </div>
+      )}
+
+      <div className="ma-mehr-card">
+        <div className="ma-mehr-icon"><Icon name="refresh-cw" size={18} /></div>
+        <div className="ma-mehr-text">
+          <div className="ma-mehr-title">{t('mobile.more_reload')}</div>
+          <div className="ma-mehr-sub">{t('mobile.more_reload_hint')}</div>
+        </div>
+        <button
+          type="button"
+          className="ma-mehr-btn"
+          onClick={() => window.location.reload()}
+        >
+          <Icon name="refresh-cw" size={13} />
+        </button>
+      </div>
     </div>
   );
 }
