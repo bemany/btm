@@ -201,7 +201,7 @@ export function MyWeekScreen({ setActive }: MyWeekScreenProps) {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 20 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.5fr)', gap: 20 }}>
         <div className="k-col">
           <div className="k-col-head">
             <div className="title-row">
