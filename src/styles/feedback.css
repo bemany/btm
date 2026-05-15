@@ -769,7 +769,7 @@ body[data-theme='default-dark'] .fb-my-card {
 }
 body[data-theme='glass-dark'] .fb-my-card-title,
 body[data-theme='default-dark'] .fb-my-card-title {
-  color: var(--cream-50);
+  color: rgba(250, 247, 242, 0.95);
 }
 body[data-theme='glass-dark'] .fb-my-card-body,
 body[data-theme='default-dark'] .fb-my-card-body {
