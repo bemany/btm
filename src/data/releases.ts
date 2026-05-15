@@ -49,6 +49,30 @@ export function tx(value: Localizable, locale: 'de' | 'en'): string {
 
 export const RELEASES: Release[] = [
   {
+    version: '0.12.1',
+    date: '2026-05-14',
+    title: {
+      de: '2 Bugfixes: Update-Pille + Subtask-Erstellung',
+      en: '2 bugfixes: Update pill + subtask creation',
+    },
+    changes: [
+      {
+        kind: 'fix',
+        text: {
+          de: '**Update-Pille klickbar**: Klick auf „Update verfügbar" löst jetzt immer einen harten Seitenreload aus — auch wenn der Service-Worker den Reload intern nicht selbst auslöst.',
+          en: '**Update pill clickable**: Clicking "Update available" now always triggers a hard page reload — even if the service worker doesn\'t fire its own reload internally.',
+        },
+      },
+      {
+        kind: 'fix',
+        text: {
+          de: '**Subtask-Erstellung**: `parentTaskId` wurde serverseitig nicht gespeichert — neue Subtasks tauchten deshalb nicht in der Liste auf. Behoben. Nach dem Anlegen öffnet sich die neue Subtask jetzt direkt im Drawer zum Weiterbearbeiten.',
+          en: '**Subtask creation**: `parentTaskId` was not saved server-side — newly created subtasks didn\'t appear in the list. Fixed. After creation, the new subtask now opens directly in the drawer for immediate editing.',
+        },
+      },
+    ],
+  },
+  {
     version: '0.12.0',
     date: '2026-05-14',
     title: {

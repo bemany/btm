@@ -14,6 +14,7 @@ interface ExtractedTask {
   who: string;
   estH: number;
   prio: Priority;
+  due: string;
   notes: string;
 }
 
@@ -63,6 +64,7 @@ export function AIDrawer({ setActive }: AIDrawerProps) {
           assignee_id?: string | null;
           est_h?: number;
           prio?: 'low' | 'med' | 'high';
+          due?: string | null;
           notes?: string;
         }> };
       };
@@ -72,6 +74,7 @@ export function AIDrawer({ setActive }: AIDrawerProps) {
         who: tk.assignee_id ?? '',
         estH: typeof tk.est_h === 'number' ? tk.est_h : 1,
         prio: (tk.prio ?? 'med') as Priority,
+        due: tk.due ?? '',
         notes: tk.notes ?? tk.description ?? '',
       }));
       setEditedTasks(extracted);
@@ -103,6 +106,7 @@ export function AIDrawer({ setActive }: AIDrawerProps) {
         who: validAssignee ?? '',
         estH: e.estH,
         prio: e.prio,
+        due: e.due || null,
       });
       added++;
     }
@@ -312,6 +316,12 @@ export function AIDrawer({ setActive }: AIDrawerProps) {
                             {e.prio === 'high' ? t('prio.high') : e.prio === 'med' ? t('prio.med') : t('prio.low')}
                           </div>
                         </div>
+                        {e.due && (
+                          <div className="ai-prev-cell">
+                            <div className="eyebrow">{t('ai_drawer.field_due')}</div>
+                            <div style={{ fontSize: 12 }}>{e.due}</div>
+                          </div>
+                        )}
                       </div>
                       {e.notes && (
                         <div
@@ -457,6 +467,20 @@ export function AIDrawer({ setActive }: AIDrawerProps) {
                             <option value="med">{t('prio.med')}</option>
                             <option value="high">{t('prio.high')}</option>
                           </select>
+                        </label>
+                        <label>
+                          <div className="eyebrow">{t('ai_drawer.field_due')}</div>
+                          <input
+                            type="date"
+                            value={editedTasks[editIdx].due}
+                            onChange={(ev) =>
+                              setEditedTasks(
+                                editedTasks.map((tk, j) =>
+                                  j === editIdx ? { ...tk, due: ev.target.value } : tk,
+                                ),
+                              )
+                            }
+                          />
                         </label>
                       </div>
                     </div>

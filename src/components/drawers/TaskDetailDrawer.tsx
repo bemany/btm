@@ -13,6 +13,7 @@ import { TaskTimeline } from '../sessions/TaskTimeline';
 import { DatePicker } from '../shared/DatePicker';
 import { SubtasksSection } from './SubtasksSection';
 import { AttachmentsSection } from './AttachmentsSection';
+import { RemindersSection } from './RemindersSection';
 import { checkMarkDone } from '../../lib/taskPermissions';
 import { navigate } from '../../router';
 
@@ -463,6 +464,10 @@ export function TaskDetailDrawer({ id }: TaskDetailDrawerProps) {
 
           <div style={{ marginTop: 18, marginBottom: 18 }}>
             <SubtasksSection parent={t} />
+          </div>
+
+          <div style={{ marginTop: 18, marginBottom: 18 }}>
+            <RemindersSection taskId={t.id} />
           </div>
 
           <div style={{ marginTop: 4 }}>

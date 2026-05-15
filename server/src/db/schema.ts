@@ -514,6 +514,27 @@ export const icalFeeds = pgTable(
   (t) => [index('ical_feeds_user_idx').on(t.userId)],
 );
 
+// ── Task-Reminders ────────────────────────────────────────────────────
+// Nutzer-spezifische Erinnerungen für Aufgaben. Der Scheduler prüft alle
+// 1 Minute auf fällige Reminder (remind_at <= NOW() AND notified_at IS NULL)
+// und schickt In-App-Notification + E-Mail.
+export const taskReminders = pgTable(
+  'task_reminders',
+  {
+    id: text('id').primaryKey(),
+    taskId: text('task_id').notNull().references(() => tasks.id, { onDelete: 'cascade' }),
+    userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    remindAt: timestamp('remind_at', { withTimezone: true }).notNull(),
+    notifiedAt: timestamp('notified_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index('reminders_task_idx').on(t.taskId),
+    index('reminders_user_idx').on(t.userId),
+    index('reminders_remind_at_idx').on(t.remindAt),
+  ],
+);
+
 // ── Type-Exports für Frontend / Routes ────────────────────────────────
 
 export type User = typeof users.$inferSelect;
@@ -537,8 +558,20 @@ export type Notification = typeof notifications.$inferSelect;
 export type NewNotification = typeof notifications.$inferInsert;
 export type Feedback = typeof feedback.$inferSelect;
 export type NewFeedback = typeof feedback.$inferInsert;
+export type TaskReminder = typeof taskReminders.$inferSelect;
+export type NewTaskReminder = typeof taskReminders.$inferInsert;
 export type CalendarEvent = typeof calendarEvents.$inferSelect;
 export type NewCalendarEvent = typeof calendarEvents.$inferInsert;
+
+export const pushSubscriptions = pgTable('push_subscriptions', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  endpoint: text('endpoint').notNull().unique(),
+  p256dh: text('p256dh').notNull(),
+  auth: text('auth').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+export type PushSubscription = typeof pushSubscriptions.$inferSelect;
 export type IcalFeed = typeof icalFeeds.$inferSelect;
 export type NewIcalFeed = typeof icalFeeds.$inferInsert;
 export type TaskAttachment = typeof taskAttachments.$inferSelect;

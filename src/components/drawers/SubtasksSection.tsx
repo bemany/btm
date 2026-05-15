@@ -32,7 +32,7 @@ export function SubtasksSection({ parent }: SubtasksSectionProps) {
     if (!title || busy) return;
     setBusy(true);
     try {
-      await addTask({
+      const created = await addTask({
         title,
         col: 'todo',
         proj: parent.proj,
@@ -42,6 +42,7 @@ export function SubtasksSection({ parent }: SubtasksSectionProps) {
       });
       setDraft('');
       setAdding(false);
+      if (created) setUI({ taskDetailId: created.id });
     } finally {
       setBusy(false);
     }

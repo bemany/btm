@@ -414,12 +414,13 @@ export const aiRoute = new Hono<{ Variables: Variables }>()
         .from(usersTable),
     ]);
 
+    const today = new Date().toISOString().slice(0, 10);
     const system = `Du bist BTM's Planungs-Assistent. Werkstattsprache, deutsch, sachlich.
 Aus dem User-Text extrahierst du eine Liste konkreter Aufgaben.
 Du antwortest IMMER und AUSSCHLIESSLICH mit JSON in dieser Form:
 
 {"tasks":[
-  {"title":"…","description":"…","project_id":"P…oder null","assignee_id":"…oder null","est_h":1.0,"prio":"low|med|high","notes":"…optional"},
+  {"title":"…","description":"…","project_id":"P…oder null","assignee_id":"…oder null","est_h":1.0,"prio":"low|med|high","due":"YYYY-MM-DD oder null","notes":"…optional"},
   ...
 ]}
 
@@ -429,6 +430,8 @@ Regeln:
 - prio nur "high" wenn explizit dringend/heute/blockierend.
 - project_id und assignee_id NUR aus den unten gelisteten IDs auswählen,
   sonst null. Niemals erfinden.
+- due: ISO-Datum (YYYY-MM-DD) wenn im Text ein Fälligkeitsdatum erkennbar ist
+  (z. B. "bis Freitag", "bis 20.05.", "morgen"), sonst null. Heute ist ${today}.
 - description als Markdown, optional. notes = Quellen-Hinweis ("aus Zeile 3").
 - Wenn der Text keine Aufgaben enthält: {"tasks":[]}.
 
@@ -465,6 +468,7 @@ ${usrs.map((u) => `- ${u.id} · ${u.name} · ${u.email}`).join('\n') || '(keine)
                   assignee_id: { type: ['string', 'null'] },
                   est_h: { type: 'number' },
                   prio: { type: 'string', enum: ['low', 'med', 'high'] },
+                  due: { type: ['string', 'null'] },
                   notes: { type: ['string', 'null'] },
                 },
                 required: [
@@ -474,6 +478,7 @@ ${usrs.map((u) => `- ${u.id} · ${u.name} · ${u.email}`).join('\n') || '(keine)
                   'assignee_id',
                   'est_h',
                   'prio',
+                  'due',
                   'notes',
                 ],
                 additionalProperties: false,
