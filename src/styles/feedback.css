@@ -671,3 +671,103 @@ body[data-theme='default-dark'] .fb-admin-bulkbar {
   background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.18), rgba(var(--accent-rgb), 0.08));
   border-color: rgba(var(--accent-rgb), 0.32);
 }
+
+/* ── My-Feedback (Settings → Meine Feedbacks, F92RWnkL_Iy) ───────────── */
+
+.fb-my-empty {
+  font-size: 13px;
+  color: var(--ink-400);
+  font-style: italic;
+  margin-top: 8px;
+}
+.fb-my-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.fb-my-card {
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(28, 26, 23, 0.08);
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.fb-my-card.status-done,
+.fb-my-card.status-wontfix {
+  opacity: 0.65;
+}
+.fb-my-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.fb-my-card-title {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-900);
+  min-width: 0;
+}
+.fb-my-status-pill {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+.fb-my-card-body {
+  font-size: 13px;
+  color: var(--ink-700);
+  line-height: 1.5;
+  margin: 0;
+  white-space: pre-wrap;
+}
+.fb-my-resolution {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--ink-600);
+  background: rgba(94, 127, 78, 0.08);
+  border: 1px solid rgba(94, 127, 78, 0.18);
+  border-radius: 6px;
+  padding: 8px 10px;
+  line-height: 1.4;
+}
+.fb-my-resolution svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: #4A6839;
+}
+.fb-my-card-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.fb-my-card-date {
+  flex: 1;
+  font-size: 11px;
+  color: var(--ink-400);
+  font-family: var(--font-mono);
+}
+body[data-theme='glass-dark'] .fb-my-card,
+body[data-theme='default-dark'] .fb-my-card {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+body[data-theme='glass-dark'] .fb-my-card-title,
+body[data-theme='default-dark'] .fb-my-card-title {
+  color: var(--cream-50);
+}
+body[data-theme='glass-dark'] .fb-my-card-body,
+body[data-theme='default-dark'] .fb-my-card-body {
+  color: var(--cream-200, rgba(250, 247, 242, 0.8));
+}

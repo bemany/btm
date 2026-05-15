@@ -113,6 +113,7 @@ export const en: Translations = {
     tab_calendar: 'Calendar',
     tab_api_tokens: 'API tokens',
     tab_data: 'Data',
+    tab_my_feedback: 'My feedback',
     backgrounds_intro:
       'Animated backgrounds for Glass mode. Subtle and calm — nothing flashes. Only renders in Glass themes.',
     backgrounds_disabled_title: 'A solid theme is currently active',
@@ -583,6 +584,10 @@ export const en: Translations = {
     status_filter_label: 'Status',
     status_filter_active: 'Active (open + in progress)',
     status_filter_all: 'All incl. resolved',
+    my_heading: 'My submitted feedback',
+    my_empty: "You haven't submitted any feedback yet.",
+    my_resolution_note: 'Note:',
+    my_delete_confirm: 'Really delete this feedback?',
   },
   attachments: {
     heading: 'Attachments ({count})',

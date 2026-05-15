@@ -115,6 +115,7 @@ export const de = {
     tab_calendar: 'Kalender',
     tab_api_tokens: 'API-Tokens',
     tab_data: 'Daten',
+    tab_my_feedback: 'Meine Feedbacks',
     backgrounds_intro:
       'Animierte Hintergründe für den Glass-Modus. Subtil und ruhig — nichts blinkt. Wirkt nur in den Glass-Themes.',
     backgrounds_disabled_title: 'Aktuell ein Solid-Theme aktiv',
@@ -585,6 +586,10 @@ export const de = {
     status_filter_label: 'Status',
     status_filter_active: 'Aktiv (offen + in Arbeit)',
     status_filter_all: 'Alle inkl. erledigt',
+    my_heading: 'Meine eingereichten Feedbacks',
+    my_empty: 'Du hast noch kein Feedback eingereicht.',
+    my_resolution_note: 'Notiz:',
+    my_delete_confirm: 'Dieses Feedback wirklich löschen?',
   },
   attachments: {
     heading: 'Anhänge ({count})',

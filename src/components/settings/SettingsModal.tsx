@@ -10,6 +10,7 @@ import { NotificationsTab } from './NotificationsTab';
 import { BackgroundsTab } from './BackgroundsTab';
 import { ProfileTab } from './ProfileTab';
 import { CalendarTab } from './CalendarTab';
+import { MyFeedbackTab } from './MyFeedbackTab';
 import type { BackgroundId } from '../backgrounds/catalog';
 
 export type SettingsTabId =
@@ -20,7 +21,8 @@ export type SettingsTabId =
   | 'notifications'
   | 'calendar'
   | 'api_tokens'
-  | 'data';
+  | 'data'
+  | 'my_feedback';
 
 export interface SettingsModalProps {
   onClose: () => void;
@@ -68,6 +70,7 @@ export function SettingsModal({
     { id: 'calendar', label: t('settings.tab_calendar'), icon: 'calendar' },
     { id: 'api_tokens', label: t('settings.tab_api_tokens'), icon: 'key-round' },
     { id: 'data', label: t('settings.tab_data'), icon: 'database' },
+    { id: 'my_feedback', label: t('settings.tab_my_feedback'), icon: 'message-square' },
   ];
 
   return (
@@ -119,6 +122,7 @@ export function SettingsModal({
             {tab === 'calendar' && <CalendarTab />}
             {tab === 'api_tokens' && <ApiTokensTab />}
             {tab === 'data' && <DataTab onReplayTour={onReplayTour} onClose={onClose} />}
+            {tab === 'my_feedback' && <MyFeedbackTab />}
           </div>
         </div>
       </div>
