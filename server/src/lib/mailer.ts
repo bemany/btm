@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import { APP_FULL_NAME, APP_ORG_NAME, APP_URL } from './brand.js';
 
 const host = process.env.SMTP_HOST;
 const port = Number(process.env.SMTP_PORT ?? 465);
@@ -102,7 +103,7 @@ ${opts.url}
 ${codeBlock}
 Link und Code sind 15 Minuten gültig. Wenn du das nicht warst, ignoriere diese Mail.
 
-— BTM (Bethesna Task Management)
+— BTM (${APP_FULL_NAME})
 `;
   const codeHtml = opts.code
     ? `
@@ -133,8 +134,8 @@ export function mentionEmail(opts: {
   subjectType: 'task' | 'project';
   subjectTitle: string;
   excerpt: string;
-  appUrl: string; // z.B. https://btm.bethesna.org/board?taskId=T123
-  inboxUrl: string; // z.B. https://btm.bethesna.org/inbox
+  appUrl: string;
+  inboxUrl: string;
   unsubscribeUrl: string; // Settings-Page
 }): { subject: string; text: string; html: string } {
   const subjectKindLabel = opts.subjectType === 'task' ? 'Aufgabe' : 'Projekt';
@@ -213,7 +214,7 @@ ${opts.unsubscribeUrl}
       <tr><td style="padding:18px 8px 0;text-align:center;">
         <div style="font-size:11px;color:#A8A097;line-height:1.55;">
           Du bekommst diese Mail weil du in BTM erwähnt wurdest.<br/>
-          <a href="${opts.unsubscribeUrl}" style="color:#6B6359;text-decoration:underline;">Mention-Mails ausschalten</a> · btm.bethesna.org
+          <a href="${opts.unsubscribeUrl}" style="color:#6B6359;text-decoration:underline;">Mention-Mails ausschalten</a> · ${APP_URL}
         </div>
       </td></tr>
     </table>
@@ -308,7 +309,7 @@ ${opts.unsubscribeUrl}
       <tr><td style="padding:18px 8px 0;text-align:center;">
         <div style="font-size:11px;color:#A8A097;line-height:1.55;">
           Du bekommst diese Mail weil du diesen ${typeLabel} eingereicht hast.<br/>
-          <a href="${opts.unsubscribeUrl}" style="color:#6B6359;text-decoration:underline;">Benachrichtigungen verwalten</a> · btm.bethesna.org
+          <a href="${opts.unsubscribeUrl}" style="color:#6B6359;text-decoration:underline;">Benachrichtigungen verwalten</a> · ${APP_URL}
         </div>
       </td></tr>
     </table>
@@ -348,7 +349,7 @@ export function reminderEmail(opts: {
         </table>
       </td></tr>
       <tr><td style="padding:18px 8px 0;text-align:center;">
-        <div style="font-size:11px;color:#A8A097;">Du bekommst diese Mail weil du einen Reminder für diese Aufgabe gesetzt hast. · btm.bethesna.org</div>
+        <div style="font-size:11px;color:#A8A097;">Du bekommst diese Mail weil du einen Reminder für diese Aufgabe gesetzt hast. · ${APP_URL}</div>
       </td></tr>
     </table>
   </td></tr>
@@ -560,7 +561,7 @@ export function digestEmail(p: DigestPayload): { subject: string; text: string; 
         </table>
         <div style="font-size:11px;color:#A8A097;line-height:1.55;">
           Du bekommst diesen Tagesdigest weil er in deinen Einstellungen aktiv ist.<br/>
-          <a href="${p.unsubscribeUrl}" style="color:#6B6359;text-decoration:underline;">Digest abbestellen</a> · btm.bethesna.org
+          <a href="${p.unsubscribeUrl}" style="color:#6B6359;text-decoration:underline;">Digest abbestellen</a> · ${APP_URL}
         </div>
       </td></tr>
     </table>
@@ -636,7 +637,7 @@ Bei Fragen: einfach an ${opts.inviterName} zurück antworten.
                 </td>
                 <td style="vertical-align:middle;">
                   <div style="font-family:'Archivo',-apple-system,sans-serif;font-weight:700;font-size:20px;letter-spacing:-0.01em;color:#1C1A17;">BTM</div>
-                  <div style="font-family:Menlo,Consolas,'SF Mono',monospace;font-size:11px;color:#6B6359;text-transform:uppercase;letter-spacing:0.08em;margin-top:2px;">Bethesna Task Management</div>
+                  <div style="font-family:Menlo,Consolas,'SF Mono',monospace;font-size:11px;color:#6B6359;text-transform:uppercase;letter-spacing:0.08em;margin-top:2px;">${APP_FULL_NAME}</div>
                 </td>
               </tr>
             </table>
@@ -729,7 +730,7 @@ Bei Fragen: einfach an ${opts.inviterName} zurück antworten.
               Wenn das ein Versehen war, ignorier sie einfach.
             </div>
             <div style="margin-top:14px;font-family:Menlo,Consolas,'SF Mono',monospace;font-size:10px;color:#A8A097;text-transform:uppercase;letter-spacing:0.08em;">
-              © Bethesna Group · btm.bethesna.org
+              © ${APP_ORG_NAME} · ${APP_URL}
             </div>
           </td>
         </tr>

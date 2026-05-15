@@ -26,7 +26,7 @@ im Repo.
 - **Quickstart-Modal mit Beschreibung, Priorität und Fälligkeit** — neue Aufgabe direkt komplett anlegen statt Detail-Drawer nachzubearbeiten.
 - **Task → Wochenansicht-Shortcut** im Detail-Drawer (Calendar-Icon oben rechts). _FRr66InEsBQ_
 - **Sidebar restrukturiert** — Updates wandert direkt über das Profil, Mobile-Vorschau + Chrome-Plugin + TV-Dashboard in zusammenklappbare „Extras"-Gruppe. Projekte-Chip zeigt nur Favoriten-Anzahl. _FR0_IIsrpwo_
-- **Odoo-Kalender-Vorlage für Bethesna** — ein Klick füllt URL + Datenbank + Email. Video-Tutorial-Placeholder unter dem API-Key-Feld. _FystBwbvLnW_
+- **Odoo-Kalender-Vorlage** — ein Klick füllt URL + Datenbank + Email aus einer Preset-Konfiguration. Video-Tutorial-Placeholder unter dem API-Key-Feld. _FystBwbvLnW_
 - **OpenAI-Key auf Production aktiv** — `gpt-4o-mini`, alte LMSTUDIO_*-Variablen entfernt.
 
 ### Fixes

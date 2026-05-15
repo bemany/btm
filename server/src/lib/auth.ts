@@ -8,7 +8,7 @@ import { loginCodes } from '../db/schema.js';
 import { sendMail, magicLinkEmail } from './mailer.js';
 
 const initialAdminEmail = (process.env.INITIAL_ADMIN_EMAIL ?? '').trim().toLowerCase();
-const trustedOrigins = (process.env.TRUSTED_ORIGINS ?? 'https://btm.bethesna.org')
+const trustedOrigins = (process.env.TRUSTED_ORIGINS ?? 'http://localhost:5173')
   .split(',')
   .map((s) => s.trim())
   .filter(Boolean);
@@ -23,7 +23,7 @@ export const auth = betterAuth({
       verification: schema.verifications,
     },
   }),
-  baseURL: process.env.BETTER_AUTH_URL ?? 'https://btm.bethesna.org',
+  baseURL: process.env.BETTER_AUTH_URL ?? 'http://localhost:3001',
   secret: process.env.BETTER_AUTH_SECRET,
   trustedOrigins,
   emailAndPassword: { enabled: false },

@@ -20,7 +20,7 @@ import { db } from '../db/client.js';
 import { users, notifications, tasks, taskSessions, activityLog } from '../db/schema.js';
 import { sendMail, digestEmail, appIconAttachment, type DigestPayload } from './mailer.js';
 
-const APP_BASE_URL = process.env.BETTER_AUTH_URL ?? 'https://btm.bethesna.org';
+const APP_BASE_URL = process.env.BETTER_AUTH_URL ?? 'http://localhost:3001';
 
 // Trigger-Stunde in lokaler Zeit (Europe/Berlin). UTC = lokal - 1 (Winter)
 // oder - 2 (Sommer). Wir nutzen einfach 7:00 UTC (~9:00 MESZ / 8:00 MEZ),

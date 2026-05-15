@@ -172,7 +172,7 @@ export const feedbackRoute = new Hono<{ Variables: Variables }>()
         // Notification kann sowieso nicht abgeschaltet werden, Mail ist
         // direkte Bestätigung „dein Anliegen wurde bearbeitet".
         if (submitter.email) {
-          const appUrl = process.env.BETTER_AUTH_URL ?? 'https://btm.bethesna.org';
+          const appUrl = process.env.BETTER_AUTH_URL ?? 'http://localhost:3001';
           const email = feedbackResolvedEmail({
             recipientName: submitter.name || submitter.email,
             feedbackType: row.type,
