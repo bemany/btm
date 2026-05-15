@@ -203,16 +203,26 @@ body[data-theme="glass"] .task-card:hover {
     0 12px 30px rgba(28, 26, 23, 0.08);
 }
 
-/* Timer hero — frosted accent */
+/* Timer hero — frosted dark */
 body[data-theme="glass"] .timer-hero {
-  background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.22), rgba(var(--accent-rgb), 0.10));
-  border-color: rgba(var(--accent-rgb), 0.35);
-  backdrop-filter: blur(28px) saturate(180%);
-  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  background: linear-gradient(135deg, rgba(28, 26, 23, 0.86), rgba(38, 35, 30, 0.86));
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.7) inset,
-    0 16px 40px rgba(28, 26, 23, 0.14);
+    0 1px 0 rgba(255, 255, 255, 0.06) inset,
+    0 16px 40px rgba(28, 26, 23, 0.25);
+  color: var(--cream-50);
 }
+body[data-theme="glass"] .timer-hero .info .m { color: var(--cream-100); }
+body[data-theme="glass"] .timer-hero .pomo-ring-lg .lbl { color: var(--cream-100); }
+body[data-theme="glass"] .timer-hero .pomo-ring-lg .lbl .big { color: var(--cream-50); }
+body[data-theme="glass"] .timer-hero .btn {
+  background: transparent;
+  border-color: var(--ink-700);
+  color: var(--cream-100);
+}
+body[data-theme="glass"] .timer-hero .btn:hover { background: var(--ink-800); color: var(--cream-50); }
 
 /* AI drawer button glow */
 body[data-theme="glass"] .quickaction-btn {

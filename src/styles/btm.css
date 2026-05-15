@@ -624,16 +624,10 @@ body[data-theme="default-dark"] .board-gear-item.is-current {
   margin-bottom: 20px;
 }
 .kpi {
-  background: rgba(255, 255, 255, 0.72);
-  border: 1px solid rgba(28, 26, 23, 0.07);
+  background: var(--cream-50);
+  border: 1px solid var(--ink-100);
   border-radius: 8px;
   padding: 14px 16px;
-  backdrop-filter: blur(16px) saturate(160%);
-  -webkit-backdrop-filter: blur(16px) saturate(160%);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.8) inset,
-    0 1px 3px rgba(28, 26, 23, 0.05),
-    0 4px 12px rgba(28, 26, 23, 0.04);
 }
 .kpi .k {
   font-family: var(--font-mono);

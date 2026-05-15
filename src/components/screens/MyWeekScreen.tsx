@@ -58,6 +58,10 @@ export function MyWeekScreen({ setActive }: MyWeekScreenProps) {
           </div>
         </div>
         <div className="right">
+          <button className="tb-btn" onClick={() => setQuickStartOpen(true)}>
+            <Icon name="play" size={13} />
+            {t('week.quickstart_btn')}
+          </button>
           <button className="tb-btn" onClick={() => setActive('board')}>
             <Icon name="kanban-square" size={14} />
             {t('week.open_board')}
