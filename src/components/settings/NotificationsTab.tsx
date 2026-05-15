@@ -13,6 +13,13 @@ import { Icon } from '../shared/Icon';
 import { useT } from '../../i18n';
 import * as api from '../../data/api';
 import { showToast } from '../shared/Toast';
+import {
+  isPushSupported,
+  getPushPermission,
+  subscribeToPush,
+  unsubscribeFromPush,
+  getCurrentSubscription,
+} from '../../lib/pushNotifications';
 
 interface ToggleRowProps {
   iconName: string;
@@ -52,6 +59,15 @@ export function NotificationsTab() {
   const [digest, setDigest] = useState<boolean>(user?.notifyDigestMail ?? true);
   const [busy, setBusy] = useState(false);
 
+  const pushSupported = isPushSupported();
+  const [pushActive, setPushActive] = useState(false);
+  const [pushBusy, setPushBusy] = useState(false);
+
+  useEffect(() => {
+    if (!pushSupported) return;
+    getCurrentSubscription().then((sub) => setPushActive(!!sub));
+  }, [pushSupported]);
+
   useEffect(() => {
     setMentions(user?.notifyMentionsMail ?? true);
     setDigest(user?.notifyDigestMail ?? true);
@@ -89,6 +105,32 @@ export function NotificationsTab() {
     }
   };
 
+  const togglePush = async () => {
+    if (pushBusy) return;
+    setPushBusy(true);
+    try {
+      if (pushActive) {
+        await unsubscribeFromPush();
+        setPushActive(false);
+        showToast(t('settings.push_disabled'));
+      } else {
+        const result = await subscribeToPush();
+        if (result === 'granted') {
+          setPushActive(true);
+          showToast(t('settings.push_enabled'));
+        } else if (result === 'denied') {
+          showToast(t('settings.push_denied'));
+        } else if (result === 'unsupported') {
+          showToast(t('settings.push_unsupported'));
+        } else {
+          showToast(t('common.error_generic'));
+        }
+      }
+    } finally {
+      setPushBusy(false);
+    }
+  };
+
   return (
     <div className="set-pane">
       <p className="set-intro">{t('settings.notifications_intro')}</p>
@@ -110,6 +152,16 @@ export function NotificationsTab() {
           onChange={updateDigest}
           disabled={busy}
         />
+        {pushSupported && getPushPermission() !== 'denied' && (
+          <ToggleRow
+            iconName="smartphone"
+            title={t('settings.push_title')}
+            description={t('settings.push_body')}
+            value={pushActive}
+            onChange={togglePush}
+            disabled={pushBusy}
+          />
+        )}
       </div>
 
       <div className="notify-send-now">

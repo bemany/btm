@@ -562,6 +562,16 @@ export type TaskReminder = typeof taskReminders.$inferSelect;
 export type NewTaskReminder = typeof taskReminders.$inferInsert;
 export type CalendarEvent = typeof calendarEvents.$inferSelect;
 export type NewCalendarEvent = typeof calendarEvents.$inferInsert;
+
+export const pushSubscriptions = pgTable('push_subscriptions', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  endpoint: text('endpoint').notNull().unique(),
+  p256dh: text('p256dh').notNull(),
+  auth: text('auth').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+export type PushSubscription = typeof pushSubscriptions.$inferSelect;
 export type IcalFeed = typeof icalFeeds.$inferSelect;
 export type NewIcalFeed = typeof icalFeeds.$inferInsert;
 export type TaskAttachment = typeof taskAttachments.$inferSelect;

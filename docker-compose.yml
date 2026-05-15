@@ -71,6 +71,9 @@ services:
       LMSTUDIO_URL: ${LMSTUDIO_URL:-}
       LMSTUDIO_TOKEN: ${LMSTUDIO_TOKEN:-}
       LMSTUDIO_MODEL: ${LMSTUDIO_MODEL:-}
+      # Web-Push VAPID — generiert mit web-push generate-vapid-keys
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
       # Persistent storage für Task-Attachments (siehe Migration 0016).
       UPLOAD_DIR: /app/uploads
     volumes:

@@ -42,6 +42,8 @@ export default defineConfig({
         ],
       },
       workbox: {
+        // push-sw.js enthält Push+Click-Handler und wird zur Laufzeit per importScripts geladen.
+        importScripts: ['/push-sw.js'],
         // Vite-emittiertes Build-Output cachen.
         globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
         // reset.html darf NIE im Precache landen — wäre sonst nicht
