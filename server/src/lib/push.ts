@@ -23,6 +23,38 @@ export function getVapidPublicKey(): string {
   return VAPID_PUBLIC_KEY;
 }
 
+export async function sendTestPush(subscriptionId: string, userId: string): Promise<'ok' | 'not_found' | 'error'> {
+  if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) return 'error';
+  init();
+  const rows = await db
+    .select()
+    .from(pushSubscriptions)
+    .where(eq(pushSubscriptions.id, subscriptionId));
+  const sub = rows[0];
+  if (!sub || sub.userId !== userId) return 'not_found';
+  const message = JSON.stringify({
+    title: 'BTM Test',
+    body: 'Push-Notifications funktionieren ✓',
+    icon: '/app-icon-192.png',
+    badge: '/app-icon-192.png',
+    data: { url: '/settings' },
+    tag: 'btm-test',
+  });
+  try {
+    await webpush.sendNotification(
+      { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+      message,
+    );
+    return 'ok';
+  } catch (e: unknown) {
+    const status = (e as { statusCode?: number })?.statusCode;
+    if (status === 410 || status === 404) {
+      await db.delete(pushSubscriptions).where(eq(pushSubscriptions.endpoint, sub.endpoint)).catch(() => {});
+    }
+    return 'error';
+  }
+}
+
 export async function sendPushToUser(
   userId: string,
   payload: { title: string; body: string; url?: string; tag?: string },

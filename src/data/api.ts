@@ -843,3 +843,24 @@ export async function deleteTaskAttachment(taskId: string, attachmentId: string)
 export function taskAttachmentDownloadUrl(taskId: string, attachmentId: string): string {
   return `/api/tasks/${taskId}/attachments/${attachmentId}/download`;
 }
+
+// ── Push Devices ─────────────────────────────────────────────────────────
+
+export interface PushDeviceDTO {
+  id: string;
+  endpoint: string;
+  createdAt: string;
+}
+
+export async function listPushDevices(): Promise<PushDeviceDTO[]> {
+  const r = await apiFetch<{ devices: PushDeviceDTO[] }>('/push/devices');
+  return (r as unknown as { devices: PushDeviceDTO[] }).devices;
+}
+
+export async function sendPushTest(subscriptionId: string): Promise<void> {
+  await apiFetch('/push/test', { method: 'POST', body: { subscriptionId } });
+}
+
+export async function deletePushDevice(id: string): Promise<void> {
+  await apiFetch(`/push/devices/${id}`, { method: 'DELETE' });
+}

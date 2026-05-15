@@ -641,6 +641,73 @@ body[data-theme='default-dark'] .notify-send-now {
   border-color: rgba(255, 255, 255, 0.08);
 }
 
+/* ── Push Devices (FRPyk3YmWAb) ─────────────────────────────────────── */
+
+.push-devices-section {
+  margin-top: 16px;
+}
+.push-devices-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-400);
+  margin: 0 0 8px;
+}
+.push-devices-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.push-device-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--cream-100);
+  border: 1px solid var(--ink-100);
+  border-radius: 8px;
+}
+.push-device-icon {
+  color: var(--ink-400);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+.push-device-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.push-device-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-800);
+}
+.push-device-since {
+  font-size: 11px;
+  color: var(--ink-400);
+}
+.tb-btn-danger {
+  color: var(--red-500, #e05252);
+  border-color: var(--red-200, #fca5a5);
+}
+.tb-btn-danger:hover {
+  background: var(--red-50, #fef2f2);
+  color: var(--red-600, #dc2626);
+}
+body[data-theme='glass-dark'] .push-device-row,
+body[data-theme='default-dark'] .push-device-row {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+body[data-theme='glass-dark'] .push-device-name,
+body[data-theme='default-dark'] .push-device-name {
+  color: var(--cream-100);
+}
+
 /* ── Akzentfarbe-Picker (F7JzZf65SzX) ──────────────────────────────── */
 
 .set-pane-help {
