@@ -758,6 +758,10 @@ body[data-theme='default-dark'] .fb-admin-bulkbar {
   color: var(--ink-400);
   font-family: var(--font-mono);
 }
+body[data-theme='glass-dark'] .fb-my-empty,
+body[data-theme='default-dark'] .fb-my-empty {
+  color: rgba(250, 247, 242, 0.45);
+}
 body[data-theme='glass-dark'] .fb-my-card,
 body[data-theme='default-dark'] .fb-my-card {
   background: rgba(255, 255, 255, 0.04);
@@ -769,5 +773,19 @@ body[data-theme='default-dark'] .fb-my-card-title {
 }
 body[data-theme='glass-dark'] .fb-my-card-body,
 body[data-theme='default-dark'] .fb-my-card-body {
-  color: var(--cream-200, rgba(250, 247, 242, 0.8));
+  color: rgba(250, 247, 242, 0.75);
+}
+body[data-theme='glass-dark'] .fb-my-card-date,
+body[data-theme='default-dark'] .fb-my-card-date {
+  color: rgba(250, 247, 242, 0.4);
+}
+body[data-theme='glass-dark'] .fb-my-status-pill,
+body[data-theme='default-dark'] .fb-my-status-pill {
+  opacity: 0.9;
+}
+body[data-theme='glass-dark'] .fb-my-resolution,
+body[data-theme='default-dark'] .fb-my-resolution {
+  background: rgba(94, 127, 78, 0.12);
+  border-color: rgba(94, 127, 78, 0.25);
+  color: rgba(250, 247, 242, 0.7);
 }
