@@ -178,7 +178,7 @@ export const usersRoute = new Hono<{ Variables: Variables }>()
       code,
       expiresAt: new Date(Date.now() + 15 * 60 * 1000),
     });
-    const baseUrl = process.env.BETTER_AUTH_URL ?? 'https://btm.bethesna.org';
+    const baseUrl = process.env.BETTER_AUTH_URL ?? 'http://localhost:3001';
     // Wichtig: /login als Pfad damit der LoginScreen direkt rendert auch
     // ohne dass AppGate erst die Magic-Params an / erkennen muss
     // (Bug FKMsD4WmmOX). Frontend-Fallback fängt /-URLs aus Bestand mit ab.
@@ -324,7 +324,7 @@ export const invitationsRoute = new Hono<{ Variables: Variables }>()
       /* nicht kritisch — kann auch beim ersten Login nachgeholt werden */
     }
 
-    const baseUrl = process.env.BETTER_AUTH_URL ?? 'https://btm.bethesna.org';
+    const baseUrl = process.env.BETTER_AUTH_URL ?? 'http://localhost:3001';
     const url = `${baseUrl}/invite/${token}`;
     const mail = inviteEmail({
       url,
@@ -354,7 +354,7 @@ export const invitationsRoute = new Hono<{ Variables: Variables }>()
       .set({ token: newToken, expiresAt: newExpiry })
       .where(eq(invitations.id, id));
 
-    const baseUrl = process.env.BETTER_AUTH_URL ?? 'https://btm.bethesna.org';
+    const baseUrl = process.env.BETTER_AUTH_URL ?? 'http://localhost:3001';
     const url = `${baseUrl}/invite/${newToken}`;
     const mail = inviteEmail({
       url,

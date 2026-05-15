@@ -160,8 +160,8 @@ export const RELEASES: Release[] = [
       {
         kind: 'feature',
         text: {
-          de: '**Odoo-Kalender-Vorlage** für Bethesna-Instanz: ein Klick füllt URL + Datenbank vor und schlägt deine Login-Email als Username vor. Platzhalter für ein zukünftiges Video-Tutorial direkt unter dem API-Key-Feld.',
-          en: '**Odoo calendar preset** for the Bethesna instance: one click fills URL + database and proposes your login email as the username. Placeholder for a future video tutorial below the API key field.',
+          de: '**Odoo-Kalender-Vorlage**: ein Klick füllt URL + Datenbank vor und schlägt deine Login-Email als Username vor. Platzhalter für ein zukünftiges Video-Tutorial direkt unter dem API-Key-Feld.',
+          en: '**Odoo calendar preset**: one click fills URL + database and proposes your login email as the username. Placeholder for a future video tutorial below the API key field.',
         },
       },
       {
@@ -345,8 +345,8 @@ export const RELEASES: Release[] = [
       {
         kind: 'fix',
         text: {
-          de: '**HTTP 431 „Request Header Fields Too Large"** beim Öffnen von BTM behoben. Better-Auth speicherte den Avatar-base64 in einem Cookie — das wuchs schnell über Node\'s 16-KB-Header-Limit. `cookieCache` ist jetzt aus, Node-Limit auf 32 KB gebumpt. Wenn du diese Seite je gesehen hast: einmalig Cookies für `btm.bethesna.org` löschen und neu einloggen.',
-          en: '**HTTP 431 "Request Header Fields Too Large"** on opening BTM fixed. Better-Auth was stashing the avatar as base64 in a cookie — grew past Node\'s 16 KB header limit. `cookieCache` is now off, Node limit bumped to 32 KB. If you ever saw that page: clear cookies for `btm.bethesna.org` once and sign in fresh.',
+          de: '**HTTP 431 „Request Header Fields Too Large"** beim Öffnen von BTM behoben. Better-Auth speicherte den Avatar-base64 in einem Cookie — das wuchs schnell über Node\'s 16-KB-Header-Limit. `cookieCache` ist jetzt aus, Node-Limit auf 32 KB gebumpt. Wenn du diese Seite je gesehen hast: einmalig Cookies löschen und neu einloggen.',
+          en: '**HTTP 431 "Request Header Fields Too Large"** on opening BTM fixed. Better-Auth was stashing the avatar as base64 in a cookie — grew past Node\'s 16 KB header limit. `cookieCache` is now off, Node limit bumped to 32 KB. If you ever saw that page: clear site cookies once and sign in fresh.',
         },
       },
       {

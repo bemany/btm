@@ -16,6 +16,7 @@ import { useT, useLocale } from '../../i18n';
 // geplanten Aufgaben. Token wird inline eingebettet, sonst muss der User
 // hinterher noch suchen + tauschen → reibungsärmster Pfad.
 function buildSetupPrompt(token: string, locale: 'de' | 'en'): string {
+  const mcpUrl = `${window.location.origin}/api/mcp`;
   const tokenLine = token || (locale === 'en' ? '<YOUR-BTM-TOKEN>' : '<DEIN-BTM-TOKEN>');
   if (locale === 'en') {
     return `Hey Claude, please help me connect BTM (my internal task tool) so you can manage my tasks, projects and timers.
@@ -33,7 +34,7 @@ If the file does not exist yet, create it. If it exists, **only add the \`btm\` 
 {
   "mcpServers": {
     "btm": {
-      "url": "https://btm.bethesna.org/api/mcp",
+      "url": "${mcpUrl}",
       "headers": {
         "Authorization": "Bearer ${tokenLine}"
       }
@@ -71,7 +72,7 @@ Falls die Datei noch nicht existiert: leg sie an. Falls schon vorhanden: **füge
 {
   "mcpServers": {
     "btm": {
-      "url": "https://btm.bethesna.org/api/mcp",
+      "url": "${mcpUrl}",
       "headers": {
         "Authorization": "Bearer ${tokenLine}"
       }
@@ -480,7 +481,7 @@ export function ApiTokensTab() {
           <pre className="apit-mcp-code">{`{
   "mcpServers": {
     "btm": {
-      "url": "https://btm.bethesna.org/api/mcp",
+      "url": "${window.location.origin}/api/mcp",
       "headers": {
         "Authorization": "Bearer <dein-token-oben>"
       }
@@ -496,8 +497,7 @@ export function ApiTokensTab() {
           <p style={{ fontSize: 12.5, lineHeight: 1.55, color: 'var(--ink-700)' }}>
             In Claude → Settings → <b>Connectors</b> → <b>Add custom connector</b>:
           </p>
-          <pre className="apit-mcp-code">{`Name              BTM
-Remote MCP URL    https://btm.bethesna.org/api/mcp?token=<dein-token-oben>`}</pre>
+          <pre className="apit-mcp-code">{`Name              BTM\nRemote MCP URL    ${window.location.origin}/api/mcp?token=<dein-token-oben>`}</pre>
           <p style={{ fontSize: 11.5, color: 'var(--ink-500)', margin: '6px 0 14px', lineHeight: 1.5 }}>
             ⚠️ Claude.ai-Connectors haben aktuell einen bekannten Anthropic-Broker-Bug
             (Issues{' '}
@@ -523,9 +523,7 @@ Remote MCP URL    https://btm.bethesna.org/api/mcp?token=<dein-token-oben>`}</pr
           </p>
 
           <div className="apit-mcp-step-label">D · Quick-Test (curl)</div>
-          <pre className="apit-mcp-code">{`curl "https://btm.bethesna.org/api/mcp?token=<dein-token>" \\
-  -H "Content-Type: application/json" \\
-  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'`}</pre>
+          <pre className="apit-mcp-code">{`curl "${window.location.origin}/api/mcp?token=<dein-token>" \\\n  -H "Content-Type: application/json" \\\n  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'`}</pre>
         </div>
       </details>
     </div>

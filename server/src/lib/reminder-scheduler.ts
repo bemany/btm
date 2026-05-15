@@ -9,7 +9,7 @@ import { taskReminders, tasks, users } from '../db/schema.js';
 import { createNotification } from './notifications.js';
 import { sendMail, reminderEmail } from './mailer.js';
 
-const APP_BASE_URL = process.env.BETTER_AUTH_URL ?? 'https://btm.bethesna.org';
+const APP_BASE_URL = process.env.BETTER_AUTH_URL ?? 'http://localhost:3001';
 
 async function runReminderTick(): Promise<void> {
   const now = new Date();

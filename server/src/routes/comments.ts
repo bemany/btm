@@ -15,7 +15,7 @@ import { createNotification } from '../lib/notifications.js';
 import { extractMentionedUserIds, renderForExcerpt } from '../lib/mentions.js';
 import { sendMail, mentionEmail, appIconAttachment } from '../lib/mailer.js';
 
-const APP_BASE_URL = process.env.BETTER_AUTH_URL ?? 'https://btm.bethesna.org';
+const APP_BASE_URL = process.env.BETTER_AUTH_URL ?? 'http://localhost:3001';
 
 const SubjectEnum = z.enum(['task', 'project']);
 const createSchema = z.object({

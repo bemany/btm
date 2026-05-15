@@ -1,8 +1,11 @@
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
-export default defineConfig({
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '');
+  const appFullName = env.VITE_APP_FULL_NAME ?? 'Bemany Task Management';
+  return {
   plugins: [
     react(),
     VitePWA({
@@ -22,10 +25,10 @@ export default defineConfig({
       ],
       manifest: {
         id: '/',
-        name: 'BTM — Bethesna Task Management',
+        name: `BTM — ${appFullName}`,
         short_name: 'BTM',
         description:
-          'Internes Task-, Zeit- und Kapazitäts-Management für Bethesna. Wochenplanung, Live-Timer, Pomodoro, KI-Task-Extraktion.',
+          'Team task, time and capacity management. Weekly planning, live timer, Pomodoro, AI task extraction.',
         lang: 'de',
         start_url: '/',
         scope: '/',
@@ -106,16 +109,16 @@ export default defineConfig({
     port: 5173,
     strictPort: false,
     open: false,
-    // /api/* lokal aufs produktive Backend proxien, damit Login + Daten
-    // im npm run dev gegen die echte API laufen.
+    // /api/* proxy to backend. Set VITE_PROXY_TARGET to your running backend URL.
+    // Example: VITE_PROXY_TARGET=https://your-instance.example npm run dev
     proxy: {
       '/api': {
-        target: 'https://btm.bethesna.org',
+        target: env.VITE_PROXY_TARGET ?? 'http://localhost:3001',
         changeOrigin: true,
-        secure: true,
+        secure: !!(env.VITE_PROXY_TARGET ?? '').startsWith('https'),
         cookieDomainRewrite: 'localhost',
-        // SameSite-Cookies brauchen das.
       },
     },
   },
+  };
 });

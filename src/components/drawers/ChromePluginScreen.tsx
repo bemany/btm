@@ -42,7 +42,7 @@ export function ChromePluginScreen() {
               <span className="cp-dot r" />
               <span className="cp-dot y" />
               <span className="cp-dot g" />
-              <div className="cp-url">app.bethesna-task.de/dashboard</div>
+              <div className="cp-url">your-btm-instance.example/board</div>
               <div className="cp-ext-row">
                 <div className="cp-ext-icon">
                   <svg viewBox="0 0 32 32" width="14" height="14">
@@ -242,7 +242,7 @@ export function ChromePluginScreen() {
               <span className="cp-dot r" />
               <span className="cp-dot y" />
               <span className="cp-dot g" />
-              <div className="cp-url">github.com/bethesna/fahrerapp/pull/47</div>
+              <div className="cp-url">github.com/your-org/your-repo/pull/47</div>
             </div>
             <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
               <div className="cp-page-fake">

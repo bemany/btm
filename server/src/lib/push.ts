@@ -9,7 +9,7 @@ import { pushSubscriptions } from '../db/schema.js';
 
 const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY ?? '';
 const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY ?? '';
-const VAPID_MAILTO = `mailto:${process.env.INITIAL_ADMIN_EMAIL ?? 'admin@bethesna.org'}`;
+const VAPID_MAILTO = `mailto:${process.env.INITIAL_ADMIN_EMAIL ?? 'admin@example.com'}`;
 
 let initialized = false;
 

@@ -167,7 +167,7 @@ export function CalendarTab() {
         <h4>{t('calendar.source_odoo')}</h4>
       </div>
 
-      {/* Bethesna-Preset (FystBwbvLnW). Spart neuen Kolleg:innen das Tippen
+      {/* Odoo-Preset (FystBwbvLnW). Spart Kolleg:innen das Tippen
           der URL+DB. API-Key bleibt vom User selbst einzutragen. */}
       <div className="cal-preset-box">
         <div className="cal-preset-text">

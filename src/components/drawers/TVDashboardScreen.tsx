@@ -7,6 +7,7 @@ import { fmtHMS } from '../../lib/format';
 import type { Task } from '../../store/types';
 import * as api from '../../data/api';
 import type { CalendarEventDTO } from '../../data/api';
+import { APP_FULL_NAME } from '../../lib/brand';
 
 // ── Date-Helper ────────────────────────────────────────────────────────
 // task.due ist im Frontend `string | 'today' | 'tomorrow' | null` — historisch
@@ -218,7 +219,7 @@ export function TVDashboardScreen() {
             </svg>
             <div>
               <div className="tv-brand-name">BTM</div>
-              <div className="tv-brand-sub">Bethesna Task Management</div>
+              <div className="tv-brand-sub">{APP_FULL_NAME}</div>
             </div>
           </div>
         </div>

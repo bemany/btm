@@ -29,7 +29,7 @@ const app = new Hono<{ Variables: Variables }>();
 
 app.use('*', logger());
 
-const trustedOrigins = (process.env.TRUSTED_ORIGINS ?? 'https://btm.bethesna.org')
+const trustedOrigins = (process.env.TRUSTED_ORIGINS ?? 'http://localhost:5173')
   .split(',')
   .map((s) => s.trim())
   .filter(Boolean);

@@ -2,7 +2,7 @@
 // Auth via Bearer-API-Token (gleicher Mechanismus wie REST).
 //
 // Claude Desktop / Web binden ihn über die URL:
-//   https://btm.bethesna.org/api/mcp
+//   https://your-instance.example/api/mcp
 // mit Header `Authorization: Bearer btm_<token>`.
 //
 // Implementiert die Kern-Methoden (initialize, tools/list, tools/call) +
@@ -16,6 +16,7 @@ import { db } from '../db/client.js';
 import { tasks, projects, users, liveTimers, taskSessions, activityLog } from '../db/schema.js';
 import { requireAuth, type Variables } from '../lib/context.js';
 import { logActivity } from '../lib/activity.js';
+import { APP_FULL_NAME } from '../lib/brand.js';
 
 // ── Tool-Schemas (JSON-Schema für MCP) ─────────────────────────────────
 
@@ -490,7 +491,7 @@ export const mcpRoute = new Hono<{ Variables: Variables }>()
                 serverInfo: SERVER_INFO,
                 capabilities: { tools: { listChanged: false } },
                 instructions:
-                  'BTM MCP server: tasks, projects and timer for Bethesna Task Management. Authenticated via API token. Available tools: ' +
+                  `BTM MCP server: tasks, projects and timer for ${APP_FULL_NAME}. Authenticated via API token. Available tools: ` +
                   TOOLS.map((t) => t.name).join(', ') + '.',
               }),
             );
