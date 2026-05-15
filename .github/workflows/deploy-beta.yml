@@ -38,7 +38,7 @@ jobs:
           key: ${{ secrets.DO_SSH_KEY }}
           source: '/tmp/btm-beta-server.tar.gz,/tmp/btm-beta-dist.tar.gz'
           target: /opt/btm-beta/
-          strip_components: 2
+          strip_components: 1
 
       - name: Deploy on server
         uses: appleboy/ssh-action@v1.0.3
