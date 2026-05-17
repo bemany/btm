@@ -807,6 +807,8 @@ export const en: Translations = {
     users_section: 'Users',
     empty_filtered: 'No users match these filters.',
     activity: 'Activity',
+    activity_show: 'Show activity sidebar',
+    activity_hide: 'Hide activity sidebar',
     activity_empty: 'No activity yet.',
     activity_tab_all: 'All',
     activity_tab_work: 'Work',

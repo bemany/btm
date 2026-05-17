@@ -17,6 +17,7 @@ import { useT, useLocale } from '../../i18n';
 type FilterMode = 'all' | 'active' | 'admin' | 'invited' | 'inactive';
 type UsersView = 'cards' | 'list';
 const USERS_VIEW_STORAGE_KEY = 'btm.adminUsersView';
+const ACTIVITY_OPEN_STORAGE_KEY = 'btm.adminActivityOpen';
 
 function loadUsersView(): UsersView {
   try {
@@ -24,6 +25,14 @@ function loadUsersView(): UsersView {
     return v === 'list' ? 'list' : 'cards';
   } catch {
     return 'cards';
+  }
+}
+
+function loadActivityOpen(): boolean {
+  try {
+    return localStorage.getItem(ACTIVITY_OPEN_STORAGE_KEY) === '1';
+  } catch {
+    return false;
   }
 }
 
@@ -43,10 +52,16 @@ export function AdminScreen() {
   const [devMode, setDevMode] = useState(false);
   // FEtt86HtKR3: View-Toggle für User-Sektion (Karten/Liste)
   const [usersView, setUsersView] = useState<UsersView>(() => loadUsersView());
+  // Aktivitätsleiste rechts standardmäßig aus, per Toggle einblendbar
+  const [activityOpen, setActivityOpen] = useState<boolean>(() => loadActivityOpen());
 
   useEffect(() => {
     try { localStorage.setItem(USERS_VIEW_STORAGE_KEY, usersView); } catch { /* ignore */ }
   }, [usersView]);
+
+  useEffect(() => {
+    try { localStorage.setItem(ACTIVITY_OPEN_STORAGE_KEY, activityOpen ? '1' : '0'); } catch { /* ignore */ }
+  }, [activityOpen]);
 
   useEffect(() => {
     fetch('/api/config', { credentials: 'include' })
@@ -80,7 +95,7 @@ export function AdminScreen() {
 
   return (
     <div className="admin-screen">
-      <div className="admin-grid">
+      <div className={`admin-grid ${activityOpen ? 'has-side' : 'no-side'}`}>
         <div className="admin-main">
           <div className="admin-header">
             <div className="admin-stat">
@@ -121,6 +136,14 @@ export function AdminScreen() {
             </button>
             <button className="tb-btn accent" onClick={() => setUserDrawerId('__new__')}>
               <Icon name="user-plus" size={14} /> {t('admin.invite_user')}
+            </button>
+            <button
+              className={`tb-btn admin-activity-toggle ${activityOpen ? 'is-on' : ''}`}
+              onClick={() => setActivityOpen((v) => !v)}
+              title={activityOpen ? t('admin.activity_hide') : t('admin.activity_show')}
+              aria-label={activityOpen ? t('admin.activity_hide') : t('admin.activity_show')}
+            >
+              <Icon name={activityOpen ? 'panel-right-close' : 'panel-right-open'} size={14} />
             </button>
           </div>
 
@@ -244,13 +267,24 @@ export function AdminScreen() {
           {devMode && <DevCloneWidget />}
         </div>
 
-        <aside className="admin-side">
-          <div className="admin-side-head">
-            <Icon name="activity" size={14} />
-            <h3>{t('admin.activity')}</h3>
-          </div>
-          <ActivitySidebar users={users} />
-        </aside>
+        {activityOpen && (
+          <aside className="admin-side">
+            <div className="admin-side-head">
+              <Icon name="activity" size={14} />
+              <h3>{t('admin.activity')}</h3>
+              <div style={{ flex: 1 }} />
+              <button
+                className="admin-side-close"
+                onClick={() => setActivityOpen(false)}
+                title={t('admin.activity_hide')}
+                aria-label={t('admin.activity_hide')}
+              >
+                <Icon name="x" size={14} />
+              </button>
+            </div>
+            <ActivitySidebar users={users} />
+          </aside>
+        )}
       </div>
 
       {userDrawerId && <UserDrawer id={userDrawerId} onClose={() => setUserDrawerId(null)} />}

@@ -809,6 +809,8 @@ export const de = {
     users_section: 'Nutzer',
     empty_filtered: 'Keine Nutzer mit diesen Filtern.',
     activity: 'Aktivität',
+    activity_show: 'Aktivitätsleiste einblenden',
+    activity_hide: 'Aktivitätsleiste ausblenden',
     activity_empty: 'Noch keine Aktivität.',
     activity_tab_all: 'Alle',
     activity_tab_work: 'Arbeit',

@@ -11,9 +11,59 @@
 
 .admin-grid {
   display: grid;
-  grid-template-columns: 1fr 320px;
   height: 100%;
   overflow: hidden;
+}
+.admin-grid.has-side {
+  grid-template-columns: 1fr 320px;
+}
+.admin-grid.no-side {
+  grid-template-columns: 1fr;
+}
+
+/* Toggle-Button für die Aktivitätsleiste — sitzt im Admin-Header */
+.admin-activity-toggle {
+  padding: 6px 8px !important;
+  color: var(--ink-700);
+}
+.admin-activity-toggle.is-on {
+  color: var(--accent-700, var(--accent-500));
+  background: rgba(var(--accent-rgb), 0.1);
+  border-color: rgba(var(--accent-rgb), 0.3);
+}
+body[data-theme="glass-dark"] .admin-activity-toggle,
+body[data-theme="default-dark"] .admin-activity-toggle {
+  color: rgba(250, 247, 242, 0.7);
+}
+body[data-theme="glass-dark"] .admin-activity-toggle.is-on,
+body[data-theme="default-dark"] .admin-activity-toggle.is-on {
+  color: var(--accent-500);
+}
+
+/* X-Button im Sidebar-Head zum Schließen */
+.admin-side-close {
+  border: 0;
+  background: transparent;
+  color: var(--ink-500);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  transition: background 120ms, color 120ms;
+}
+.admin-side-close:hover {
+  background: var(--cream-100);
+  color: var(--ink-900);
+}
+body[data-theme="glass-dark"] .admin-side-close,
+body[data-theme="default-dark"] .admin-side-close {
+  color: rgba(250, 247, 242, 0.5);
+}
+body[data-theme="glass-dark"] .admin-side-close:hover,
+body[data-theme="default-dark"] .admin-side-close:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--cream-50);
 }
 
 .admin-main {
