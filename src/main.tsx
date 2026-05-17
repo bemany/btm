@@ -27,6 +27,7 @@ import './styles/onboarding.css';
 import './styles/releases.css';
 import './styles/chat-bubble.css';
 import './styles/mobile-app.css';
+import './styles/mobile-shell.css';
 import './styles/settings.css';
 import './styles/comments.css';
 import './styles/inbox.css';
