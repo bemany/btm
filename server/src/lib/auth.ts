@@ -2,9 +2,10 @@ import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { magicLink } from 'better-auth/plugins';
 import { nanoid } from 'nanoid';
+import { eq } from 'drizzle-orm';
 import { db } from '../db/client.js';
 import * as schema from '../db/schema.js';
-import { loginCodes } from '../db/schema.js';
+import { loginCodes, users, allowedDomains } from '../db/schema.js';
 import { sendMail, magicLinkEmail } from './mailer.js';
 
 const initialAdminEmail = (process.env.INITIAL_ADMIN_EMAIL ?? '').trim().toLowerCase();
@@ -43,6 +44,38 @@ export const auth = betterAuth({
         // Code eintippen statt aus der App in den Browser zu wechseln.
         const code = String(Math.floor(100000 + Math.random() * 900000));
         const lowerEmail = email.toLowerCase();
+
+        // Fm16BUutfUO: Domain-Whitelisting bei Self-Registration.
+        // Bestehende User dürfen sich immer anmelden. Neue User nur, wenn
+        // ihre E-Mail-Domain in allowed_domains steht. INITIAL_ADMIN_EMAIL
+        // umgeht den Check (für initiales Setup).
+        try {
+          const [existing] = await db
+            .select({ id: users.id })
+            .from(users)
+            .where(eq(users.email, lowerEmail))
+            .limit(1);
+          if (!existing && lowerEmail !== initialAdminEmail) {
+            const domain = lowerEmail.split('@')[1] ?? '';
+            if (domain) {
+              const [allowed] = await db
+                .select({ id: allowedDomains.id })
+                .from(allowedDomains)
+                .where(eq(allowedDomains.domain, domain))
+                .limit(1);
+              if (!allowed) {
+                console.warn(`[auth] Self-registration denied for domain "${domain}" (email: ${lowerEmail})`);
+                // Silent fail — keine E-Mail versenden, aber auch keine
+                // klare Fehlermeldung an den Client (verrät nicht, ob ein
+                // User existiert). Frontend zeigt generischen "Mail unterwegs".
+                return;
+              }
+            }
+          }
+        } catch (e) {
+          console.warn('[auth] domain whitelist check failed', e);
+        }
+
         try {
           await db.insert(loginCodes).values({
             id: `LC${nanoid(12)}`,

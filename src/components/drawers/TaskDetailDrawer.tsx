@@ -13,6 +13,7 @@ import { TaskTimeline } from '../sessions/TaskTimeline';
 import { DatePicker } from '../shared/DatePicker';
 import { SubtasksSection } from './SubtasksSection';
 import { AttachmentsSection } from './AttachmentsSection';
+import { ChecklistSection } from './ChecklistSection';
 import { RemindersSection } from './RemindersSection';
 import { checkMarkDone } from '../../lib/taskPermissions';
 import { navigate } from '../../router';
@@ -458,6 +459,10 @@ export function TaskDetailDrawer({ id }: TaskDetailDrawerProps) {
               placeholder={tr('task_detail.description_placeholder')}
               style={{ minHeight: 100, fontFamily: 'var(--font-body)', fontSize: 13, lineHeight: 1.55 }}
             />
+          </div>
+
+          <div style={{ marginTop: 14, marginBottom: 14 }}>
+            <ChecklistSection taskId={t.id} />
           </div>
 
           <AttachmentsSection taskId={t.id} />

@@ -173,6 +173,36 @@ export const taskAttachments = pgTable(
   ],
 );
 
+// Fm16BUutfUO: E-Mail-Domains die sich selbst registrieren dürfen.
+// Beim Magic-Link-Anmelden mit einer neuen E-Mail wird geprüft, ob die
+// Domain in dieser Liste steht. Wenn ja: User wird automatisch als
+// 'member' angelegt. Wenn nein: Magic-Link wird nicht versendet.
+// Pflege durch Admins über Admin-Screen.
+export const allowedDomains = pgTable('allowed_domains', {
+  id: text('id').primaryKey(),
+  domain: text('domain').notNull().unique(),
+  addedById: text('added_by_id').references(() => users.id, { onDelete: 'set null' }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+// FCXVQOSTCFp: Checklisten-Items pro Aufgabe.
+// Reihenfolge via sortOrder, jedes Item kann unabhängig abgehakt werden.
+export const taskChecklistItems = pgTable(
+  'task_checklist_items',
+  {
+    id: text('id').primaryKey(),
+    taskId: text('task_id').notNull().references(() => tasks.id, { onDelete: 'cascade' }),
+    text: text('text').notNull(),
+    done: boolean('done').notNull().default(false),
+    sortOrder: integer('sort_order').notNull().default(0),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index('task_checklist_items_task_idx').on(t.taskId, t.sortOrder),
+  ],
+);
+
 // Persönliche Projekt-Favoriten — komplett user-spezifisch, kein Sharing.
 // PK ist (userId, projectId). Beim Löschen von User oder Projekt cascading.
 export const projectFavorites = pgTable(
@@ -576,3 +606,7 @@ export type IcalFeed = typeof icalFeeds.$inferSelect;
 export type NewIcalFeed = typeof icalFeeds.$inferInsert;
 export type TaskAttachment = typeof taskAttachments.$inferSelect;
 export type NewTaskAttachment = typeof taskAttachments.$inferInsert;
+export type TaskChecklistItem = typeof taskChecklistItems.$inferSelect;
+export type NewTaskChecklistItem = typeof taskChecklistItems.$inferInsert;
+export type AllowedDomain = typeof allowedDomains.$inferSelect;
+export type NewAllowedDomain = typeof allowedDomains.$inferInsert;

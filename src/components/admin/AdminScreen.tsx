@@ -12,6 +12,7 @@ import { fmtRel, activityLine, WORK_KINDS } from './adminUtils';
 import { UserDrawer } from './UserDrawer';
 import { TeamsDrawer } from './TeamsDrawer';
 import { TVSetupDrawer } from './TVSetupDrawer';
+import { AllowedDomainsSection } from './AllowedDomainsSection';
 import { useT, useLocale } from '../../i18n';
 
 type FilterMode = 'all' | 'active' | 'admin' | 'invited' | 'inactive';
@@ -263,6 +264,8 @@ export function AdminScreen() {
               <FeedbackList />
             </section>
           </div>
+
+          <AllowedDomainsSection />
 
           {devMode && <DevCloneWidget />}
         </div>

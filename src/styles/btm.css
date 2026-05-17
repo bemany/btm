@@ -3773,6 +3773,26 @@ body[data-theme="glass-dark"] .cal-status {
   grid-template-columns: auto minmax(0, 1fr) auto;
   gap: 10px;
 }
+/* FNl4YW89vBX: gestapelte Teilnehmer-Avatare */
+.tv-cal-attendees {
+  display: inline-flex;
+  align-items: center;
+}
+.tv-cal-attendees > .tv-row-avatar {
+  margin-left: -8px;
+  border: 2px solid rgba(28, 26, 23, 0.95);
+  box-sizing: content-box;
+}
+.tv-cal-attendees > .tv-row-avatar:first-child {
+  margin-left: 0;
+}
+.tv-cal-attendee-more {
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: rgba(250, 247, 242, 0.85);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+}
 .tv-cal-time {
   font-family: var(--font-mono);
   font-size: 11px;

@@ -850,6 +850,73 @@ export function taskAttachmentDownloadUrl(taskId: string, attachmentId: string):
   return `/api/tasks/${taskId}/attachments/${attachmentId}/download`;
 }
 
+// ── Allowed Domains (Fm16BUutfUO) ────────────────────────────────────────
+
+export interface AllowedDomainDTO {
+  id: string;
+  domain: string;
+  addedById: string | null;
+  createdAt: string;
+}
+
+export async function listAllowedDomains(): Promise<AllowedDomainDTO[]> {
+  const { domains } = await apiFetch<{ domains: AllowedDomainDTO[] }>('/allowed-domains');
+  return domains;
+}
+
+export async function addAllowedDomain(domain: string): Promise<AllowedDomainDTO> {
+  const { domain: row } = await apiFetch<{ domain: AllowedDomainDTO }>('/allowed-domains', {
+    method: 'POST',
+    body: { domain },
+  });
+  return row;
+}
+
+export async function deleteAllowedDomain(id: string): Promise<void> {
+  await apiFetch(`/allowed-domains/${id}`, { method: 'DELETE' });
+}
+
+// ── Checklisten (FCXVQOSTCFp) ────────────────────────────────────────────
+
+export interface TaskChecklistItemDTO {
+  id: string;
+  taskId: string;
+  text: string;
+  done: boolean;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export async function listTaskChecklist(taskId: string): Promise<TaskChecklistItemDTO[]> {
+  const { items } = await apiFetch<{ items: TaskChecklistItemDTO[] }>(`/tasks/${taskId}/checklist`);
+  return items;
+}
+
+export async function createChecklistItem(taskId: string, text: string): Promise<TaskChecklistItemDTO> {
+  const { item } = await apiFetch<{ item: TaskChecklistItemDTO }>(`/tasks/${taskId}/checklist`, {
+    method: 'POST',
+    body: { text },
+  });
+  return item;
+}
+
+export async function updateChecklistItem(
+  taskId: string,
+  itemId: string,
+  patch: { text?: string; done?: boolean },
+): Promise<TaskChecklistItemDTO> {
+  const { item } = await apiFetch<{ item: TaskChecklistItemDTO }>(`/tasks/${taskId}/checklist/${itemId}`, {
+    method: 'PATCH',
+    body: patch,
+  });
+  return item;
+}
+
+export async function deleteChecklistItem(taskId: string, itemId: string): Promise<void> {
+  await apiFetch(`/tasks/${taskId}/checklist/${itemId}`, { method: 'DELETE' });
+}
+
 // ── Push Devices ─────────────────────────────────────────────────────────
 
 export interface PushDeviceDTO {

@@ -35,9 +35,18 @@ export function MyWeekScreen({ setActive }: MyWeekScreenProps) {
   const me = meUser
     ? { name: meUser.name.split(' ')[0] || meUser.name, cap: meUser.cap }
     : { name: '—', cap: 40 };
+  const projects = useStore((s) => s.projects);
   const myTasks = tasks.filter((tk) => tk.who === currentUser);
   const today = myTasks.filter((tk) => tk.col === 'doing').slice(0, 5);
-  const inReview = myTasks.filter((tk) => tk.col === 'review');
+  // FyfRp-e2nzS: Review-Sektion zeigt nur Aufgaben aus Projekten, bei
+  // denen ich Verantwortlicher (project.ownerId) bin — nicht meine eigenen
+  // Tasks. Wer Reviewer ist, bestimmt die Projektverantwortung.
+  const myOwnedProjectIds = new Set(
+    projects.filter((p) => p.ownerId === currentUser).map((p) => p.id),
+  );
+  const inReview = tasks.filter(
+    (tk) => tk.col === 'review' && tk.proj && myOwnedProjectIds.has(tk.proj),
+  );
   const doneThisWeek = myTasks.filter((tk) => tk.col === 'done');
 
   const plannedH = myTasks.filter((tk) => tk.col !== 'done').reduce((a, b) => a + b.estH, 0);

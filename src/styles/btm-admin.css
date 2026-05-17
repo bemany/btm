@@ -256,6 +256,111 @@ body[data-theme="default-dark"] .admin-view-btn.active {
   color: #1A1815;
 }
 
+/* ---- Allowed Domains (Fm16BUutfUO) ---------------------- */
+.admin-domains-section {
+  margin-top: 22px;
+  padding-top: 22px;
+  border-top: 1px solid var(--ink-100);
+}
+.admin-domains-hint {
+  font-size: 12px;
+  color: var(--ink-500);
+  line-height: 1.5;
+  margin: 0;
+}
+.admin-domains-add {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  max-width: 480px;
+}
+.admin-domains-add input {
+  flex: 1;
+  background: var(--cream-50);
+  border: 1px solid var(--ink-200);
+  border-radius: 6px;
+  padding: 7px 12px;
+  font-size: 13px;
+  color: var(--ink-900);
+  font-family: var(--font-mono);
+}
+.admin-domains-add input:focus {
+  outline: none;
+  border-color: var(--accent-500);
+}
+.admin-domains-empty {
+  border: 1px dashed var(--ink-200);
+  background: var(--cream-50);
+  color: var(--ink-500);
+  padding: 14px;
+  border-radius: 6px;
+  font-size: 12.5px;
+  text-align: center;
+}
+.admin-domains-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.admin-domain-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--cream-100);
+  border: 1px solid var(--ink-100);
+  border-radius: 6px;
+  padding: 5px 4px 5px 10px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-800);
+}
+.admin-domain-row svg:first-of-type { color: var(--accent-600, var(--accent-500)); }
+.admin-domain-name { font-weight: 500; }
+.admin-domain-delete {
+  border: 0;
+  background: transparent;
+  color: var(--ink-400);
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 3px;
+  display: inline-flex;
+  align-items: center;
+  transition: background 120ms, color 120ms;
+}
+.admin-domain-delete:hover {
+  background: rgba(200, 60, 60, 0.1);
+  color: #993C3C;
+}
+body[data-theme="glass-dark"] .admin-domains-section,
+body[data-theme="default-dark"] .admin-domains-section {
+  border-top-color: rgba(255, 255, 255, 0.06);
+}
+body[data-theme="glass-dark"] .admin-domains-hint,
+body[data-theme="default-dark"] .admin-domains-hint {
+  color: rgba(250, 247, 242, 0.5);
+}
+body[data-theme="glass-dark"] .admin-domains-add input,
+body[data-theme="default-dark"] .admin-domains-add input {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: var(--cream-50);
+}
+body[data-theme="glass-dark"] .admin-domains-empty,
+body[data-theme="default-dark"] .admin-domains-empty {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: rgba(250, 247, 242, 0.5);
+}
+body[data-theme="glass-dark"] .admin-domain-row,
+body[data-theme="default-dark"] .admin-domain-row {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: rgba(250, 247, 242, 0.85);
+}
+
 /* ---- USER LIST TABLE (Listen-Ansicht, FEtt86HtKR3) ------ */
 .admin-user-table {
   width: 100%;

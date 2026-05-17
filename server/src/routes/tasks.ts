@@ -6,7 +6,7 @@ import { promises as fs, createReadStream } from 'node:fs';
 import { join as joinPath, extname } from 'node:path';
 import { Readable } from 'node:stream';
 import { db } from '../db/client.js';
-import { tasks, taskSessions, liveTimers, projects, projectMembers, taskAttachments } from '../db/schema.js';
+import { tasks, taskSessions, liveTimers, projects, projectMembers, taskAttachments, taskChecklistItems } from '../db/schema.js';
 import { requireAuth, type Variables } from '../lib/context.js';
 import { logActivity } from '../lib/activity.js';
 import { createNotification } from '../lib/notifications.js';
@@ -638,6 +638,54 @@ export const tasksRoute = new Hono<{ Variables: Variables }>()
     } catch (e) {
       console.warn('[attachments] unlink failed for', row.storagePath, e);
     }
+    return c.json({ ok: true });
+  })
+
+  // ── Checklisten (FCXVQOSTCFp) ───────────────────────────────────────
+  .get('/:id/checklist', async (c) => {
+    const taskId = c.req.param('id');
+    const items = await db
+      .select()
+      .from(taskChecklistItems)
+      .where(eq(taskChecklistItems.taskId, taskId))
+      .orderBy(asc(taskChecklistItems.sortOrder));
+    return c.json({ items });
+  })
+  .post('/:id/checklist', async (c) => {
+    const taskId = c.req.param('id');
+    const { text } = z.object({ text: z.string().min(1).max(500) }).parse(await c.req.json());
+    // Nächste sortOrder bestimmen (max + 1)
+    const [maxRow] = await db
+      .select({ max: sql<number>`coalesce(max(${taskChecklistItems.sortOrder}), 0)` })
+      .from(taskChecklistItems)
+      .where(eq(taskChecklistItems.taskId, taskId));
+    const sortOrder = (maxRow?.max ?? 0) + 1;
+    const id = `CL${nanoid(10)}`;
+    const [row] = await db
+      .insert(taskChecklistItems)
+      .values({ id, taskId, text, done: false, sortOrder })
+      .returning();
+    return c.json({ item: row }, 201);
+  })
+  .patch('/:id/checklist/:itemId', async (c) => {
+    const itemId = c.req.param('itemId');
+    const body = z
+      .object({ text: z.string().min(1).max(500).optional(), done: z.boolean().optional() })
+      .parse(await c.req.json());
+    const patch: { text?: string; done?: boolean; updatedAt: Date } = { updatedAt: new Date() };
+    if (body.text !== undefined) patch.text = body.text;
+    if (body.done !== undefined) patch.done = body.done;
+    const [row] = await db
+      .update(taskChecklistItems)
+      .set(patch)
+      .where(eq(taskChecklistItems.id, itemId))
+      .returning();
+    if (!row) return c.json({ error: 'not found' }, 404);
+    return c.json({ item: row });
+  })
+  .delete('/:id/checklist/:itemId', async (c) => {
+    const itemId = c.req.param('itemId');
+    await db.delete(taskChecklistItems).where(eq(taskChecklistItems.id, itemId));
     return c.json({ ok: true });
   });
 

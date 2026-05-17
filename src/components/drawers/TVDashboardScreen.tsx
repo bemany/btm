@@ -232,7 +232,37 @@ export function TVDashboardScreen() {
     retry: 5,
     retryDelay: (i) => Math.min(1000 * 2 ** i, 30_000),
   });
-  const calendarEvents: CalendarEventDTO[] = calendarQ.data ?? [];
+  const calendarEventsRaw: CalendarEventDTO[] = calendarQ.data ?? [];
+  // FNl4YW89vBX: Doppelte Termine konsolidieren — wenn mehrere User im
+  // gleichen Termin sind, kommt jeder mit seinem eigenen Event-Eintrag.
+  // Wir gruppieren nach Titel + Zeitraum + Location und sammeln alle
+  // Teilnehmer in einem Array.
+  type AggregatedEvent = CalendarEventDTO & {
+    attendees: Array<{ userId: string; userName?: string; userImage?: string | null; userColor?: string }>;
+  };
+  const calendarEvents: AggregatedEvent[] = useMemo(() => {
+    const groupKey = (ev: CalendarEventDTO) =>
+      `${ev.title}|${ev.startAt}|${ev.endAt}|${ev.location ?? ''}|${ev.allDay ? '1' : '0'}`;
+    const groups = new Map<string, AggregatedEvent>();
+    for (const ev of calendarEventsRaw) {
+      const key = groupKey(ev);
+      const existing = groups.get(key);
+      const attendee = {
+        userId: ev.userId,
+        userName: ev.userName,
+        userImage: ev.userImage,
+        userColor: ev.userColor,
+      };
+      if (existing) {
+        if (!existing.attendees.some((a) => a.userId === attendee.userId)) {
+          existing.attendees.push(attendee);
+        }
+      } else {
+        groups.set(key, { ...ev, attendees: [attendee] });
+      }
+    }
+    return Array.from(groups.values()).sort((a, b) => a.startAt.localeCompare(b.startAt));
+  }, [calendarEventsRaw]);
   const calendarPaged = usePagedRotation(calendarEvents, PAGE_SIZE);
 
   const PageBadge = ({ pageIndex, pageCount }: { pageIndex: number; pageCount: number }) =>
@@ -442,7 +472,6 @@ export function TVDashboardScreen() {
                 minute: '2-digit',
               });
               const timeLabel = ev.allDay ? 'Ganztägig' : `${startTime}–${endTime}`;
-              const initials = (ev.userName ?? '??').slice(0, 2).toUpperCase();
               return (
                 <div key={ev.id} className="tv-row tv-cal-row">
                   <span className="tv-cal-time">{timeLabel}</span>
@@ -453,15 +482,31 @@ export function TVDashboardScreen() {
                         <Icon name="map-pin" size={10} /> {ev.location.length > 20 ? ev.location.slice(0, 20) + '…' : ev.location}
                       </span>
                     )}
-                    {ev.userImage ? (
-                      <span className="tv-row-avatar sm has-image" title={ev.userName}>
-                        <img src={ev.userImage} alt={ev.userName ?? ''} />
-                      </span>
-                    ) : (
-                      <div className="tv-row-avatar sm" style={{ background: ev.userColor ?? '#6B6359' }} title={ev.userName}>
-                        {initials}
-                      </div>
-                    )}
+                    {/* FNl4YW89vBX: gestapelte Avatare aller Teilnehmer */}
+                    <div className="tv-cal-attendees">
+                      {ev.attendees.slice(0, 4).map((a) => {
+                        const init = (a.userName ?? '??').slice(0, 2).toUpperCase();
+                        return a.userImage ? (
+                          <span key={a.userId} className="tv-row-avatar sm has-image" title={a.userName}>
+                            <img src={a.userImage} alt={a.userName ?? ''} />
+                          </span>
+                        ) : (
+                          <div
+                            key={a.userId}
+                            className="tv-row-avatar sm"
+                            style={{ background: a.userColor ?? '#6B6359' }}
+                            title={a.userName}
+                          >
+                            {init}
+                          </div>
+                        );
+                      })}
+                      {ev.attendees.length > 4 && (
+                        <div className="tv-row-avatar sm tv-cal-attendee-more" title={`+${ev.attendees.length - 4}`}>
+                          +{ev.attendees.length - 4}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               );

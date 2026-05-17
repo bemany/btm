@@ -24,6 +24,7 @@ import { loginCodeRoute } from './routes/login-code.js';
 import { remindersRoute } from './routes/reminders.js';
 import { devAuthRoute } from './routes/dev-auth.js';
 import { pushRoute } from './routes/push.js';
+import { allowedDomainsRoute } from './routes/allowed-domains.js';
 
 const app = new Hono<{ Variables: Variables }>();
 
@@ -88,6 +89,7 @@ app.route('/api/mcp', mcpRoute);
 app.route('/api/events', eventsRoute);
 app.route('/api/login-code', loginCodeRoute);
 app.route('/api/push', pushRoute);
+app.route('/api/allowed-domains', allowedDomainsRoute);
 app.get('/api/healthz', (c) => c.json({ ok: true, ts: Date.now() }));
 
 // devAuthRoute VOR remindersRoute: remindersRoute hat .use('*', requireAuth)
