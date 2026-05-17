@@ -334,6 +334,13 @@ export const tasksRoute = new Hono<{ Variables: Variables }>()
     const [row] = await db.select().from(liveTimers).where(eq(liveTimers.userId, user.id)).limit(1);
     return c.json({ liveTimer: row ?? null });
   })
+  // FQJzGtjPqc-: Alle aktiven Live-Timer aller User — fürs TV-Dashboard,
+  // damit man auch Aufgaben sieht, die nicht in "Doing" stehen, aber auf
+  // die gerade Zeit getrackt wird.
+  .get('/timer/live/all', async (c) => {
+    const rows = await db.select().from(liveTimers);
+    return c.json({ liveTimers: rows });
+  })
 
   // ── Manuelle Zeitbuchungen ──────────────────────────────────────────
   .get('/:id/sessions', async (c) => {

@@ -197,9 +197,11 @@ export function ProjectsScreen({ setActive }: ProjectsScreenProps) {
             >
               <Icon name="eye" size={13} />
             </button>
-            <button className="proj-card-action" title={t('projects.edit_action')} onClick={() => setEditProj(p)}>
-              <Icon name="pencil" size={13} />
-            </button>
+            {isAdmin && (
+              <button className="proj-card-action" title={t('projects.edit_action')} onClick={() => setEditProj(p)}>
+                <Icon name="pencil" size={13} />
+              </button>
+            )}
           </div>
         </div>
         <h4>{p.name}</h4>
@@ -284,9 +286,11 @@ export function ProjectsScreen({ setActive }: ProjectsScreenProps) {
               </button>
             ))}
           </div>
-          <button className="tb-btn primary" onClick={() => setShowNew(true)}>
-            <Icon name="plus" size={14} /> {t('projects.new_project')}
-          </button>
+          {isAdmin && (
+            <button className="tb-btn primary" onClick={() => setShowNew(true)}>
+              <Icon name="plus" size={14} /> {t('projects.new_project')}
+            </button>
+          )}
         </div>
       </div>
 
@@ -310,13 +314,15 @@ export function ProjectsScreen({ setActive }: ProjectsScreenProps) {
           )}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
             {rest.map(renderCard)}
-            <button className="proj-card-new" onClick={() => setShowNew(true)} aria-label={t('projects.new_aria')}>
-              <div className="plus-circle">
-                <Icon name="plus" size={22} />
-              </div>
-              <div className="lbl">{t('projects.new_project')}</div>
-              <div className="hint">{t('projects.new_hint')}</div>
-            </button>
+            {isAdmin && (
+              <button className="proj-card-new" onClick={() => setShowNew(true)} aria-label={t('projects.new_aria')}>
+                <div className="plus-circle">
+                  <Icon name="plus" size={22} />
+                </div>
+                <div className="lbl">{t('projects.new_project')}</div>
+                <div className="hint">{t('projects.new_hint')}</div>
+              </button>
+            )}
           </div>
         </>
       )}
@@ -411,13 +417,15 @@ export function ProjectsScreen({ setActive }: ProjectsScreenProps) {
                       >
                         <Icon name="eye" size={13} />
                       </button>
-                      <button
-                        className="proj-table-action"
-                        title={t('projects.edit_action')}
-                        onClick={() => setEditProj(p)}
-                      >
-                        <Icon name="pencil" size={13} />
-                      </button>
+                      {isAdmin && (
+                        <button
+                          className="proj-table-action"
+                          title={t('projects.edit_action')}
+                          onClick={() => setEditProj(p)}
+                        >
+                          <Icon name="pencil" size={13} />
+                        </button>
+                      )}
                     </td>
                   </tr>
                 );

@@ -15,6 +15,17 @@ import { TVSetupDrawer } from './TVSetupDrawer';
 import { useT, useLocale } from '../../i18n';
 
 type FilterMode = 'all' | 'active' | 'admin' | 'invited' | 'inactive';
+type UsersView = 'cards' | 'list';
+const USERS_VIEW_STORAGE_KEY = 'btm.adminUsersView';
+
+function loadUsersView(): UsersView {
+  try {
+    const v = localStorage.getItem(USERS_VIEW_STORAGE_KEY);
+    return v === 'list' ? 'list' : 'cards';
+  } catch {
+    return 'cards';
+  }
+}
 
 export function AdminScreen() {
   const users = useStore((s) => s.users);
@@ -30,6 +41,12 @@ export function AdminScreen() {
   const [teamsDrawerOpen, setTeamsDrawerOpen] = useState(false);
   const [tvDrawerOpen, setTvDrawerOpen] = useState(false);
   const [devMode, setDevMode] = useState(false);
+  // FEtt86HtKR3: View-Toggle für User-Sektion (Karten/Liste)
+  const [usersView, setUsersView] = useState<UsersView>(() => loadUsersView());
+
+  useEffect(() => {
+    try { localStorage.setItem(USERS_VIEW_STORAGE_KEY, usersView); } catch { /* ignore */ }
+  }, [usersView]);
 
   useEffect(() => {
     fetch('/api/config', { credentials: 'include' })
@@ -164,38 +181,65 @@ export function AdminScreen() {
             </div>
           )}
 
-          <div className="admin-section">
-            <div className="admin-section-head">
-              <Icon name="users" size={14} />
-              <h3>{t('admin.users_section')}</h3>
-              <span className="admin-section-count">{filtered.length}</span>
-            </div>
-            {filtered.length === 0 && (
-              <div className="admin-empty">{t('admin.empty_filtered')}</div>
-            )}
-            <div className="admin-user-grid">
-              {filtered.map((u) => (
-                <UserCard
-                  key={u.id}
-                  u={u}
-                  doingCount={tasks.filter((tk) => tk.who === u.id && tk.col === 'doing').length}
-                  teamName={teams.find((tm) => tm.id === u.teamId)?.name ?? '—'}
-                  onClick={() => setUserDrawerId(u.id)}
+          {/* FEtt86HtKR3: User und Feedbacks nebeneinander */}
+          <div className="admin-split">
+            <div className="admin-section">
+              <div className="admin-section-head">
+                <Icon name="users" size={14} />
+                <h3>{t('admin.users_section')}</h3>
+                <span className="admin-section-count">{filtered.length}</span>
+                <div style={{ flex: 1 }} />
+                <div className="admin-view-toggle">
+                  {([
+                    { id: 'cards' as const, icon: 'layout-grid', label: t('layout.cards') },
+                    { id: 'list' as const, icon: 'list', label: t('layout.list') },
+                  ]).map((o) => (
+                    <button
+                      key={o.id}
+                      className={`admin-view-btn ${usersView === o.id ? 'active' : ''}`}
+                      onClick={() => setUsersView(o.id)}
+                      title={o.label}
+                      aria-label={o.label}
+                    >
+                      <Icon name={o.icon} size={12} />
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {filtered.length === 0 && (
+                <div className="admin-empty">{t('admin.empty_filtered')}</div>
+              )}
+              {filtered.length > 0 && usersView === 'cards' && (
+                <div className="admin-user-grid">
+                  {filtered.map((u) => (
+                    <UserCard
+                      key={u.id}
+                      u={u}
+                      doingCount={tasks.filter((tk) => tk.who === u.id && tk.col === 'doing').length}
+                      teamName={teams.find((tm) => tm.id === u.teamId)?.name ?? '—'}
+                      onClick={() => setUserDrawerId(u.id)}
+                    />
+                  ))}
+                </div>
+              )}
+              {filtered.length > 0 && usersView === 'list' && (
+                <UserListTable
+                  users={filtered}
+                  teamsById={(id) => teams.find((tm) => tm.id === id)?.name ?? '—'}
+                  doingCountByUser={(uid) => tasks.filter((tk) => tk.who === uid && tk.col === 'doing').length}
+                  onPick={(id) => setUserDrawerId(id)}
                 />
-              ))}
+              )}
             </div>
-          </div>
 
-          {/* Feedback-Sektion (Bugs + Feature-Requests).
-              Liegt jetzt INNERHALB von .admin-main, damit sie mit dem Rest
-              scrollt — .admin-screen hat overflow: hidden, sonst clipped. */}
-          <section className="admin-section admin-feedback-section">
-            <div className="admin-section-head">
-              <Icon name="message-square" size={14} />
-              <h3>{t('feedback.admin_heading')}</h3>
-            </div>
-            <FeedbackList />
-          </section>
+            <section className="admin-section admin-feedback-section">
+              <div className="admin-section-head">
+                <Icon name="message-square" size={14} />
+                <h3>{t('feedback.admin_heading')}</h3>
+              </div>
+              <FeedbackList />
+            </section>
+          </div>
 
           {devMode && <DevCloneWidget />}
         </div>
@@ -213,6 +257,72 @@ export function AdminScreen() {
       {teamsDrawerOpen && <TeamsDrawer onClose={() => setTeamsDrawerOpen(false)} />}
       {tvDrawerOpen && <TVSetupDrawer onClose={() => setTvDrawerOpen(false)} />}
     </div>
+  );
+}
+
+// FEtt86HtKR3: kompakte Listen-Ansicht der User-Sektion
+function UserListTable({
+  users,
+  teamsById,
+  doingCountByUser,
+  onPick,
+}: {
+  users: AppUser[];
+  teamsById: (id: string | null | undefined) => string;
+  doingCountByUser: (uid: string) => number;
+  onPick: (id: string) => void;
+}) {
+  const t = useT();
+  return (
+    <table className="admin-user-table">
+      <thead>
+        <tr>
+          <th aria-label="avatar" />
+          <th>{t('admin.users_section')}</th>
+          <th>{t('admin.user_card_team')}</th>
+          <th>{t('admin.user_card_capacity')}</th>
+          <th>{t('admin.user_card_active')}</th>
+          <th>{t('admin.user_table_status')}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {users.map((u) => (
+          <tr
+            key={u.id}
+            className={`admin-user-row ${u.status === 'inactive' ? 'is-inactive' : ''} ${u.status === 'invited' ? 'is-invited' : ''}`}
+            onClick={() => onPick(u.id)}
+          >
+            <td className="admin-user-row-avatar">
+              <Avatar id={u.id} size={28} />
+            </td>
+            <td className="admin-user-row-name">
+              <div className="admin-user-row-name-main">{u.name || u.email.split('@')[0]}</div>
+              <div className="admin-user-row-name-sub">{u.email}</div>
+            </td>
+            <td>{teamsById(u.teamId)}</td>
+            <td className="mono">
+              {u.cap}h<span className="dim"> {t('admin.user_card_cap_per_week')}</span>
+            </td>
+            <td className="mono">{doingCountByUser(u.id)}</td>
+            <td>
+              <span className="admin-user-row-badges">
+                {u.role === 'admin' && (
+                  <span className="admin-user-badge admin">
+                    <Icon name="shield-check" size={10} /> {t('admin.badge_admin')}
+                  </span>
+                )}
+                {u.status === 'invited' && (
+                  <span className="admin-user-badge invited">{t('admin.badge_invited')}</span>
+                )}
+                {u.status === 'inactive' && (
+                  <span className="admin-user-badge inactive">{t('admin.badge_inactive')}</span>
+                )}
+              </span>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
 }
 

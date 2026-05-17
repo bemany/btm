@@ -818,6 +818,7 @@ export const en: Translations = {
     user_card_active: 'Active',
     user_card_active_unit: ' tasks',
     user_card_cap_per_week: '/wk',
+    user_table_status: 'Status',
     user_card_since: 'Since {date}',
     user_card_edit: 'Edit',
     invite_status_old: 'Waiting >2 days',

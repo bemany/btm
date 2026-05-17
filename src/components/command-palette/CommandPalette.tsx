@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import type { ScreenId } from '../../store/types';
 import { useStore } from '../../store/store';
+import { useAuth } from '../../auth/AuthContext';
 import { Icon } from '../shared/Icon';
 import { showToast } from '../shared/Toast';
 import { useT, useLocale } from '../../i18n';
@@ -32,6 +33,8 @@ export function CommandPalette({ onClose, setActive }: CommandPaletteProps) {
   const setUI = useStore((s) => s.setUI);
   const setFilter = useStore((s) => s.setFilter);
   const resetDemo = useStore((s) => s.resetDemo);
+  const { user: me } = useAuth();
+  const isAdmin = me?.role === 'admin';
   const t = useT();
   const [locale] = useLocale();
   const fmtNum = (h: number) => h.toFixed(1).replace('.', locale === 'en' ? '.' : ',');
@@ -60,18 +63,20 @@ export function CommandPalette({ onClose, setActive }: CommandPaletteProps) {
         kbd: '⌘P',
         run: () => setUI({ drawer: 'ai' }),
       },
-      {
-        kind: 'action',
-        group: t('cmdk.group_actions'),
-        id: 'new-project',
-        title: t('cmdk.action_new_project_long'),
-        subtitle: t('cmdk.action_new_project_sub'),
-        icon: 'folder-plus',
-        run: () => {
-          setActive('projects');
-          setTimeout(() => window.dispatchEvent(new CustomEvent('btm:open-new-project')), 100);
-        },
-      },
+      ...(isAdmin
+        ? [{
+            kind: 'action' as const,
+            group: t('cmdk.group_actions'),
+            id: 'new-project',
+            title: t('cmdk.action_new_project_long'),
+            subtitle: t('cmdk.action_new_project_sub'),
+            icon: 'folder-plus',
+            run: () => {
+              setActive('projects');
+              setTimeout(() => window.dispatchEvent(new CustomEvent('btm:open-new-project')), 100);
+            },
+          }]
+        : []),
       {
         kind: 'action',
         group: t('cmdk.group_actions'),
@@ -163,7 +168,7 @@ export function CommandPalette({ onClose, setActive }: CommandPaletteProps) {
     });
 
     return out;
-  }, [q, tasks, projects, users, setUI, setFilter, setActive, resetDemo]);
+  }, [q, tasks, projects, users, setUI, setFilter, setActive, resetDemo, isAdmin, t]);
 
   useEffect(() => {
     setActiveIdx(0);

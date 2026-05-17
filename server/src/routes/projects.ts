@@ -51,6 +51,8 @@ export const projectsRoute = new Hono<{ Variables: Variables }>()
   })
   .post('/', async (c) => {
     const user = c.get('user')!;
+    // Fpo1Iu0ndzL: Projekte nur durch Admins anlegen
+    if (user.role !== 'admin') return c.json({ error: 'forbidden' }, 403);
     const body = createSchema.parse(await c.req.json());
     const id = `P${nanoid(8)}`;
     const [row] = await db
@@ -62,6 +64,8 @@ export const projectsRoute = new Hono<{ Variables: Variables }>()
   })
   .patch('/:id', async (c) => {
     const me = c.get('user')!;
+    // Fpo1Iu0ndzL: Projekte nur durch Admins bearbeiten
+    if (me.role !== 'admin') return c.json({ error: 'forbidden' }, 403);
     const id = c.req.param('id');
     const body = updateSchema.parse(await c.req.json());
     const [row] = await db
@@ -75,6 +79,8 @@ export const projectsRoute = new Hono<{ Variables: Variables }>()
   })
   .delete('/:id', async (c) => {
     const me = c.get('user')!;
+    // Fpo1Iu0ndzL: Projekte nur durch Admins löschen
+    if (me.role !== 'admin') return c.json({ error: 'forbidden' }, 403);
     const id = c.req.param('id');
     const [before] = await db.select().from(projects).where(eq(projects.id, id)).limit(1);
     const result = await db.delete(projects).where(eq(projects.id, id)).returning();

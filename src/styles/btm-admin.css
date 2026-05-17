@@ -149,6 +149,133 @@
   font-size: 13px;
 }
 
+/* ---- Admin-Split (FEtt86HtKR3) -------------------------- */
+/* User-Sektion + Feedbacks nebeneinander auf breiten Screens,
+   gestapelt auf schmaleren. */
+.admin-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 22px;
+  align-items: start;
+}
+@media (max-width: 1280px) {
+  .admin-split {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* View-Toggle (Karten / Liste) — kompakt, im Section-Head */
+.admin-view-toggle {
+  display: inline-flex;
+  background: var(--cream-100);
+  border: 1px solid var(--ink-100);
+  border-radius: 6px;
+  padding: 2px;
+  gap: 2px;
+}
+.admin-view-btn {
+  border: 0;
+  background: transparent;
+  padding: 4px 8px;
+  border-radius: 4px;
+  color: var(--ink-500);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  transition: background 120ms, color 120ms;
+}
+.admin-view-btn:hover { color: var(--ink-900); background: var(--cream-50); }
+.admin-view-btn.active { background: var(--ink-900); color: var(--cream-50); }
+body[data-theme="glass-dark"] .admin-view-toggle,
+body[data-theme="default-dark"] .admin-view-toggle {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+body[data-theme="glass-dark"] .admin-view-btn,
+body[data-theme="default-dark"] .admin-view-btn {
+  color: rgba(250, 247, 242, 0.5);
+}
+body[data-theme="glass-dark"] .admin-view-btn:hover,
+body[data-theme="default-dark"] .admin-view-btn:hover {
+  color: var(--cream-50);
+  background: rgba(255, 255, 255, 0.05);
+}
+body[data-theme="glass-dark"] .admin-view-btn.active,
+body[data-theme="default-dark"] .admin-view-btn.active {
+  background: rgba(255, 255, 255, 0.85);
+  color: #1A1815;
+}
+
+/* ---- USER LIST TABLE (Listen-Ansicht, FEtt86HtKR3) ------ */
+.admin-user-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.admin-user-table thead th {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-500);
+  font-weight: 600;
+  padding: 8px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--ink-100);
+}
+.admin-user-table tbody tr {
+  border-bottom: 1px solid var(--ink-100);
+  cursor: pointer;
+  transition: background 120ms;
+}
+.admin-user-table tbody tr:hover { background: var(--cream-50); }
+.admin-user-table td {
+  padding: 8px 10px;
+  vertical-align: middle;
+  color: var(--ink-800);
+}
+.admin-user-table td.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.admin-user-table td.dim { color: var(--ink-500); }
+.admin-user-table td .dim { color: var(--ink-400); font-size: 11px; }
+.admin-user-row-avatar { width: 36px; }
+.admin-user-row-name-main { font-weight: 600; color: var(--ink-900); }
+.admin-user-row-name-sub { font-size: 11px; color: var(--ink-500); }
+.admin-user-row.is-inactive { opacity: 0.5; }
+.admin-user-row.is-invited .admin-user-row-name-main::after {
+  content: ' ⏳';
+  font-size: 11px;
+}
+.admin-user-row-badges {
+  display: inline-flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+body[data-theme="glass-dark"] .admin-user-table thead th,
+body[data-theme="default-dark"] .admin-user-table thead th {
+  color: rgba(250, 247, 242, 0.5);
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+body[data-theme="glass-dark"] .admin-user-table tbody tr,
+body[data-theme="default-dark"] .admin-user-table tbody tr {
+  border-bottom-color: rgba(255, 255, 255, 0.05);
+}
+body[data-theme="glass-dark"] .admin-user-table tbody tr:hover,
+body[data-theme="default-dark"] .admin-user-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+body[data-theme="glass-dark"] .admin-user-table td,
+body[data-theme="default-dark"] .admin-user-table td {
+  color: rgba(250, 247, 242, 0.8);
+}
+body[data-theme="glass-dark"] .admin-user-row-name-main,
+body[data-theme="default-dark"] .admin-user-row-name-main {
+  color: var(--cream-50);
+}
+body[data-theme="glass-dark"] .admin-user-row-name-sub,
+body[data-theme="default-dark"] .admin-user-row-name-sub {
+  color: rgba(250, 247, 242, 0.4);
+}
+
 /* ---- USER CARD GRID ------------------------------------- */
 .admin-user-grid {
   display: grid;

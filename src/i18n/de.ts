@@ -819,6 +819,7 @@ export const de = {
     user_card_capacity: 'Kapazität',
     user_card_active: 'Aktiv',
     user_card_active_unit: ' Tasks',
+    user_table_status: 'Status',
     user_card_cap_per_week: '/Wo',
     user_card_since: 'Seit {date}',
     user_card_edit: 'Bearbeiten',

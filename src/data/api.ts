@@ -176,6 +176,12 @@ export async function getLiveTimer(): Promise<ServerLiveTimer | null> {
   return liveTimer;
 }
 
+// FQJzGtjPqc-: Alle Live-Timer aller User — fürs TV-Dashboard.
+export async function listAllLiveTimers(): Promise<ServerLiveTimer[]> {
+  const { liveTimers } = await apiFetch<{ liveTimers: ServerLiveTimer[] }>('/tasks/timer/live/all');
+  return liveTimers;
+}
+
 // ── Writes (Tasks) ─────────────────────────────────────────────────────
 
 export interface CreateTaskInput {

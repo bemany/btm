@@ -135,8 +135,45 @@ export function TVDashboardScreen() {
     [tasks, privateProjectIds],
   );
 
+  // ── Alle aktiven Live-Timer (FQJzGtjPqc-) ─────────────────────────────
+  // Damit Aufgaben, auf die jemand gerade Zeit trackt, auch dann auf dem
+  // TV-Dashboard erscheinen, wenn sie noch in Backlog / Geplant stehen.
+  const liveTimersQ = useQuery({
+    queryKey: ['btm', 'tv', 'live-timers'],
+    queryFn: api.listAllLiveTimers,
+    staleTime: 5_000,
+    refetchInterval: 10_000,
+    refetchOnWindowFocus: true,
+  });
+  const allLiveTimers = liveTimersQ.data ?? [];
+  // Map: taskId → {userId, startedAt} für schnellen Lookup beim Rendering
+  const liveTimerByTaskId = useMemo(() => {
+    const m = new Map<string, { userId: string; startedAt: Date }>();
+    for (const lt of allLiveTimers) {
+      m.set(lt.taskId, { userId: lt.userId, startedAt: new Date(lt.startedAt) });
+    }
+    return m;
+  }, [allLiveTimers]);
+
   // ── Bucketing ─────────────────────────────────────────────────────────
-  const inProgress = publicTasks.filter((t) => t.col === 'doing');
+  // In Arbeit = alle Tasks in der "doing"-Spalte + alle Tasks (egal welche Spalte)
+  // auf die gerade ein Live-Timer läuft. Doppelte ID-Filterung am Ende.
+  const doingTasks = publicTasks.filter((t) => t.col === 'doing');
+  const trackedOutsideDoing = publicTasks.filter(
+    (t) => t.col !== 'doing' && liveTimerByTaskId.has(t.id),
+  );
+  const inProgress = useMemo(() => {
+    const seen = new Set<string>();
+    const out: typeof publicTasks = [];
+    // Live-Timer-Tasks zuerst (auch die aus anderen Spalten)
+    for (const t of trackedOutsideDoing) {
+      if (!seen.has(t.id)) { seen.add(t.id); out.push(t); }
+    }
+    for (const t of doingTasks) {
+      if (!seen.has(t.id)) { seen.add(t.id); out.push(t); }
+    }
+    return out;
+  }, [doingTasks, trackedOutsideDoing]);
 
   // Heute fällig + Überfällig zusammen, überfällige zuerst und absteigend
   // (am ältesten ganz oben), heutige danach.
@@ -254,10 +291,29 @@ export function TVDashboardScreen() {
           <div className="tv-list">
             {inProgress.length === 0 && <div className="tv-empty">Niemand arbeitet gerade aktiv.</div>}
             {progressPaged.page.map((t) => {
-              const p = personaById(t.who);
+              // Live-Timer-Info ermitteln — entweder eigener Timer oder
+              // ein Timer von einem anderen User (FQJzGtjPqc-)
+              const liveInfo = liveTimerByTaskId.get(t.id);
+              // Wer trackt? Bei Live-Timern den User des Timers nehmen,
+              // sonst den eingetragenen Assignee
+              const trackerId = liveInfo?.userId ?? t.who;
+              const p = personaById(trackerId);
               const proj = projectById(t.proj);
-              const isLive = liveTaskId === t.id;
+              const isLive = !!liveInfo;
+              const isOwnTimer = liveTaskId === t.id;
+              const elapsedMs = liveInfo
+                ? Date.now() - liveInfo.startedAt.getTime()
+                : isOwnTimer
+                  ? liveElapsed
+                  : 0;
               const pct = t.estH ? Math.min(100, Math.round((t.loggedH / t.estH) * 100)) : 0;
+              const colLabel: Record<string, string> = {
+                todo: 'Backlog',
+                planned: 'Geplant',
+                doing: 'In Arbeit',
+                review: 'Review',
+              };
+              const showStatus = t.col !== 'doing';
               return (
                 <div key={t.id} className={`tv-row ${isLive ? 'is-live' : ''}`}>
                   {renderAvatar(p)}
@@ -266,10 +322,13 @@ export function TVDashboardScreen() {
                     <span className="tv-chip" style={{ borderColor: proj?.color, color: proj?.color }}>
                       {proj?.code || '—'}
                     </span>
+                    {showStatus && (
+                      <span className={`tv-status-pill status-${t.col}`}>{colLabel[t.col] ?? t.col}</span>
+                    )}
                     {isLive && (
                       <span className="tv-live-pill">
                         <span className="tv-live-dot" />
-                        {fmtHMS(liveElapsed)}
+                        {fmtHMS(elapsedMs)}
                       </span>
                     )}
                     <div className="tv-row-progress">
