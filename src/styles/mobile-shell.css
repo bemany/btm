@@ -4,7 +4,12 @@
    Used when viewport < 768px or ?mobile=1 override.
    ========================================================= */
 
-/* Mobile-Shell — nimmt den kompletten Viewport ein */
+/* Mobile-Shell — nimmt den kompletten Viewport ein.
+   Im PWA-Standalone-Mode (zum Home-Screen hinzugefuegt) rendert iOS den
+   App-Content UNTER der OS-Statusleiste. env(safe-area-inset-top) gibt
+   dann ~44-59px zurueck (Notch/Dynamic Island). Im normalen Safari-Tab
+   ist env() = 0, daher als Fallback ein hartes Minimum.
+   Das gleiche unten fuer den Home-Indicator-Strich. */
 .mob-app {
   position: fixed;
   inset: 0;
@@ -12,9 +17,10 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  /* iOS-Safe-Areas berücksichtigen */
-  padding-top: env(safe-area-inset-top);
+  padding-top: max(env(safe-area-inset-top), 12px);
   padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
   z-index: 1;
 }
 body[data-theme="default-dark"] .mob-app,
@@ -45,8 +51,10 @@ body[data-theme="glass-dark"] .mob-app {
   background: rgba(28, 26, 23, 0.4);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
-  padding-top: env(safe-area-inset-top);
+  padding-top: max(env(safe-area-inset-top), 12px);
   padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
 }
 .mob-sheet-layer .mob-screen {
   background: var(--cream-50);
