@@ -65,7 +65,13 @@ export function MobScreenHeute({ onOpenTask }: Props) {
   const meName = meUser ? meUser.name.split(' ')[0] : '—';
   const today = todayIso();
 
-  const myTasks = useMemo(() => tasks.filter((tk) => tk.who === currentUser && tk.col !== 'done'), [tasks, currentUser]);
+  // Heute zeigt nur Aufgaben die man selbst noch bearbeitet. Review-Aufgaben
+  // liegen beim Projektleiter — die tauchen hier nicht mehr auf (auch nicht
+  // unter Ueberfaellig). Done sowieso nicht.
+  const myTasks = useMemo(
+    () => tasks.filter((tk) => tk.who === currentUser && tk.col !== 'done' && tk.col !== 'review'),
+    [tasks, currentUser],
+  );
 
   const overdue = useMemo(
     () => myTasks.filter((tk) => isOverdue(tk.due, today)).slice(0, 4),
