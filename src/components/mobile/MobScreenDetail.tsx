@@ -23,11 +23,15 @@ export function MobScreenDetail({ taskId, onClose }: Props) {
   const tasks = useStore((s) => s.tasks);
   const users = useStore((s) => s.users);
   const projects = useStore((s) => s.projects);
+  const currentUser = useStore((s) => s.currentUser);
   const startTimer = useStore((s) => s.startTimer);
+  const moveTask = useStore((s) => s.moveTask);
 
   const task = tasks.find((tk) => tk.id === taskId);
   const assignee = task ? users.find((u) => u.id === task.who) : null;
   const proj = task?.proj ? projects.find((p) => p.id === task.proj) : null;
+  const isMine = task?.who === currentUser;
+  const isOwner = proj?.ownerId === currentUser;
 
   const subtasks = useMemo(
     () => (task ? tasks.filter((tk) => tk.parentTaskId === task.id) : []),
@@ -166,9 +170,88 @@ export function MobScreenDetail({ taskId, onClose }: Props) {
       </div>
 
       <footer className="mob-sheet-foot">
-        <button type="button" className="mob-sheet-secondary" onClick={onClose}>
+        {renderFooterButtons()}
+      </footer>
+    </>
+  );
+
+  // Footer-Buttons je nach Spalte + Rolle:
+  //   - col=review + Projektleiter → "Zurück" (an Bearbeiter) + "Erledigt"
+  //   - col=review + nicht-Projektleiter → nur "Schließen"
+  //   - col=done → "Wieder öffnen"
+  //   - sonst (eigene aktive Aufgabe) → "Zur Review" + "Timer starten"
+  function renderFooterButtons(): React.ReactNode {
+    if (!task) return null;
+    const move = async (to: 'todo' | 'doing' | 'review' | 'done', toast: string) => {
+      await moveTask(task.id, to);
+      showToast(toast);
+      onClose();
+    };
+
+    if (task.col === 'review') {
+      if (isOwner) {
+        return (
+          <>
+            <button
+              type="button"
+              className="mob-sheet-secondary"
+              onClick={() => move('doing', t('mobile.detail_moved_back'))}
+            >
+              <Icon name="undo-2" size={13} /> {t('mobile.detail_back_to_work')}
+            </button>
+            <button
+              type="button"
+              className="mob-sheet-primary"
+              onClick={() => move('done', t('mobile.detail_marked_done'))}
+            >
+              <Icon name="check" size={13} /> {t('mobile.detail_mark_done')}
+            </button>
+          </>
+        );
+      }
+      // In Review + nicht Projektleiter — passiv warten
+      return (
+        <button type="button" className="mob-sheet-primary" style={{ flex: 1 }} onClick={onClose}>
           <Icon name="x" size={13} /> {t('common.close')}
         </button>
+      );
+    }
+
+    if (task.col === 'done') {
+      return (
+        <>
+          <button type="button" className="mob-sheet-secondary" onClick={onClose}>
+            <Icon name="x" size={13} /> {t('common.close')}
+          </button>
+          <button
+            type="button"
+            className="mob-sheet-primary"
+            onClick={() => move('doing', t('mobile.detail_reopened'))}
+          >
+            <Icon name="undo-2" size={13} /> {t('mobile.detail_reopen')}
+          </button>
+        </>
+      );
+    }
+
+    // Eigene aktive Aufgabe (todo/planned/doing): Zur Review + Timer
+    const canSendToReview = isMine;
+    return (
+      <>
+        {canSendToReview && (
+          <button
+            type="button"
+            className="mob-sheet-secondary"
+            onClick={() => move('review', t('mobile.detail_sent_to_review'))}
+          >
+            <Icon name="eye" size={13} /> {t('mobile.detail_to_review')}
+          </button>
+        )}
+        {!canSendToReview && (
+          <button type="button" className="mob-sheet-secondary" onClick={onClose}>
+            <Icon name="x" size={13} /> {t('common.close')}
+          </button>
+        )}
         <button
           type="button"
           className="mob-sheet-primary"
@@ -180,7 +263,7 @@ export function MobScreenDetail({ taskId, onClose }: Props) {
         >
           <Icon name="play" size={13} /> {t('mobile.detail_start_timer')}
         </button>
-      </footer>
-    </>
-  );
+      </>
+    );
+  }
 }

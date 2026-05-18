@@ -348,7 +348,9 @@ body[data-theme="glass-dark"] .mob-sheet-foot {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
-  padding: 0 14px 16px;
+  /* Horizontal-Padding stimmt mit der Greeting-Header-Achse ueberein (20px),
+     damit Karten und Header gleichbreit links/rechts abschliessen. */
+  padding: 0 20px 16px;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -1229,6 +1231,7 @@ body[data-theme="glass-dark"] .mob-sheet-foot {
   border: 1px solid rgba(182, 60, 60, 0.22);
   border-radius: 7px;
   padding: 5px 8px;
+  /* kein horizontales margin — Scroll-Container hat 20px padding */
   margin: 0 0 4px;
 }
 .mob-task-row {
@@ -1337,9 +1340,11 @@ body[data-theme="glass-dark"]   .mob-section-head-overdue {
 /* Safe-Area: PWA wird fullscreen geoeffnet, Bottom-Bar darf nicht in
    den Home-Indicator-Bereich rutschen */
 .mob-tabbar {
-  padding-top: 10px;
-  padding-bottom: max(env(safe-area-inset-bottom), 12px);
-  min-height: calc(56px + env(safe-area-inset-bottom));
+  /* iOS HIG: Tab-Bar = 49pt + safe-area-inset-bottom (~34pt am iPhone X+).
+     Davor war's 90+pt total, zu wuchtig. */
+  padding-top: 4px;
+  padding-bottom: max(env(safe-area-inset-bottom), 6px);
+  min-height: calc(49px + env(safe-area-inset-bottom));
 }
 .mob-tab {
   font-size: 11px;
@@ -1381,7 +1386,7 @@ body[data-theme="glass-dark"]   .mob-section-head-overdue {
 .mob-live-card,
 .mob-live-card-slim {
   padding: 14px 18px !important;
-  margin: 0 16px 12px !important;
+  margin: 0 20px 12px !important;
   border-radius: 14px;
   min-height: 64px;
 }
@@ -1400,13 +1405,15 @@ body[data-theme="glass-dark"]   .mob-section-head-overdue {
   font-size: 16px !important;
 }
 
-/* Task-Rows: groessere Touch-Targets, lesbarer Text */
+/* Task-Rows: groessere Touch-Targets, lesbarer Text.
+   Horizontal kein margin mehr — Scroll-Container gibt das Padding vor (20px),
+   damit die Karten gleichbreit mit dem Header schliessen. */
 .mob-task-row {
   padding: 12px 14px !important;
   border-radius: 12px;
   gap: 10px;
   min-height: 56px;
-  margin: 0 16px 6px;
+  margin: 0 0 6px !important;
 }
 .mob-task-row-title {
   font-size: 15px !important;
@@ -1424,14 +1431,15 @@ body[data-theme="glass-dark"]   .mob-section-head-overdue {
 
 /* Section-Head groesser */
 .mob-section-head {
-  padding: 14px 20px 6px !important;
+  /* horizontal kein eigenes padding — Scroll-Container hat schon 20px */
+  padding: 14px 0 6px !important;
 }
 .mob-section-head .mono {
   font-size: 11px !important;
 }
 .mob-section-head-overdue {
-  padding: 10px 16px !important;
-  margin: 0 16px 8px !important;
+  padding: 10px 14px !important;
+  margin: 0 0 8px !important;
   border-radius: 10px;
 }
 
