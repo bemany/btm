@@ -4,7 +4,6 @@
 
 import { useStore } from '../../store/store';
 import { useT } from '../../i18n';
-import { MobStatusBar, HomeBar } from './MobileChrome';
 
 interface Props {
   onDismiss: () => void;
@@ -21,8 +20,17 @@ export function MobScreenLock({ onDismiss }: Props) {
   const timeLine = now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
 
   return (
-    <div className="mob-screen mob-screen-lock" onClick={onDismiss}>
-      <MobStatusBar dark />
+    <div
+      className="mob-screen-lock"
+      onClick={onDismiss}
+      style={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        background: 'linear-gradient(160deg, #2a221a 0%, #0d0907 60%, #1a1410 100%)',
+        color: 'var(--cream-50)',
+      }}
+    >
       <div className="mob-lock-time">
         <div className="mono" style={{ fontSize: 11, color: 'rgba(250,247,242,0.7)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
           {dateLine}
@@ -88,7 +96,6 @@ export function MobScreenLock({ onDismiss }: Props) {
         </span>
       </div>
 
-      <HomeBar dark />
     </div>
   );
 }

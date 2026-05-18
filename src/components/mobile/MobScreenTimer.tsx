@@ -10,7 +10,6 @@ import { showToast } from '../shared/Toast';
 import { fmtMS } from '../../lib/format';
 import { computePomo } from '../../lib/pomodoro';
 import { useT } from '../../i18n';
-import { MobStatusBar, HomeBar } from './MobileChrome';
 
 interface Props {
   onBack: () => void;
@@ -33,9 +32,7 @@ export function MobScreenTimer({ onBack }: Props) {
   const progress = pomo ? pomo.elapsedInBlock / pomo.total : 0;
 
   return (
-    <div className="mob-screen mob-screen-dark">
-      <MobStatusBar dark />
-
+    <>
       <div style={{ padding: '6px 16px 0', display: 'flex', alignItems: 'center', gap: 6 }}>
         <button
           type="button"
@@ -159,7 +156,6 @@ export function MobScreenTimer({ onBack }: Props) {
         </div>
       )}
 
-      <HomeBar dark />
-    </div>
+    </>
   );
 }

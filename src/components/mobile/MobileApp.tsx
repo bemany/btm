@@ -1,15 +1,11 @@
-// BTM Mobile-App — Top-Level Shell für die PWA.
+// BTM Mobile-App — Top-Level Shell fuer die PWA.
 // Aktiviert wenn useIsMobile() === true (Viewport < 768px oder ?mobile=1).
 //
-// 8 Screens nach Design (claude.ai/design Handoff):
-//   home    → Heute
-//   board   → Wochenboard
-//   ki      → Foto/Text → KI
-//   me      → Profil
-//   create  → Neue Aufgabe (Sheet, vom FAB)
-//   detail  → Task-Detail (Sheet, vom Tap auf Card)
-//   timer   → Fokus-Timer (Pomodoro, vom Live-Card-Tap)
-//   lock    → Lockscreen-Notification-Preview (Profil → Push testen)
+// Architektur:
+//   - Tab-Inhalt im .mob-screen-stage (Fade+Slide-Anim bei key-change)
+//   - Bottom-Tab-Bar mit FAB
+//   - Sheets ueber MobBottomSheet (Detents + Drag)
+//   - Timer/Lockscreen als Full-Screen-Overlay (kein Backdrop, slidet)
 
 import { useState, useCallback } from 'react';
 import { MobScreenHeute } from './MobScreenHeute';
@@ -21,6 +17,7 @@ import { MobScreenBoard } from './MobScreenBoard';
 import { MobScreenProfile } from './MobScreenProfile';
 import { MobScreenLock } from './MobScreenLock';
 import { BottomTabBar, type MobileTab } from './MobileChrome';
+import { MobBottomSheet } from './MobBottomSheet';
 
 type Sheet =
   | { kind: 'none' }
@@ -38,13 +35,9 @@ export function MobileApp() {
   }, []);
 
   const closeSheet = useCallback(() => setSheet({ kind: 'none' }), []);
-
   const openTimer = useCallback(() => setSheet({ kind: 'timer' }), []);
-
-  // FAB-Klick: öffnet Create-Sheet
   const onFab = useCallback(() => setSheet({ kind: 'create' }), []);
 
-  // Wenn ein Tab gewechselt wird, schließen wir offene Sheets
   const onTabChange = useCallback((next: MobileTab) => {
     setSheet({ kind: 'none' });
     setTab(next);
@@ -70,35 +63,34 @@ export function MobileApp() {
 
   return (
     <div className="mob-app">
-      {mainScreen}
+      <div className="mob-screen-stage" key={tab}>
+        {mainScreen}
+      </div>
       <BottomTabBar active={tab} onChange={onTabChange} onFab={onFab} />
 
-      {/* Sheets / Modals — über dem Main-Screen */}
       {sheet.kind === 'create' && (
-        <div className="mob-sheet-layer">
+        <MobBottomSheet onClose={closeSheet} initialDetent="large">
           <MobScreenCreate
             onClose={closeSheet}
             onCreated={(_taskId, started) => {
               closeSheet();
-              if (started) {
-                openTimer();
-              }
+              if (started) openTimer();
             }}
           />
-        </div>
+        </MobBottomSheet>
       )}
       {sheet.kind === 'detail' && (
-        <div className="mob-sheet-layer">
+        <MobBottomSheet onClose={closeSheet} initialDetent="medium">
           <MobScreenDetail taskId={sheet.taskId} onClose={closeSheet} />
-        </div>
+        </MobBottomSheet>
       )}
       {sheet.kind === 'timer' && (
-        <div className="mob-sheet-layer">
+        <div className="mob-fullscreen-overlay">
           <MobScreenTimer onBack={closeSheet} />
         </div>
       )}
       {sheet.kind === 'lock' && (
-        <div className="mob-sheet-layer">
+        <div className="mob-fullscreen-overlay">
           <MobScreenLock onDismiss={closeSheet} />
         </div>
       )}

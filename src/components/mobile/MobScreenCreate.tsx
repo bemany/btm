@@ -1,13 +1,12 @@
-// Screen 2 · Neue Aufgabe — Bottom-Sheet, getriggert vom FAB.
-// Pflicht: Titel. Optional: Beschreibung, Projekt, Fällig, Aufwand, Prio.
-// "Nur anlegen" → speichert. "Anlegen + starten" → speichert + Timer.
+// Screen 2 · Neue Aufgabe — Bottom-Sheet-Inhalt (wird in MobBottomSheet gewrappt).
+// Pflicht: Titel. Optional: Beschreibung, Projekt, Faellig, Aufwand, Prio.
+// Drei-Zonen-Layout: head (fix), scroll (flex), foot (fix mit Save-Buttons).
 
 import { useState, useEffect, useRef } from 'react';
 import { useStore } from '../../store/store';
 import { Icon } from '../shared/Icon';
 import { showToast } from '../shared/Toast';
 import { useT } from '../../i18n';
-import { MobStatusBar, HomeBar } from './MobileChrome';
 import type { Priority } from '../../store/types';
 
 type DueChip = 'today' | 'tomorrow' | 'week' | 'none';
@@ -41,7 +40,7 @@ export function MobScreenCreate({ onClose, onCreated }: Props) {
   const titleRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    setTimeout(() => titleRef.current?.focus(), 100);
+    setTimeout(() => titleRef.current?.focus(), 400);
   }, []);
 
   const canSubmit = title.trim().length > 0 && !busy;
@@ -73,9 +72,7 @@ export function MobScreenCreate({ onClose, onCreated }: Props) {
     }
   };
 
-  // Aktuell sichtbare Projekt-Chips: erste 4 + Auswahl-fallback
   const visibleProjects = projects.slice(0, 4);
-
   const dueChips: Array<{ id: DueChip; label: string; icon: string }> = [
     { id: 'today', label: t('common.today'), icon: 'sun' },
     { id: 'tomorrow', label: t('common.tomorrow'), icon: 'sunrise' },
@@ -84,159 +81,145 @@ export function MobScreenCreate({ onClose, onCreated }: Props) {
   ];
 
   return (
-    <div className="mob-screen mob-screen-sheet">
-      <MobStatusBar />
-      <div className="mob-sheet-backdrop" onClick={onClose}>
-        <div style={{ height: 8 }} />
-        <div className="mob-sheet-strip" />
-        <div className="mob-sheet-strip s" />
-        <div className="mob-sheet-strip" />
-        <div className="mob-sheet-strip" />
-      </div>
+    <>
+      <header className="mob-sheet-head mob-create-head">
+        <span className="mob-create-cancel" onClick={onClose}>{t('common.cancel')}</span>
+        <span className="mob-create-title">{t('mobile.create_title')}</span>
+        <span
+          className="mob-create-save"
+          style={{ opacity: canSubmit ? 1 : 0.4 }}
+          onClick={() => canSubmit && submit(false)}
+        >
+          {t('common.create')}
+        </span>
+      </header>
 
-      <div className="mob-sheet mob-sheet-create">
-        <div className="mob-sheet-handle" />
-        <div className="mob-create-head">
-          <span className="mob-create-cancel" onClick={onClose}>{t('common.cancel')}</span>
-          <span className="mob-create-title">{t('mobile.create_title')}</span>
-          <span
-            className="mob-create-save"
-            style={{ opacity: canSubmit ? 1 : 0.4 }}
-            onClick={() => canSubmit && submit(false)}
-          >
-            {t('common.create')}
-          </span>
+      <div className="mob-sheet-scroll mob-create-body">
+        <div className={`mob-input-wrap ${title ? '' : 'is-focus'}`}>
+          <div className="mob-input-label">
+            <span>{t('mobile.create_field_title')}</span>
+            <span className="mob-req">{t('mobile.create_required')}</span>
+          </div>
+          <input
+            ref={titleRef}
+            className="mob-input"
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder={t('mobile.create_title_placeholder')}
+            maxLength={200}
+            style={{ background: 'transparent', border: 0, outline: 'none', width: '100%', fontSize: 16, color: 'inherit' }}
+          />
         </div>
 
-        <div className="mob-create-body">
-          <div className={`mob-input-wrap ${title ? '' : 'is-focus'}`}>
-            <div className="mob-input-label">
-              <span>{t('mobile.create_field_title')}</span>
-              <span className="mob-req">{t('mobile.create_required')}</span>
-            </div>
-            <input
-              ref={titleRef}
-              className="mob-input"
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder={t('mobile.create_title_placeholder')}
-              maxLength={200}
-              style={{ background: 'transparent', border: 0, outline: 'none', width: '100%', fontSize: 14, color: 'inherit' }}
-            />
+        <div className="mob-input-wrap">
+          <div className="mob-input-label">
+            <span>{t('mobile.create_field_desc')}</span>
+            <span className="mob-opt">{t('mobile.create_optional')}</span>
           </div>
+          <textarea
+            className="mob-input mob-input-multi"
+            value={desc}
+            onChange={(e) => setDesc(e.target.value)}
+            placeholder={t('mobile.create_desc_placeholder')}
+            rows={3}
+            style={{ background: 'transparent', border: 0, outline: 'none', width: '100%', fontSize: 16, color: 'inherit', fontFamily: 'inherit', resize: 'none' }}
+          />
+        </div>
 
-          <div className="mob-input-wrap">
-            <div className="mob-input-label">
-              <span>{t('mobile.create_field_desc')}</span>
-              <span className="mob-opt">{t('mobile.create_optional')}</span>
-            </div>
-            <textarea
-              className="mob-input mob-input-multi"
-              value={desc}
-              onChange={(e) => setDesc(e.target.value)}
-              placeholder={t('mobile.create_desc_placeholder')}
-              rows={3}
-              style={{ background: 'transparent', border: 0, outline: 'none', width: '100%', fontSize: 13, color: 'inherit', fontFamily: 'inherit', resize: 'none' }}
-            />
-          </div>
-
-          {visibleProjects.length > 0 && (
-            <div className="mob-field">
-              <div className="mob-input-label">
-                <span>{t('mobile.create_field_project')}</span>
-                <span className="mob-opt">{t('mobile.create_optional')}</span>
-              </div>
-              <div className="mob-chip-row">
-                {visibleProjects.map((p) => (
-                  <div
-                    key={p.id}
-                    className={`mob-chip ${projId === p.id ? 'is-on' : ''}`}
-                    onClick={() => setProjId(projId === p.id ? null : p.id)}
-                  >
-                    <span className="mob-chip-dot" style={{ background: p.color }} />
-                    <span>{p.code}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
+        {visibleProjects.length > 0 && (
           <div className="mob-field">
             <div className="mob-input-label">
-              <span>{t('mobile.create_field_due')}</span>
+              <span>{t('mobile.create_field_project')}</span>
               <span className="mob-opt">{t('mobile.create_optional')}</span>
             </div>
             <div className="mob-chip-row">
-              {dueChips.map((c) => (
+              {visibleProjects.map((p) => (
                 <div
-                  key={c.id}
-                  className={`mob-chip ${due === c.id ? 'is-on' : ''}`}
-                  onClick={() => setDue(c.id)}
+                  key={p.id}
+                  className={`mob-chip ${projId === p.id ? 'is-on' : ''}`}
+                  onClick={() => setProjId(projId === p.id ? null : p.id)}
                 >
-                  <Icon name={c.icon} size={10} />
-                  <span>{c.label}</span>
+                  <span className="mob-chip-dot" style={{ background: p.color }} />
+                  <span>{p.code}</span>
                 </div>
               ))}
             </div>
           </div>
+        )}
 
-          <div className="mob-field-row">
-            <div className="mob-mini-field">
-              <div className="mob-mini-lbl">{t('mobile.create_field_estimate')}</div>
-              <div className="mob-mini-stepper">
-                <span
-                  className="mob-step"
-                  onClick={() => setEstH((v) => Math.max(0.25, Number((v - 0.25).toFixed(2))))}
-                >−</span>
-                <span className="mob-step-val">{estH.toFixed(2).replace('.', ',').replace(/,?0+$/, '')}h</span>
-                <span
-                  className="mob-step"
-                  onClick={() => setEstH((v) => Math.min(24, Number((v + 0.25).toFixed(2))))}
-                >+</span>
+        <div className="mob-field">
+          <div className="mob-input-label">
+            <span>{t('mobile.create_field_due')}</span>
+            <span className="mob-opt">{t('mobile.create_optional')}</span>
+          </div>
+          <div className="mob-chip-row">
+            {dueChips.map((c) => (
+              <div
+                key={c.id}
+                className={`mob-chip ${due === c.id ? 'is-on' : ''}`}
+                onClick={() => setDue(c.id)}
+              >
+                <Icon name={c.icon} size={12} />
+                <span>{c.label}</span>
               </div>
-            </div>
-            <div className="mob-mini-field">
-              <div className="mob-mini-lbl">{t('mobile.create_field_priority')}</div>
-              <div className="mob-prio-row">
-                <span
-                  className={`mob-prio low ${prio === 'low' ? 'is-on' : ''}`}
-                  onClick={() => setPrio('low')}
-                />
-                <span
-                  className={`mob-prio med ${prio === 'med' ? 'is-on' : ''}`}
-                  onClick={() => setPrio('med')}
-                />
-                <span
-                  className={`mob-prio high ${prio === 'high' ? 'is-on' : ''}`}
-                  onClick={() => setPrio('high')}
-                />
-              </div>
-            </div>
+            ))}
           </div>
         </div>
 
-        <div className="mob-sheet-foot">
-          <button
-            type="button"
-            className="mob-sheet-secondary"
-            disabled={!canSubmit}
-            onClick={() => submit(false)}
-          >
-            <Icon name="check" size={11} /> {t('mobile.create_save_only')}
-          </button>
-          <button
-            type="button"
-            className="mob-sheet-primary"
-            disabled={!canSubmit}
-            onClick={() => submit(true)}
-          >
-            <Icon name="play" size={11} /> {t('mobile.create_save_start')}
-          </button>
+        <div className="mob-field-row">
+          <div className="mob-mini-field">
+            <div className="mob-mini-lbl">{t('mobile.create_field_estimate')}</div>
+            <div className="mob-mini-stepper">
+              <span
+                className="mob-step"
+                onClick={() => setEstH((v) => Math.max(0.25, Number((v - 0.25).toFixed(2))))}
+              >−</span>
+              <span className="mob-step-val">{estH.toFixed(2).replace('.', ',').replace(/,?0+$/, '')}h</span>
+              <span
+                className="mob-step"
+                onClick={() => setEstH((v) => Math.min(24, Number((v + 0.25).toFixed(2))))}
+              >+</span>
+            </div>
+          </div>
+          <div className="mob-mini-field">
+            <div className="mob-mini-lbl">{t('mobile.create_field_priority')}</div>
+            <div className="mob-prio-row">
+              <span
+                className={`mob-prio low ${prio === 'low' ? 'is-on' : ''}`}
+                onClick={() => setPrio('low')}
+              />
+              <span
+                className={`mob-prio med ${prio === 'med' ? 'is-on' : ''}`}
+                onClick={() => setPrio('med')}
+              />
+              <span
+                className={`mob-prio high ${prio === 'high' ? 'is-on' : ''}`}
+                onClick={() => setPrio('high')}
+              />
+            </div>
+          </div>
         </div>
       </div>
 
-      <HomeBar />
-    </div>
+      <footer className="mob-sheet-foot">
+        <button
+          type="button"
+          className="mob-sheet-secondary"
+          disabled={!canSubmit}
+          onClick={() => submit(false)}
+        >
+          <Icon name="check" size={13} /> {t('mobile.create_save_only')}
+        </button>
+        <button
+          type="button"
+          className="mob-sheet-primary"
+          disabled={!canSubmit}
+          onClick={() => submit(true)}
+        >
+          <Icon name="play" size={13} /> {t('mobile.create_save_start')}
+        </button>
+      </footer>
+    </>
   );
 }

@@ -32,6 +32,7 @@ body[data-theme="glass-dark"] .mob-app {
 .mob-screen {
   position: relative;
   flex: 1;
+  min-height: 0;
   width: 100%;
   overflow: hidden;
   display: flex;
@@ -41,27 +42,160 @@ body[data-theme="glass-dark"] .mob-app {
 .mob-screen-dark { background: #0e0c09; color: var(--cream-50); }
 .mob-screen-lock { background: linear-gradient(160deg, #2a221a 0%, #0d0907 60%, #1a1410 100%); color: var(--cream-50); }
 
-/* Sheet-Layer: overlay über dem Tab-Bar-Layer */
-.mob-sheet-layer {
+/* =========================================================
+   NEUE BOTTOM-SHEET-ARCHITEKTUR (iOS Detents)
+   - Backdrop semi-transparent, klickbar
+   - Card mit zwei Detents: medium ~50vh, large ~88vh
+   - Drag-Handle setzt translateY waehrend Touch-Move,
+     Spring-Snap mit iOS-Easing nach Release
+   ========================================================= */
+.mob-bs-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(20, 18, 15, var(--backdrop-opacity, 0.4));
+  -webkit-backdrop-filter: blur(8px) saturate(140%);
+  backdrop-filter: blur(8px) saturate(140%);
+  display: flex;
+  align-items: flex-end;
+  animation: mob-bs-fade-in 220ms ease-out;
+  transition: background 220ms ease-out;
+}
+.mob-bs-card {
+  position: relative;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  background: var(--cream-50);
+  color: var(--ink-900);
+  border-radius: 22px 22px 0 0;
+  box-shadow: 0 -28px 64px -10px rgba(28, 26, 23, 0.45);
+  display: flex;
+  flex-direction: column;
+  transform: translateY(0);
+  transition: transform 360ms cubic-bezier(0.32, 0.72, 0, 1),
+              height 360ms cubic-bezier(0.32, 0.72, 0, 1);
+  will-change: transform, height;
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+  overflow: hidden;
+  animation: mob-bs-slide-in 380ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+.mob-bs-card.is-dragging {
+  transition: none;
+}
+.mob-bs-card.detent-medium {
+  height: 52vh;
+  max-height: 88vh;
+}
+.mob-bs-card.detent-large {
+  height: 88vh;
+}
+.mob-bs-handle {
+  flex-shrink: 0;
+  padding: 10px 0 6px;
+  display: flex;
+  justify-content: center;
+  touch-action: none;
+  cursor: grab;
+  -webkit-tap-highlight-color: transparent;
+}
+.mob-bs-handle:active {
+  cursor: grabbing;
+}
+.mob-bs-handle-bar {
+  width: 38px;
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(28, 26, 23, 0.22);
+  transition: background 120ms;
+}
+.mob-bs-handle:active .mob-bs-handle-bar {
+  background: rgba(28, 26, 23, 0.35);
+}
+.mob-bs-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Sheet-Inhalt: Header oben, scrollender Body, Footer fix unten */
+.mob-sheet-head {
+  flex-shrink: 0;
+  padding: 4px 20px 12px;
+}
+.mob-sheet-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding: 4px 20px 12px;
+}
+.mob-sheet-foot {
+  flex-shrink: 0;
+  display: flex;
+  gap: 10px;
+  padding: 12px 18px max(env(safe-area-inset-bottom), 14px);
+  border-top: 1px solid var(--ink-100);
+  background: var(--cream-50);
+}
+
+body[data-theme="default-dark"] .mob-bs-card,
+body[data-theme="glass-dark"] .mob-bs-card {
+  background: #1a1815;
+  color: var(--cream-50);
+  box-shadow: 0 -28px 64px -10px rgba(0, 0, 0, 0.6);
+}
+body[data-theme="default-dark"] .mob-bs-handle-bar,
+body[data-theme="glass-dark"] .mob-bs-handle-bar {
+  background: rgba(250, 247, 242, 0.3);
+}
+body[data-theme="default-dark"] .mob-sheet-foot,
+body[data-theme="glass-dark"] .mob-sheet-foot {
+  background: #1a1815;
+  border-top-color: rgba(255, 255, 255, 0.06);
+}
+
+@keyframes mob-bs-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes mob-bs-slide-in {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+/* Full-Screen-Overlay (Timer, Lockscreen) — kein Detent, slidet aber rein */
+.mob-fullscreen-overlay {
   position: fixed;
   inset: 0;
   z-index: 50;
   display: flex;
   flex-direction: column;
-  background: rgba(28, 26, 23, 0.4);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  background: #0e0c09;
+  color: var(--cream-50);
   padding-top: max(env(safe-area-inset-top), 12px);
   padding-bottom: env(safe-area-inset-bottom);
   padding-left: env(safe-area-inset-left);
   padding-right: env(safe-area-inset-right);
+  animation: mob-bs-slide-in 340ms cubic-bezier(0.32, 0.72, 0, 1);
 }
-.mob-sheet-layer .mob-screen {
-  background: var(--cream-50);
+
+/* Tab-Stage: jeder Tab-Wechsel triggert via key-change ein Fade+Slide-In */
+.mob-screen-stage {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  animation: mob-tab-enter 240ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
-body[data-theme="default-dark"] .mob-sheet-layer .mob-screen,
-body[data-theme="glass-dark"] .mob-sheet-layer .mob-screen {
-  background: #1A1815;
+@keyframes mob-tab-enter {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* Status bar */
@@ -210,8 +344,11 @@ body[data-theme="glass-dark"] .mob-sheet-layer .mob-screen {
 
 .mob-scroll {
   flex: 1;
-  overflow: hidden;
-  padding: 0 14px 4px;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding: 0 14px 16px;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -1303,33 +1440,7 @@ body[data-theme="glass-dark"]   .mob-section-head-overdue {
   padding-bottom: 16px !important;
 }
 
-/* Sheet-Layer Slide-In-Animation (von unten reinfahren) */
-@keyframes mob-sheet-slide-in {
-  from {
-    transform: translateY(100%);
-  }
-  to {
-    transform: translateY(0);
-  }
-}
-@keyframes mob-sheet-backdrop-fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-.mob-sheet-layer {
-  animation: mob-sheet-backdrop-fade-in 200ms ease-out;
-}
-.mob-sheet-layer .mob-screen,
-.mob-sheet-layer .mob-screen-sheet,
-.mob-sheet-layer .mob-screen-dark,
-.mob-sheet-layer .mob-screen-lock {
-  animation: mob-sheet-slide-in 320ms cubic-bezier(0.32, 0.72, 0, 1);
-}
-
 /* Sheet-Inhalt: groessere Schriftgroessen + Spacings */
-.mob-sheet {
-  padding-bottom: max(env(safe-area-inset-bottom), 12px) !important;
-}
 .mob-create-head {
   padding: 14px 18px !important;
   font-size: 15px !important;
@@ -1603,4 +1714,56 @@ body[data-theme="glass-dark"]   .mob-section-head-overdue {
 .mob-app .proj-tag {
   font-size: 11px !important;
   padding: 3px 8px !important;
+}
+
+/* =========================================================
+   TOUCH-FEEDBACK ("App-Feeling")
+   - Versteckt iOS-Standard-Tap-Highlight (grauer Flash)
+   - :active mit subtiler Scale-Animation
+   ========================================================= */
+.mob-app * {
+  -webkit-tap-highlight-color: transparent;
+}
+.mob-app button,
+.mob-app .mob-tab,
+.mob-app .mob-task-row,
+.mob-app .mob-board-card,
+.mob-app .mob-chip,
+.mob-app .mob-cap-row,
+.mob-app .mob-prof-row,
+.mob-app .mob-step,
+.mob-app .mob-task-row-start,
+.mob-app .mob-live-stop,
+.mob-bs-card button,
+.mob-bs-card .mob-chip,
+.mob-bs-card .mob-step {
+  transition: transform 90ms ease, opacity 90ms ease, background-color 120ms ease;
+}
+.mob-app .mob-tab:active,
+.mob-app .mob-task-row:active,
+.mob-app .mob-board-card:active,
+.mob-app .mob-chip:active,
+.mob-app .mob-cap-row:active,
+.mob-app .mob-prof-row:active,
+.mob-bs-card .mob-chip:active {
+  transform: scale(0.97);
+}
+.mob-app .mob-tab-fab > button:active,
+.mob-app .mob-task-row-start:active,
+.mob-app .mob-live-stop:active,
+.mob-app .mob-step:active,
+.mob-bs-card .mob-step:active {
+  transform: scale(0.88);
+  opacity: 0.7;
+}
+.mob-app .mob-sheet-primary:active,
+.mob-app .mob-sheet-secondary:active,
+.mob-app .mob-cap-primary:active,
+.mob-app .mob-cap-secondary:active,
+.mob-app .mob-tc-stop:active,
+.mob-app .mob-tc-btn:active,
+.mob-bs-card .mob-sheet-primary:active,
+.mob-bs-card .mob-sheet-secondary:active {
+  transform: scale(0.97);
+  opacity: 0.85;
 }
