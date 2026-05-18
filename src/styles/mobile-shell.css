@@ -1178,3 +1178,421 @@ body[data-theme="glass-dark"]   .mob-section-head-overdue {
   background: rgba(182, 60, 60, 0.08);
   border-color: rgba(220, 80, 80, 0.3);
 }
+
+/* =========================================================
+   PRODUCTION SCALE OVERRIDES — iOS-konform
+   Design-Prototype war auf 280px breitem Phone-Frame skaliert.
+   In der echten PWA brauchen wir iOS-Standardgroessen:
+     - Touch-Targets: min 44pt
+     - Body-Text: 16-17pt
+     - Caption: 13pt
+     - Safe-Areas fuer Notch + Home-Indicator
+   ========================================================= */
+
+/* Safe-Area: PWA wird fullscreen geoeffnet, Bottom-Bar darf nicht in
+   den Home-Indicator-Bereich rutschen */
+.mob-tabbar {
+  padding-top: 10px;
+  padding-bottom: max(env(safe-area-inset-bottom), 12px);
+  min-height: calc(56px + env(safe-area-inset-bottom));
+}
+.mob-tab {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 6px;
+  gap: 3px;
+  min-height: 48px;
+  min-width: 48px;
+}
+.mob-tab-fab > button {
+  width: 56px;
+  height: 56px;
+  border-radius: 28px;
+  display: inline-grid;
+  place-items: center;
+}
+
+/* Inputs: iOS zoomt nicht rein wenn font-size >= 16px */
+.mob-app input,
+.mob-app textarea,
+.mob-app select,
+.mob-input {
+  font-size: 16px !important;
+}
+
+/* Heute-Screen: Greeting groesser */
+.mob-h-greeting {
+  padding: 14px 20px 14px;
+}
+.mob-h-greeting > div .mono {
+  font-size: 12px !important;
+}
+.mob-h-greeting > div > div:nth-child(2) {
+  font-size: 26px !important;
+  margin-top: 4px !important;
+}
+
+/* Live-Card groesser */
+.mob-live-card,
+.mob-live-card-slim {
+  padding: 14px 18px !important;
+  margin: 0 16px 12px !important;
+  border-radius: 14px;
+  min-height: 64px;
+}
+.mob-live-card-slim .mob-live-stop,
+.mob-live-card .mob-live-stop {
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 20px;
+}
+.mob-live-card-slim .mono:first-of-type,
+.mob-live-card .mono:first-of-type {
+  font-size: 11px !important;
+}
+.mob-live-card-slim > div:nth-child(2) > div:nth-child(2),
+.mob-live-card > div:nth-child(2) > div:nth-child(2) {
+  font-size: 16px !important;
+}
+
+/* Task-Rows: groessere Touch-Targets, lesbarer Text */
+.mob-task-row {
+  padding: 12px 14px !important;
+  border-radius: 12px;
+  gap: 10px;
+  min-height: 56px;
+  margin: 0 16px 6px;
+}
+.mob-task-row-title {
+  font-size: 15px !important;
+  line-height: 1.35 !important;
+}
+.mob-task-row-start,
+.mob-task-row-live {
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 18px;
+}
+.mob-task-row .mono {
+  font-size: 12px !important;
+}
+
+/* Section-Head groesser */
+.mob-section-head {
+  padding: 14px 20px 6px !important;
+}
+.mob-section-head .mono {
+  font-size: 11px !important;
+}
+.mob-section-head-overdue {
+  padding: 10px 16px !important;
+  margin: 0 16px 8px !important;
+  border-radius: 10px;
+}
+
+/* Scroll-Bereich Padding */
+.mob-scroll {
+  padding-bottom: 16px !important;
+}
+
+/* Sheet-Layer Slide-In-Animation (von unten reinfahren) */
+@keyframes mob-sheet-slide-in {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+@keyframes mob-sheet-backdrop-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.mob-sheet-layer {
+  animation: mob-sheet-backdrop-fade-in 200ms ease-out;
+}
+.mob-sheet-layer .mob-screen,
+.mob-sheet-layer .mob-screen-sheet,
+.mob-sheet-layer .mob-screen-dark,
+.mob-sheet-layer .mob-screen-lock {
+  animation: mob-sheet-slide-in 320ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* Sheet-Inhalt: groessere Schriftgroessen + Spacings */
+.mob-sheet {
+  padding-bottom: max(env(safe-area-inset-bottom), 12px) !important;
+}
+.mob-create-head {
+  padding: 14px 18px !important;
+  font-size: 15px !important;
+}
+.mob-create-cancel,
+.mob-create-save {
+  font-size: 15px !important;
+  padding: 8px 4px;
+  cursor: pointer;
+}
+.mob-create-title {
+  font-size: 16px !important;
+  font-weight: 600;
+}
+.mob-create-body {
+  padding: 8px 18px 18px !important;
+  gap: 16px !important;
+}
+.mob-input-wrap {
+  padding: 12px 14px !important;
+  border-radius: 12px;
+}
+.mob-input-label {
+  font-size: 12px !important;
+  margin-bottom: 6px !important;
+}
+.mob-input {
+  font-size: 16px !important;
+  line-height: 1.4 !important;
+  min-height: 24px;
+}
+.mob-input-multi {
+  min-height: 80px !important;
+}
+.mob-chip-row {
+  gap: 8px !important;
+}
+.mob-chip {
+  font-size: 13px !important;
+  padding: 8px 12px !important;
+  border-radius: 100px;
+  min-height: 36px;
+}
+.mob-mini-field {
+  padding: 12px 14px !important;
+}
+.mob-mini-lbl {
+  font-size: 12px !important;
+}
+.mob-mini-stepper {
+  font-size: 16px !important;
+  gap: 12px;
+}
+.mob-step {
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 16px;
+  display: inline-grid;
+  place-items: center;
+  cursor: pointer;
+}
+.mob-step-val {
+  font-size: 15px !important;
+}
+.mob-prio {
+  width: 28px !important;
+  height: 28px !important;
+}
+.mob-sheet-foot {
+  padding: 12px 18px max(env(safe-area-inset-bottom), 12px) !important;
+  gap: 10px;
+}
+.mob-sheet-primary,
+.mob-sheet-secondary {
+  font-size: 15px !important;
+  font-weight: 600;
+  padding: 14px !important;
+  border-radius: 14px;
+  min-height: 48px;
+}
+
+/* Detail-Sheet */
+.mob-sheet-handle {
+  margin: 8px auto !important;
+  width: 40px;
+  height: 5px;
+  border-radius: 3px;
+}
+.mob-detail-meta {
+  font-size: 13px !important;
+  gap: 14px !important;
+}
+.mob-meta-lbl {
+  font-size: 11px !important;
+}
+.mob-meta-val {
+  font-size: 15px !important;
+}
+.mob-detail-section {
+  margin-top: 16px !important;
+}
+.mob-section-h {
+  font-size: 12px !important;
+  margin-bottom: 8px !important;
+}
+.mob-sub-row {
+  padding: 10px 0 !important;
+  font-size: 14px !important;
+  min-height: 40px;
+}
+.mob-check {
+  width: 22px !important;
+  height: 22px !important;
+}
+
+/* Board */
+.mob-board-head {
+  padding: 14px 18px !important;
+}
+.mob-board-head > div:nth-of-type(2) {
+  font-size: 18px !important;
+}
+.mob-col-tabs {
+  padding: 0 14px !important;
+  gap: 6px !important;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.mob-col-tab {
+  padding: 8px 12px !important;
+  font-size: 13px !important;
+  min-height: 36px;
+}
+.mob-swipe-hint {
+  padding: 8px 16px !important;
+  font-size: 11px !important;
+}
+.mob-board-card {
+  padding: 14px !important;
+  margin: 0 16px 10px !important;
+  border-radius: 14px;
+}
+.mob-board-card > div:nth-of-type(2) {
+  font-size: 16px !important;
+}
+
+/* Timer */
+.mob-timer-controls {
+  padding: 16px 24px max(env(safe-area-inset-bottom), 20px) !important;
+  gap: 16px;
+}
+.mob-tc-btn {
+  width: 56px !important;
+  height: 56px !important;
+  border-radius: 28px;
+}
+.mob-tc-stop {
+  padding: 14px 24px !important;
+  font-size: 15px !important;
+  border-radius: 28px;
+  min-height: 56px;
+}
+
+/* Profile */
+.mob-prof-head {
+  padding: 14px 18px !important;
+  font-size: 16px !important;
+}
+.mob-prof-scroll {
+  padding: 0 16px 24px !important;
+}
+.mob-prof-hero {
+  padding: 20px 0 !important;
+}
+.mob-prof-hero > div:nth-of-type(2) {
+  font-size: 22px !important;
+}
+.mob-prof-stats {
+  gap: 8px !important;
+  padding: 0 0 16px !important;
+}
+.mob-prof-stat {
+  padding: 14px 10px !important;
+}
+.mob-prof-stat-val {
+  font-size: 22px !important;
+}
+.mob-prof-stat-lbl {
+  font-size: 11px !important;
+  margin-top: 4px;
+}
+.mob-prof-section-h {
+  font-size: 12px !important;
+  margin: 18px 0 8px !important;
+}
+.mob-prof-row {
+  padding: 14px !important;
+  gap: 12px;
+  min-height: 56px;
+}
+.mob-prof-row-icon {
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 10px;
+  display: inline-grid;
+  place-items: center;
+}
+.mob-prof-row-title {
+  font-size: 15px !important;
+}
+.mob-prof-row-sub {
+  font-size: 12px !important;
+  margin-top: 2px;
+}
+.mob-toggle {
+  width: 48px !important;
+  height: 28px !important;
+  border-radius: 14px;
+}
+.mob-toggle span {
+  width: 22px !important;
+  height: 22px !important;
+}
+.mob-prof-logout {
+  padding: 14px !important;
+  font-size: 15px !important;
+  margin-top: 18px;
+}
+
+/* Capture */
+.mob-capture-head {
+  padding: 14px 18px !important;
+  font-size: 16px !important;
+}
+.mob-capture-body {
+  padding: 14px 16px !important;
+  gap: 10px;
+}
+.mob-cap-row {
+  padding: 12px 14px !important;
+  border-radius: 12px;
+  font-size: 14px;
+  min-height: 56px;
+}
+.mob-capture-foot {
+  padding: 12px 16px max(env(safe-area-inset-bottom), 14px) !important;
+  gap: 10px;
+}
+.mob-cap-primary,
+.mob-cap-secondary {
+  font-size: 15px !important;
+  padding: 14px !important;
+  border-radius: 14px;
+  min-height: 48px;
+}
+
+/* Lockscreen */
+.mob-lock-time {
+  padding: 30px 24px 24px !important;
+}
+.mob-lock-stack {
+  padding: 0 14px !important;
+  gap: 10px;
+}
+.mob-noti {
+  padding: 14px 16px !important;
+  border-radius: 14px;
+}
+
+/* Allgemein: alle ProjTag sollen in mob auch leicht groesser sein */
+.mob-app .proj-tag {
+  font-size: 11px !important;
+  padding: 3px 8px !important;
+}

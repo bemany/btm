@@ -4,8 +4,10 @@
     <meta charset="utf-8" />
     <title>BTM — %VITE_APP_FULL_NAME%</title>
 
-    <!-- Viewport: Mobile responsive (width=device-width), Desktop-Layout greift ab 1024px im CSS -->
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+    <!-- Viewport: Mobile responsive. maximum-scale=1 + user-scalable=no verhindert
+         dass iOS bei Input-Focus reinzoomt (passiert sonst bei font-size < 16px).
+         viewport-fit=cover lässt env(safe-area-inset-*) auf iPhones funktionieren. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
 
     <!-- Primary Meta -->
     <meta name="description" content="BTM — team task, time and capacity management. Weekly planning, live timer, Pomodoro, AI task extraction." />
