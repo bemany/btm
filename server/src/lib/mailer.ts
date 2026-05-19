@@ -7,6 +7,8 @@ const secure = (process.env.SMTP_SECURE ?? 'true') === 'true';
 const user = process.env.SMTP_USER;
 const pass = process.env.SMTP_PASS;
 const from = process.env.SMTP_FROM ?? user ?? 'noreply@localhost';
+// MAIL_DISABLED=true → kein Versand, nur Log. Fuer Staging/Dev-Umgebungen.
+const mailDisabled = process.env.MAIL_DISABLED === 'true';
 
 let transporter: nodemailer.Transporter | null = null;
 
@@ -37,6 +39,10 @@ export interface MailOpts {
 }
 
 export async function sendMail({ to, subject, text, html, attachments }: MailOpts): Promise<void> {
+  if (mailDisabled) {
+    console.log(`[mail] DISABLED (MAIL_DISABLED=true) — would have sent to=${to} subject="${subject}"`);
+    return;
+  }
   try {
     const t = getTransport();
     const info = await t.sendMail({ from, to, subject, text, html, attachments });
