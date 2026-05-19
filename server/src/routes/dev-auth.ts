@@ -3,7 +3,7 @@
 // Sichert durch ENV-Flag ab — produktiv nie aktiv.
 
 import { Hono } from 'hono';
-import { setCookie } from 'hono/cookie';
+import { setSignedCookie } from 'hono/cookie';
 import { z } from 'zod';
 import { eq } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
@@ -62,12 +62,27 @@ export const devAuthRoute = new Hono<{ Variables: Variables }>()
       userAgent: c.req.header('user-agent') ?? null,
     });
 
-    setCookie(c, 'better-auth.session_token', token, {
+    // Better-Auth liest den Session-Token mit signiertem Cookie (HMAC-SHA-256
+    // gegen BETTER_AUTH_SECRET). Ein simpler setCookie() reicht nicht, das
+    // Cookie würde von auth.api.getSession() verworfen → User bleibt null.
+    const secret = process.env.BETTER_AUTH_SECRET;
+    if (!secret) return c.json({ error: 'BETTER_AUTH_SECRET not set' }, 500);
+    // WICHTIG: Better-Auth setzt auf HTTPS automatisch den __Secure-Prefix
+    // (siehe ctx.authCookies.sessionToken.name = "__Secure-better-auth.session_token").
+    // Wenn wir nur "better-auth.session_token" setzen, findet getSession() das Cookie
+    // nicht und gibt null zurück. Daher den passenden Cookie-Namen je nach Protokoll
+    // wählen, plus parallel beide Varianten setzen für Tunnel-Konfigs mit
+    // x-forwarded-proto-Drift.
+    const isHttps = (c.req.header('x-forwarded-proto') ?? 'https') === 'https';
+    const cookieName = isHttps
+      ? '__Secure-better-auth.session_token'
+      : 'better-auth.session_token';
+    await setSignedCookie(c, cookieName, token, secret, {
       httpOnly: true,
       path: '/',
       sameSite: 'Lax',
       expires: expiresAt,
-      secure: false,
+      secure: isHttps,
     });
 
     return c.json({ ok: true, userId: user.id });
