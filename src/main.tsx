@@ -37,6 +37,7 @@ import './styles/backgrounds.css';
 import './styles/project-members.css';
 import './styles/subtasks.css';
 import './styles/checklist.css';
+import './styles/new-task-modal.css';
 import './styles/feedback.css';
 
 // Theme früh setzen — sonst hat der Login-Screen kein Glass.

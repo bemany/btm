@@ -321,8 +321,16 @@ export const handlers: Record<string, (args: Record<string, unknown>, ctx: ToolC
         hours: Number(hours.toFixed(4)),
         source: 'timer',
       });
+      await restorePrevColumnMcp(existing.taskId, existing.previousColumn);
       await db.update(tasks).set({ loggedH: sql`${tasks.loggedH} + ${hours}` }).where(eq(tasks.id, existing.taskId));
       await db.delete(liveTimers).where(eq(liveTimers.userId, ctx.userId));
+    }
+
+    // FclpRr066St: Task in 'doing' setzen, alte Spalte merken
+    const [targetTask] = await db.select().from(tasks).where(eq(tasks.id, task_id)).limit(1);
+    const previousColumn = targetTask && targetTask.column !== 'doing' ? targetTask.column : null;
+    if (previousColumn) {
+      await db.update(tasks).set({ column: 'doing', updatedAt: new Date() }).where(eq(tasks.id, task_id));
     }
 
     const startedAt = new Date();
@@ -334,9 +342,10 @@ export const handlers: Record<string, (args: Record<string, unknown>, ctx: ToolC
         startedAt,
         pomodoroEnabled: pomodoro,
         pomodoroStartedAt: pomodoro ? startedAt : null,
+        previousColumn,
       })
       .returning();
-    logActivity({ kind: 'timer_started', actorId: ctx.userId, target: task_id, meta: { via: 'mcp' } });
+    logActivity({ kind: 'timer_started', actorId: ctx.userId, target: task_id, meta: { via: 'mcp', autoMovedFrom: previousColumn } });
     return { live_timer: row };
   },
 
@@ -358,8 +367,9 @@ export const handlers: Record<string, (args: Record<string, unknown>, ctx: ToolC
       })
       .returning();
     await db.update(tasks).set({ loggedH: sql`${tasks.loggedH} + ${hours}` }).where(eq(tasks.id, existing.taskId));
+    await restorePrevColumnMcp(existing.taskId, existing.previousColumn);
     await db.delete(liveTimers).where(eq(liveTimers.userId, ctx.userId));
-    logActivity({ kind: 'timer_stopped', actorId: ctx.userId, target: existing.taskId, meta: { via: 'mcp', hours: Number(hours.toFixed(2)) } });
+    logActivity({ kind: 'timer_stopped', actorId: ctx.userId, target: existing.taskId, meta: { via: 'mcp', hours: Number(hours.toFixed(2)), autoMovedTo: existing.previousColumn } });
     return { live_timer: null, session };
   },
 
@@ -560,3 +570,15 @@ export const mcpRoute = new Hono<{ Variables: Variables }>()
     if (responses.length === 1 && !Array.isArray(body)) return c.json(responses[0]);
     return c.json(responses);
   });
+
+// FclpRr066St (MCP): Auto-Move-Back beim Timer-Stop/Wechsel.
+async function restorePrevColumnMcp(taskId: string, previousColumn: string | null): Promise<void> {
+  if (!previousColumn) return;
+  if (previousColumn === 'review' || previousColumn === 'done') return;
+  const [task] = await db.select().from(tasks).where(eq(tasks.id, taskId)).limit(1);
+  if (!task || task.column !== 'doing') return;
+  await db
+    .update(tasks)
+    .set({ column: previousColumn as 'todo' | 'planned' | 'doing' | 'review' | 'done', updatedAt: new Date() })
+    .where(eq(tasks.id, taskId));
+}

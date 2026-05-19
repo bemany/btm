@@ -274,11 +274,21 @@ export const tasksRoute = new Hono<{ Variables: Variables }>()
         hours: Number(hours.toFixed(4)),
         source: 'timer',
       });
+      // FclpRr066St: alte Task ggf. zurueck in vorherige Spalte
+      await restorePreviousColumn(existing.taskId, existing.previousColumn);
       await db
         .update(tasks)
         .set({ loggedH: sql`${tasks.loggedH} + ${hours}` })
         .where(eq(tasks.id, existing.taskId));
       await db.delete(liveTimers).where(eq(liveTimers.userId, user.id));
+    }
+
+    // FclpRr066St: aktuelle Spalte der Ziel-Aufgabe lesen und ggf. in 'doing' setzen.
+    // Wir merken uns die alte Spalte; bei Stop verschieben wir zurueck.
+    const [targetTask] = await db.select().from(tasks).where(eq(tasks.id, taskId)).limit(1);
+    const previousColumn = targetTask && targetTask.column !== 'doing' ? targetTask.column : null;
+    if (previousColumn) {
+      await db.update(tasks).set({ column: 'doing', updatedAt: new Date() }).where(eq(tasks.id, taskId));
     }
 
     const startedAt = new Date();
@@ -290,10 +300,15 @@ export const tasksRoute = new Hono<{ Variables: Variables }>()
         startedAt,
         pomodoroEnabled: pomodoro,
         pomodoroStartedAt: pomodoro ? startedAt : null,
+        previousColumn,
       })
       .returning();
-    const [task] = await db.select().from(tasks).where(eq(tasks.id, taskId)).limit(1);
-    logActivity({ kind: 'timer_started', actorId: user.id, target: taskId, meta: { title: task?.title, who: user.id } });
+    logActivity({
+      kind: 'timer_started',
+      actorId: user.id,
+      target: taskId,
+      meta: { title: targetTask?.title, who: user.id, autoMovedFrom: previousColumn },
+    });
     return c.json({ liveTimer: row });
   })
   .post('/timer/stop', async (c) => {
@@ -319,13 +334,15 @@ export const tasksRoute = new Hono<{ Variables: Variables }>()
       .update(tasks)
       .set({ loggedH: sql`${tasks.loggedH} + ${hours}` })
       .where(eq(tasks.id, existing.taskId));
+    // FclpRr066St: zurueck in vorherige Spalte (nur wenn aktuell noch in 'doing')
+    await restorePreviousColumn(existing.taskId, existing.previousColumn);
     await db.delete(liveTimers).where(eq(liveTimers.userId, user.id));
     const [task] = await db.select().from(tasks).where(eq(tasks.id, existing.taskId)).limit(1);
     logActivity({
       kind: 'timer_stopped',
       actorId: user.id,
       target: existing.taskId,
-      meta: { title: task?.title, who: user.id, hours: Number(hours.toFixed(2)) },
+      meta: { title: task?.title, who: user.id, hours: Number(hours.toFixed(2)), autoMovedTo: existing.previousColumn },
     });
     return c.json({ liveTimer: null, session });
   })
@@ -694,6 +711,22 @@ export const tasksRoute = new Hono<{ Variables: Variables }>()
 // Owner und triggert die existierende Notification-Mail-Pipeline (Mention-
 // Mail-Toggle wird hier ignoriert; Owner-Reviews sind wichtiger als der
 // allgemeine Mention-Setting-Toggle, sollen aber im Digest mitlaufen).
+
+// FclpRr066St: Wenn ein Timer auf eine Aufgabe lief die vorher NICHT in 'doing'
+// war, schieben wir sie beim Stop zurueck in die alte Spalte. Aber nur, wenn:
+//   - previousColumn gespeichert ist (sonst war Task schon in 'doing')
+//   - die Task aktuell noch in 'doing' steht (sonst hat jemand sie manuell weiterverschoben)
+// review/done werden nicht zurueckgezogen — finale Stati respektieren.
+async function restorePreviousColumn(taskId: string, previousColumn: string | null): Promise<void> {
+  if (!previousColumn) return;
+  if (previousColumn === 'review' || previousColumn === 'done') return;
+  const [task] = await db.select().from(tasks).where(eq(tasks.id, taskId)).limit(1);
+  if (!task || task.column !== 'doing') return;
+  await db
+    .update(tasks)
+    .set({ column: previousColumn as 'todo' | 'planned' | 'doing' | 'review' | 'done', updatedAt: new Date() })
+    .where(eq(tasks.id, taskId));
+}
 
 async function notifyOwnerOnReview(opts: {
   taskId: string;

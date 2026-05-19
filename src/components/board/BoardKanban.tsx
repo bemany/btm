@@ -5,7 +5,7 @@ import { useStore } from '../../store/store';
 import { COLUMNS } from '../../store/seed';
 import { Icon } from '../shared/Icon';
 import { TaskCard } from './TaskCard';
-import { QuickAdd } from './QuickAdd';
+import { NewTaskModal } from './NewTaskModal';
 import { showToast } from '../shared/Toast';
 import { useT } from '../../i18n';
 import { checkMarkDone } from '../../lib/taskPermissions';
@@ -46,6 +46,7 @@ interface KanbanColumnProps {
   onDragStart: (e: DragEvent<HTMLDivElement>, task: Task) => void;
   onDragEnd: () => void;
   onTaskClick: (t: Task) => void;
+  onAddTask: (col: ColumnId) => void;
   onArchiveAllDone?: () => void;
 }
 
@@ -60,10 +61,10 @@ function KanbanColumn({
   onDragStart,
   onDragEnd,
   onTaskClick,
+  onAddTask,
   onArchiveAllDone,
 }: KanbanColumnProps) {
   const t = useT();
-  const [adding, setAdding] = useState(false);
   const colLabel = t(`column.${col.id}` as 'column.todo');
   return (
     <div className="k-col">
@@ -83,7 +84,7 @@ function KanbanColumn({
             <Icon name="archive" size={12} />
           </button>
         ) : (
-          <button className="add" onClick={() => setAdding(true)} title={t('board.add_task')}>
+          <button className="add" onClick={() => onAddTask(col.id)} title={t('board.add_task')}>
             <Icon name="plus" size={12} />
           </button>
         )}
@@ -110,9 +111,8 @@ function KanbanColumn({
             onClick={() => onTaskClick(tk)}
           />
         ))}
-        {adding && <QuickAdd col={col.id} onClose={() => setAdding(false)} />}
-        {!adding && tasks.length === 0 && !dragOver && (
-          <button className="k-add-btn" onClick={() => setAdding(true)}>
+        {tasks.length === 0 && !dragOver && (
+          <button className="k-add-btn" onClick={() => onAddTask(col.id)}>
             <Icon name="plus" size={12} /> {t('board.add_task')}
           </button>
         )}
@@ -156,6 +156,8 @@ export function BoardKanban({ tasks }: BoardKanbanProps) {
   };
   const [dragTask, setDragTask] = useState<Task | null>(null);
   const [dragOverCol, setDragOverCol] = useState<ColumnId | null>(null);
+  // FuO6j_tbUS5: Modal statt Inline-Tile. null = geschlossen.
+  const [newTaskCol, setNewTaskCol] = useState<ColumnId | null>(null);
 
   const onDragStart = (e: DragEvent<HTMLDivElement>, task: Task) => {
     setDragTask(task);
@@ -243,9 +245,13 @@ export function BoardKanban({ tasks }: BoardKanbanProps) {
           onDragLeave={onDragLeave}
           onDrop={onDrop}
           onTaskClick={onTaskClick}
+          onAddTask={(c) => setNewTaskCol(c)}
           onArchiveAllDone={col.id === 'done' ? onArchiveAllDone : undefined}
         />
       ))}
+      {newTaskCol && (
+        <NewTaskModal col={newTaskCol} onClose={() => setNewTaskCol(null)} />
+      )}
     </div>
   );
 }

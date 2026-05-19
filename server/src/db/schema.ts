@@ -289,6 +289,9 @@ export const liveTimers = pgTable('live_timers', {
   startedAt: timestamp('started_at', { withTimezone: true }).notNull(),
   pomodoroEnabled: boolean('pomodoro_enabled').notNull().default(false),
   pomodoroStartedAt: timestamp('pomodoro_started_at', { withTimezone: true }),
+  // FclpRr066St: gespeicherte vorherige Spalte fuer Auto-Move-Back.
+  // null wenn Task schon in 'doing' war (kein Move beim Start).
+  previousColumn: text('previous_column'),
 });
 
 export const invitations = pgTable('invitations', {
