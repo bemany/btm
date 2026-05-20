@@ -18,6 +18,8 @@ import { useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as api from '../../data/api';
 import { SYNC_KEYS } from '../../data/sync';
+import { useStore } from '../../store/store';
+import { useTick } from '../shared/hooks';
 import { Icon } from '../shared/Icon';
 import { showToast } from '../shared/Toast';
 import { useT, useLocale } from '../../i18n';
@@ -274,6 +276,11 @@ export function SessionsSection({ taskId }: SessionsSectionProps) {
   const [locale] = useLocale();
   const queryClient = useQueryClient();
   const [adding, setAdding] = useState(false);
+  // Live-Timer aus dem Store — wenn der aktive Timer auf dieser Task laeuft,
+  // zeigen wir ihn als virtuelle Session-Row oben mit Live-Chip + Akzent.
+  const timer = useStore((s) => s.timer);
+  const isLive = !!timer && timer.taskId === taskId;
+  useTick(isLive);
 
   const sessionsQ = useQuery({
     queryKey: [...SYNC_KEYS.TASK_SESSIONS, taskId],
@@ -318,7 +325,11 @@ export function SessionsSection({ taskId }: SessionsSectionProps) {
         />
       )}
 
-      {sessions.length === 0 && !adding && (
+      {isLive && timer && (
+        <LiveSessionRow startedAt={timer.startedAt} locale={locale} />
+      )}
+
+      {sessions.length === 0 && !isLive && !adding && (
         <div className="ses-empty">
           {sessionsQ.isLoading ? t('common.loading') : t('task_detail.sessions_empty')}
         </div>
@@ -333,6 +344,36 @@ export function SessionsSection({ taskId }: SessionsSectionProps) {
           onChange={refresh}
         />
       ))}
+    </div>
+  );
+}
+
+// Live-Session-Row: rendert den aktuell laufenden Timer als "echte" Session-
+// Zeile mit Live-Chip + Akzent-Highlight. updated 1x/Sekunde via useTick im
+// Parent.
+function LiveSessionRow({ startedAt, locale }: { startedAt: number; locale: 'de' | 'en' }) {
+  const t = useT();
+  const elapsedMs = Date.now() - startedAt;
+  const hours = elapsedMs / 3_600_000;
+  return (
+    <div className="ses-row ses-row-live">
+      <span className="ses-row-icon">
+        <span className="ses-row-live-dot" />
+      </span>
+      <span className="ses-row-date-label">
+        {new Date(startedAt).toLocaleString(locale === 'en' ? 'en-US' : 'de-DE', {
+          weekday: 'short',
+          day: '2-digit',
+          month: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+        })}
+      </span>
+      <span className="ses-row-live-chip">
+        <span className="ses-row-live-dot-mini" />
+        {t('sessions.live_chip')}
+      </span>
+      <span className="ses-row-h ses-row-h-live">{fmtHM(hours)}</span>
     </div>
   );
 }

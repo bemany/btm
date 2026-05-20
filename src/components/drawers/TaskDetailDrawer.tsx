@@ -8,6 +8,7 @@ import { Icon } from '../shared/Icon';
 import { ProjTag } from '../shared/ProjTag';
 import { showToast } from '../shared/Toast';
 import { useT, useLocale } from '../../i18n';
+import { fmtHM } from '../../lib/format';
 import { SessionsSection } from '../sessions/SessionsSection';
 import { TaskTimeline } from '../sessions/TaskTimeline';
 import { DatePicker } from '../shared/DatePicker';
@@ -362,7 +363,7 @@ export function TaskDetailDrawer({ id }: TaskDetailDrawerProps) {
                   fontVariantNumeric: 'tabular-nums',
                 }}
               >
-                {fmtNum(liveLog)}
+                {fmtHM(liveLog)}
               </span>
               {editingEst ? (
                 <span
@@ -441,7 +442,7 @@ export function TaskDetailDrawer({ id }: TaskDetailDrawerProps) {
                     (e.currentTarget as HTMLElement).style.color = 'var(--ink-500)';
                   }}
                 >
-                  {tr('task_detail.estimate_planned_suffix', { h: fmtNum(t.estH) })}
+                  {tr('task_detail.estimate_planned_suffix', { h: fmtHM(t.estH) })}
                 </button>
               )}
             </div>
