@@ -5,7 +5,8 @@ import { Icon } from '../shared/Icon';
 import { Avatar } from '../shared/Avatar';
 import { ProjTag } from '../shared/ProjTag';
 import { showToast } from '../shared/Toast';
-import { useT, useLocale } from '../../i18n';
+import { useT } from '../../i18n';
+import { fmtHM } from '../../lib/format';
 
 export interface BoardListProps {
   tasks: Task[];
@@ -15,8 +16,6 @@ export function BoardList({ tasks }: BoardListProps) {
   const setUI = useStore((s) => s.setUI);
   const startTimer = useStore((s) => s.startTimer);
   const t = useT();
-  const [locale] = useLocale();
-  const fmtNum = (h: number) => h.toFixed(1).replace('.', locale === 'en' ? '.' : ',');
 
   const grouped = COLUMNS.map((c) => ({ col: c, items: tasks.filter((tk) => tk.col === c.id) }));
   return (
@@ -72,10 +71,10 @@ export function BoardList({ tasks }: BoardListProps) {
               <div style={{ fontSize: 13 }}>{tk.title}</div>
               <Avatar id={tk.who} size={20} />
               <span className="mono" style={{ fontSize: 11, color: 'var(--ink-500)' }}>
-                {t('board.list_planned_short', { h: fmtNum(tk.estH) })}
+                {t('board.list_planned_short', { h: fmtHM(tk.estH) })}
               </span>
               <span className="mono" style={{ fontSize: 11, color: 'var(--ink-700)' }}>
-                {t('board.list_logged_short', { h: fmtNum(tk.loggedH) })}
+                {t('board.list_logged_short', { h: fmtHM(tk.loggedH) })}
               </span>
               <button
                 className="timer-btn"

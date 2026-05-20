@@ -18,6 +18,24 @@ export function fmtH(h: number | null | undefined): string {
   return h.toFixed(1).replace('.', ',') + 'h';
 }
 
+// F4ItOLZIZ2-: Stunden lesbar als "Hh MM" oder "MMm" formatieren — keine
+// Dezimalstunden mehr (0,7 ist schwerer zu erfassen als 42m).
+//   0    → "0m"
+//   0.7  → "42m"
+//   1    → "1h"
+//   1.5  → "1h30"
+//   2.25 → "2h15"
+export function fmtHM(h: number | null | undefined): string {
+  if (h == null || !isFinite(h) || h < 0) return '0m';
+  const totalMin = Math.round(h * 60);
+  if (totalMin === 0) return '0m';
+  if (totalMin < 60) return `${totalMin}m`;
+  const hours = Math.floor(totalMin / 60);
+  const mins = totalMin % 60;
+  if (mins === 0) return `${hours}h`;
+  return `${hours}h${String(mins).padStart(2, '0')}`;
+}
+
 // Demo-Anker: alle "heute"/"morgen"-Berechnungen relativ zu diesem Datum.
 export const DEMO_TODAY = new Date('2026-05-04T00:00:00');
 export const DEMO_WEEK = 'KW 19 · 04.–08. Mai 2026';

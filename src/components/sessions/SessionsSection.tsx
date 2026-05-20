@@ -21,6 +21,7 @@ import { SYNC_KEYS } from '../../data/sync';
 import { Icon } from '../shared/Icon';
 import { showToast } from '../shared/Toast';
 import { useT, useLocale } from '../../i18n';
+import { fmtHM } from '../../lib/format';
 import { DatePicker } from '../shared/DatePicker';
 
 export interface SessionsSectionProps {
@@ -57,8 +58,6 @@ function SessionRow({ session, taskId, locale, onChange }: RowProps) {
   const [hoursDraft, setHoursDraft] = useState(String(session.hours));
   const [fromDraft, setFromDraft] = useState(fmtDateTimeForInput(new Date(session.fromAt)));
   const [busy, setBusy] = useState(false);
-
-  const fmtNum = (h: number) => h.toFixed(2).replace('.', locale === 'en' ? '.' : ',');
 
   const startEdit = () => {
     setHoursDraft(String(session.hours));
@@ -166,7 +165,7 @@ function SessionRow({ session, taskId, locale, onChange }: RowProps) {
           minute: '2-digit',
         })}
       </span>
-      <span className="ses-row-h">{fmtNum(Number(session.hours))}h</span>
+      <span className="ses-row-h">{fmtHM(Number(session.hours))}</span>
       <div className="ses-row-actions">
         <button
           type="button"

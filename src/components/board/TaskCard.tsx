@@ -8,6 +8,7 @@ import { ProjTag } from '../shared/ProjTag';
 import { PrioDot } from '../shared/PrioDot';
 import { showToast } from '../shared/Toast';
 import { useT, useLocale } from '../../i18n';
+import { fmtHM } from '../../lib/format';
 
 export interface TaskCardProps {
   task: Task;
@@ -23,7 +24,6 @@ export function TaskCard({ task, dragging, onDragStart, onDragEnd, onClick }: Ta
   const stopTimer = useStore((s) => s.stopTimer);
   const t = useT();
   const [locale] = useLocale();
-  const fmtNum = (h: number) => h.toFixed(1).replace('.', locale === 'en' ? '.' : ',');
 
   const isLive = timer?.taskId === task.id;
   useTick(isLive);
@@ -115,7 +115,7 @@ export function TaskCard({ task, dragging, onDragStart, onDragEnd, onClick }: Ta
       <div className="right-row">
         <span className={`hours ${over ? 'over' : ''}`}>
           <Icon name="timer" size={11} />
-          {fmtNum(liveLogged)} / {fmtNum(task.estH)}h
+          {fmtHM(liveLogged)} / {fmtHM(task.estH)}
         </span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           {!isLive ? (
