@@ -1009,6 +1009,21 @@ export const de = {
     modal_more: 'Mehr Details',
     modal_understood: 'Verstanden',
   },
+  notify_prompt: {
+    title: 'E-Mail-Benachrichtigungen?',
+    sub: 'Standardmäßig schicken wir keine E-Mails. Du kannst aber wichtige Benachrichtigungen aktivieren.',
+    want_yes: 'Ja, gerne',
+    want_no: 'Nein, danke',
+    which_label: 'Welche möchtest du erhalten?',
+    mentions_title: 'Erwähnungen',
+    mentions_sub: 'Sofort-Mail wenn dich jemand mit @ in einem Kommentar anpingt.',
+    digest_title: 'Tägliche Zusammenfassung',
+    digest_sub: 'Morgens um 8 Uhr: ungelesene Erwähnungen, fällige Aufgaben, neue Aktivität.',
+    hint_off: 'Du kannst die Einstellungen jederzeit unter Einstellungen → Benachrichtigungen ändern.',
+    save: 'Speichern',
+    later: 'Später',
+    saved_toast: 'Benachrichtigungs-Einstellungen gespeichert.',
+  },
   onboarding: {
     welcome_title: 'Willkommen bei BTM',
     welcome_body:

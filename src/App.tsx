@@ -27,6 +27,7 @@ import { MyWeekScreen } from './components/screens/MyWeekScreen';
 import { BoardScreen } from './components/board/BoardScreen';
 import { ChatBubble } from './components/chat-bubble/ChatBubble';
 import { OnboardingTour } from './components/onboarding/OnboardingTour';
+import { NotifyPrompt } from './components/onboarding/NotifyPrompt';
 import { ReleaseModal } from './components/onboarding/ReleaseModal';
 import { MobileApp } from './components/mobile/MobileApp';
 
@@ -272,6 +273,7 @@ export function App() {
           {projectDetailId && <ProjectDetailDrawer id={projectDetailId} />}
         </Suspense>
         <OnboardingTour replayKey={tourReplay} theme={theme} setTheme={setTheme} />
+        <NotifyPrompt />
         <ReleaseModal />
       </>
     );
@@ -350,6 +352,7 @@ export function App() {
       </Suspense>
 
       <OnboardingTour replayKey={tourReplay} theme={theme} setTheme={setTheme} />
+        <NotifyPrompt />
       <ReleaseModal />
       <ChatBubble />
     </>

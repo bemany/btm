@@ -493,6 +493,15 @@ export async function updateUserPrefs(patch: {
 // Backwards-Compat-Alias
 export const updateNotifyPrefs = updateUserPrefs;
 
+// Notify-Prompt-Wizard: markiert dass der Dialog gezeigt wurde + setzt
+// optional die Mail-Notifikations-Einstellungen.
+export async function markNotifyPromptSeen(opts: {
+  notifyMentionsMail?: boolean;
+  notifyDigestMail?: boolean;
+} = {}): Promise<void> {
+  await apiFetch('/me/notify-prompt/seen', { method: 'POST', body: opts });
+}
+
 // Profil bearbeiten: Position (jobTitle), Avatar (image), Name
 export async function updateMyProfile(patch: {
   name?: string;

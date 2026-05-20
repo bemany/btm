@@ -1000,6 +1000,21 @@ export const en: Translations = {
     modal_more: 'More details',
     modal_understood: 'Got it',
   },
+  notify_prompt: {
+    title: 'Email notifications?',
+    sub: "By default we won't send any emails. You can opt in to important notifications.",
+    want_yes: 'Yes please',
+    want_no: 'No thanks',
+    which_label: 'Which ones would you like?',
+    mentions_title: 'Mentions',
+    mentions_sub: 'Instant email when someone @-mentions you in a comment.',
+    digest_title: 'Daily digest',
+    digest_sub: 'Morning email at 8am with unread mentions, due tasks, recent activity.',
+    hint_off: 'You can change these any time in Settings → Notifications.',
+    save: 'Save',
+    later: 'Later',
+    saved_toast: 'Notification preferences saved.',
+  },
   onboarding: {
     welcome_title: 'Welcome to BTM',
     welcome_body:

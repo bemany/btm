@@ -27,6 +27,9 @@ export const users = pgTable('users', {
     .notNull()
     .default('kanban'),
   onboardingCompletedAt: timestamp('onboarding_completed_at', { withTimezone: true }),
+  // Wann der Notification-Wizard-Dialog dem User gezeigt wurde.
+  // null = noch nicht gesehen → Dialog beim naechsten Login zeigen.
+  notifyPromptShownAt: timestamp('notify_prompt_shown_at', { withTimezone: true }),
   // Mail-Notification-Präferenzen. Default: instant-Mention-Mails an, Daily-
   // Digest an. Beide unabhängig — der User kann sich auch nur Digest oder
   // nur Sofort-Mails wünschen.

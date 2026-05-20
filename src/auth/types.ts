@@ -11,6 +11,7 @@ export interface AuthUser {
   jobTitle?: string | null;
   boardDefaultView?: 'kanban' | 'list' | 'timeline';
   onboardingCompletedAt?: string | null;
+  notifyPromptShownAt?: string | null;
   notifyMentionsMail?: boolean;
   notifyDigestMail?: boolean;
   backgroundChoice?: string;

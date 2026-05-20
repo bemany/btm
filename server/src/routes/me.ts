@@ -39,6 +39,7 @@ export const meRoute = new Hono<{ Variables: Variables }>()
         teamId: user.teamId,
         boardDefaultView: user.boardDefaultView,
         onboardingCompletedAt: user.onboardingCompletedAt,
+        notifyPromptShownAt: user.notifyPromptShownAt,
         notifyMentionsMail: user.notifyMentionsMail,
         notifyDigestMail: user.notifyDigestMail,
         backgroundChoice: user.backgroundChoice,
@@ -180,6 +181,26 @@ export const meRoute = new Hono<{ Variables: Variables }>()
       .update(users)
       .set({ onboardingCompletedAt: null, updatedAt: new Date() })
       .where(eq(users.id, me.id));
+    return c.json({ ok: true });
+  })
+  // Notify-Prompt: markiert dass der Wizard gezeigt wurde + optional Prefs setzen
+  .post('/notify-prompt/seen', requireAuth, async (c) => {
+    const me = c.get('user')!;
+    const body = z
+      .object({
+        notifyMentionsMail: z.boolean().optional(),
+        notifyDigestMail: z.boolean().optional(),
+      })
+      .parse(await c.req.json().catch(() => ({})));
+    const patch: Partial<{
+      notifyMentionsMail: boolean;
+      notifyDigestMail: boolean;
+      notifyPromptShownAt: Date;
+      updatedAt: Date;
+    }> = { notifyPromptShownAt: new Date(), updatedAt: new Date() };
+    if (body.notifyMentionsMail !== undefined) patch.notifyMentionsMail = body.notifyMentionsMail;
+    if (body.notifyDigestMail !== undefined) patch.notifyDigestMail = body.notifyDigestMail;
+    await db.update(users).set(patch).where(eq(users.id, me.id));
     return c.json({ ok: true });
   })
 
