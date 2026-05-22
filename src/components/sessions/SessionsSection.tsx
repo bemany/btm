@@ -21,6 +21,7 @@ import { SYNC_KEYS } from '../../data/sync';
 import { useStore } from '../../store/store';
 import { useTick } from '../shared/hooks';
 import { Icon } from '../shared/Icon';
+import { HoursMinutesInput } from '../shared/HoursMinutesInput';
 import { showToast } from '../shared/Toast';
 import { useT, useLocale } from '../../i18n';
 import { fmtHM } from '../../lib/format';
@@ -115,20 +116,13 @@ function SessionRow({ session, taskId, locale, onChange }: RowProps) {
           onChange={(v) => v && setFromDraft(v)}
           required
         />
-        <input
-          type="number"
-          step={0.25}
-          min={0}
+        <HoursMinutesInput
+          value={parseFloat(hoursDraft.replace(',', '.')) || 0}
+          onChange={(v) => setHoursDraft(String(v))}
           max={24}
-          value={hoursDraft}
-          onChange={(e) => setHoursDraft(e.target.value)}
-          className="ses-row-input ses-row-hours"
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') save();
-            if (e.key === 'Escape') setEditing(false);
-          }}
+          size="sm"
+          onEnter={save}
         />
-        <span className="ses-row-h-label">h</span>
         <button
           type="button"
           className="ses-row-act ses-row-act-save"
@@ -234,21 +228,14 @@ function AddRow({ taskId, onAdded, onCancel }: AddRowProps) {
         onChange={(v) => v && setFromDraft(v)}
         required
       />
-      <input
-        type="number"
-        step={0.25}
-        min={0.25}
+      <HoursMinutesInput
+        value={parseFloat(hoursDraft.replace(',', '.')) || 0}
+        onChange={(v) => setHoursDraft(String(v))}
         max={24}
-        value={hoursDraft}
-        onChange={(e) => setHoursDraft(e.target.value)}
-        className="ses-row-input ses-row-hours"
+        size="sm"
         autoFocus
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') save();
-          if (e.key === 'Escape') onCancel();
-        }}
+        onEnter={save}
       />
-      <span className="ses-row-h-label">h</span>
       <button
         type="button"
         className="ses-row-act ses-row-act-save"

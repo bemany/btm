@@ -1,0 +1,70 @@
+/* F0VxDj1glFV: HoursMinutesInput — H + M Twin-Inputs */
+
+.hm-input {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--cream-100);
+  border: 1px solid var(--ink-200);
+  border-radius: 8px;
+  padding: 4px 8px;
+  width: fit-content;
+}
+.hm-input:focus-within {
+  border-color: var(--accent-500);
+  background: var(--cream-50);
+}
+.hm-input input {
+  width: 38px;
+  background: transparent;
+  border: 0;
+  outline: none;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  color: var(--ink-900);
+  -moz-appearance: textfield;
+  appearance: textfield;
+  padding: 4px 0;
+}
+.hm-input input::-webkit-outer-spin-button,
+.hm-input input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.hm-input-sep {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-500);
+  font-weight: 600;
+}
+
+.hm-input-sm {
+  padding: 2px 6px;
+  border-radius: 6px;
+  gap: 2px;
+}
+.hm-input-sm input {
+  width: 30px;
+  font-size: 12px;
+  padding: 2px 0;
+}
+.hm-input-sm .hm-input-sep {
+  font-size: 10px;
+}
+
+body[data-theme='glass-dark'] .hm-input,
+body[data-theme='default-dark'] .hm-input {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+body[data-theme='glass-dark'] .hm-input input,
+body[data-theme='default-dark'] .hm-input input {
+  color: rgba(250, 247, 242, 0.95);
+}
+body[data-theme='glass-dark'] .hm-input-sep,
+body[data-theme='default-dark'] .hm-input-sep {
+  color: rgba(250, 247, 242, 0.5);
+}

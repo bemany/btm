@@ -9,6 +9,7 @@ import { ProjTag } from '../shared/ProjTag';
 import { showToast } from '../shared/Toast';
 import { useT, useLocale } from '../../i18n';
 import { fmtHM } from '../../lib/format';
+import { HoursMinutesInput } from '../shared/HoursMinutesInput';
 import { SessionsSection } from '../sessions/SessionsSection';
 import { TaskTimeline } from '../sessions/TaskTimeline';
 import { DatePicker } from '../shared/DatePicker';
@@ -370,47 +371,30 @@ export function TaskDetailDrawer({ id }: TaskDetailDrawerProps) {
                   style={{
                     display: 'inline-flex',
                     alignItems: 'baseline',
-                    gap: 4,
+                    gap: 6,
                     fontSize: 14,
                     color: 'var(--ink-500)',
                   }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Escape') {
+                      e.preventDefault();
+                      setEditingEst(false);
+                    }
+                  }}
                 >
                   /
-                  <input
-                    type="number"
-                    autoFocus
-                    step={0.5}
-                    min={0}
-                    max={200}
-                    value={estDraft}
-                    onChange={(e) => setEstDraft(e.target.value)}
-                    onBlur={() => {
-                      const v = parseFloat(estDraft.replace(',', '.'));
-                      if (!Number.isNaN(v) && v >= 0 && v !== t.estH) {
+                  <HoursMinutesInput
+                    value={parseFloat(estDraft.replace(',', '.')) || 0}
+                    onChange={(v) => {
+                      setEstDraft(String(v));
+                      if (v !== t.estH) {
                         updateTask(t.id, { estH: Math.round(v * 100) / 100 });
                       }
-                      setEditingEst(false);
                     }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        (e.currentTarget as HTMLInputElement).blur();
-                      } else if (e.key === 'Escape') {
-                        e.preventDefault();
-                        setEditingEst(false);
-                      }
-                    }}
-                    style={{
-                      width: 60,
-                      padding: '2px 6px',
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: 13,
-                      fontVariantNumeric: 'tabular-nums',
-                      border: '1px solid var(--ink-300)',
-                      borderRadius: 4,
-                      background: 'var(--cream-50)',
-                      color: 'var(--ink-900)',
-                    }}
+                    max={200}
+                    size="sm"
+                    autoFocus
+                    onEnter={() => setEditingEst(false)}
                   />
                   {tr('task_detail.estimate_planned_inline_suffix')}
                 </span>

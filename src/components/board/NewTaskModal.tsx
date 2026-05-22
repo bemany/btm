@@ -9,6 +9,7 @@ import { useStore } from '../../store/store';
 import { useAuth } from '../../auth/AuthContext';
 import { Icon } from '../shared/Icon';
 import { ProjectSelect } from '../shared/ProjectSelect';
+import { HoursMinutesInput } from '../shared/HoursMinutesInput';
 import { filterAssignableProjects } from '../../lib/projectFilters';
 import { showToast } from '../shared/Toast';
 import { useT } from '../../i18n';
@@ -181,21 +182,7 @@ export function NewTaskModal({ col, onClose }: NewTaskModalProps) {
           <div className="ntm-row">
             <label className="ntm-field" style={{ flex: 1 }}>
               <span className="ntm-label">{t('board.new_task_estimate')}</span>
-              <div className="ntm-stepper">
-                <button
-                  type="button"
-                  onClick={() => setEstH((v) => Math.max(0.25, Number((v - 0.25).toFixed(2))))}
-                  aria-label="-"
-                >−</button>
-                <span className="ntm-stepper-val">
-                  {estH.toFixed(2).replace('.', ',').replace(/,?0+$/, '')}h
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setEstH((v) => Math.min(24, Number((v + 0.25).toFixed(2))))}
-                  aria-label="+"
-                >+</button>
-              </div>
+              <HoursMinutesInput value={estH} onChange={setEstH} max={24} />
             </label>
             <label className="ntm-field" style={{ flex: 1 }}>
               <span className="ntm-label">{t('board.new_task_priority')}</span>

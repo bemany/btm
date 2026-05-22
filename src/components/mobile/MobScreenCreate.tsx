@@ -8,6 +8,7 @@ import { Icon } from '../shared/Icon';
 import { showToast } from '../shared/Toast';
 import { useT } from '../../i18n';
 import type { Priority } from '../../store/types';
+import { HoursMinutesInput } from '../shared/HoursMinutesInput';
 
 type DueChip = 'today' | 'tomorrow' | 'week' | 'none';
 
@@ -170,17 +171,7 @@ export function MobScreenCreate({ onClose, onCreated }: Props) {
         <div className="mob-field-row">
           <div className="mob-mini-field">
             <div className="mob-mini-lbl">{t('mobile.create_field_estimate')}</div>
-            <div className="mob-mini-stepper">
-              <span
-                className="mob-step"
-                onClick={() => setEstH((v) => Math.max(0.25, Number((v - 0.25).toFixed(2))))}
-              >−</span>
-              <span className="mob-step-val">{estH.toFixed(2).replace('.', ',').replace(/,?0+$/, '')}h</span>
-              <span
-                className="mob-step"
-                onClick={() => setEstH((v) => Math.min(24, Number((v + 0.25).toFixed(2))))}
-              >+</span>
-            </div>
+            <HoursMinutesInput value={estH} onChange={setEstH} max={24} />
           </div>
           <div className="mob-mini-field">
             <div className="mob-mini-lbl">{t('mobile.create_field_priority')}</div>
