@@ -345,6 +345,10 @@ export const en: Translations = {
     card_due_today: 'Due today',
     card_due_tomorrow: 'Tomorrow',
     card_overdue: 'Overdue',
+    card_archived: 'Archived',
+    filter_show_archived_title: 'Show/hide archived tasks on the board',
+    filter_archived_on: 'Archive: on',
+    filter_archived_off: 'Archive: off',
     timer_started_pomo_toast: 'Timer started · Pomodoro focus',
     gear_title: 'Default view',
     gear_sub: 'Selected automatically on login.',
@@ -492,6 +496,7 @@ export const en: Translations = {
   },
   task_detail: {
     archive: 'Archive task',
+    unarchive: 'Restore task',
     go_to_week: 'Open my week view',
     title_placeholder: 'Task title …',
     column_label: 'Column',

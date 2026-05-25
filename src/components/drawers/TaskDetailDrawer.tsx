@@ -33,6 +33,7 @@ export function TaskDetailDrawer({ id }: TaskDetailDrawerProps) {
   const updateTask = useStore((s) => s.updateTask);
   const deleteTask = useStore((s) => s.deleteTask);
   const archiveTask = useStore((s) => s.archiveTask);
+  const unarchiveTask = useStore((s) => s.unarchiveTask);
   const startTimer = useStore((s) => s.startTimer);
   const stopTimer = useStore((s) => s.stopTimer);
   const tr = useT();
@@ -162,6 +163,18 @@ export function TaskDetailDrawer({ id }: TaskDetailDrawerProps) {
               title={tr('task_detail.archive')}
             >
               <Icon name="archive" size={14} />
+            </button>
+          )}
+          {t.archivedAt && (
+            <button
+              className="x"
+              onClick={() => {
+                void unarchiveTask(t.id);
+                showToast(tr('toast.unarchived'));
+              }}
+              title={tr('task_detail.unarchive')}
+            >
+              <Icon name="archive-restore" size={14} />
             </button>
           )}
           <button

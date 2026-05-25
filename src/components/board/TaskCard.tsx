@@ -71,7 +71,7 @@ export function TaskCard({ task, dragging, onDragStart, onDragEnd, onClick }: Ta
 
   return (
     <div
-      className={`task-card ${dragging ? 'dragging' : ''} ${isLive ? 'live' : ''} due-${dueStatus}`}
+      className={`task-card ${dragging ? 'dragging' : ''} ${isLive ? 'live' : ''} due-${dueStatus} ${task.archivedAt ? 'is-archived' : ''}`}
       draggable
       onDragStart={(e) => onDragStart(e, task)}
       onDragEnd={onDragEnd}
@@ -80,6 +80,11 @@ export function TaskCard({ task, dragging, onDragStart, onDragEnd, onClick }: Ta
       <div className="meta-row">
         <ProjTag id={task.proj} />
         <PrioDot p={task.prio} />
+        {task.archivedAt && (
+          <span className="archived-pill" title={t('board.card_archived')}>
+            <Icon name="archive" size={9} /> {t('board.card_archived')}
+          </span>
+        )}
         {dueLabel && (
           <span className={`due-pill due-pill-${dueStatus}`} title={dueLabel}>
             <Icon name={dueStatus === 'overdue' ? 'alert-triangle' : 'calendar'} size={9} />

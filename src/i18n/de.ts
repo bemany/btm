@@ -347,6 +347,10 @@ export const de = {
     card_due_today: 'Heute fällig',
     card_due_tomorrow: 'Morgen',
     card_overdue: 'Überfällig',
+    card_archived: 'Archiviert',
+    filter_show_archived_title: 'Archivierte Aufgaben im Board ein-/ausblenden',
+    filter_archived_on: 'Archiv: an',
+    filter_archived_off: 'Archiv: aus',
     timer_started_pomo_toast: 'Timer gestartet · Pomodoro Fokus',
     gear_title: 'Standard-Ansicht',
     gear_sub: 'Wird beim Login automatisch ausgewählt.',
@@ -494,6 +498,7 @@ export const de = {
   },
   task_detail: {
     archive: 'Aufgabe archivieren',
+    unarchive: 'Aufgabe wiederherstellen',
     go_to_week: 'Zur Wochenansicht',
     title_placeholder: 'Aufgaben-Titel …',
     column_label: 'Spalte',

@@ -92,6 +92,9 @@ export interface Filter {
   // 'mine' = eigene Tasks, 'all' = alle Personen, ansonsten konkrete User-ID
   who: 'mine' | 'all' | string;
   q: string;
+  /** FgPjnOpBdCX-followup: archivierte Tasks im Board mitanzeigen.
+   *  Default false → Board zeigt nur aktive Tasks (alter Stand). */
+  showArchived?: boolean;
 }
 
 export interface UIState {

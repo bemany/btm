@@ -35,9 +35,13 @@ export function useServerSync(): void {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
 
+  // FgPjnOpBdCX-followup: showArchived-Filter wirkt sich auf den Server-
+  // Fetch aus — query-key haengt davon ab, damit React-Query auto re-fetcht
+  // wenn der User den Toggle umlegt.
+  const showArchived = useStore((s) => s.filter.showArchived ?? false);
   const tasksQ = useQuery({
-    queryKey: TASKS_KEY,
-    queryFn: () => api.listTasks(),
+    queryKey: [...TASKS_KEY, showArchived ? 'with-archived' : 'active'],
+    queryFn: () => api.listTasks({ archived: showArchived ? 'all' : 'active' }),
     staleTime: 15_000,
     refetchInterval: 30_000,
     refetchOnWindowFocus: true,

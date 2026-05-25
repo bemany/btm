@@ -707,6 +707,39 @@ body[data-theme="default-dark"] .board-gear-item.is-current {
 }
 .task-card.dragging { opacity: 0.4; cursor: grabbing; }
 .task-card.live { border-color: var(--accent-500); box-shadow: 0 0 0 1px var(--accent-500), 0 6px 16px rgba(var(--accent-rgb), 0.15); }
+/* Archivierte Tasks: ausgegraut, leichter gestrichelt, nicht "tot" aber klar markiert */
+.task-card.is-archived {
+  opacity: 0.65;
+  border-style: dashed;
+  background: var(--cream-100);
+}
+.task-card.is-archived .title { color: var(--ink-500); }
+.archived-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-500);
+  background: var(--ink-100);
+  border: 1px solid var(--ink-200);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+body[data-theme="default-dark"] .task-card.is-archived,
+body[data-theme="glass-dark"]   .task-card.is-archived {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+body[data-theme="default-dark"] .archived-pill,
+body[data-theme="glass-dark"]   .archived-pill {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: rgba(250, 247, 242, 0.55);
+}
 .task-card .title { font-size: 13px; font-weight: 500; line-height: 1.35; color: var(--ink-900); }
 .task-card .meta-row {
   display: flex; align-items: center; gap: 6px; flex-wrap: wrap;

@@ -142,6 +142,15 @@ export function FilterRow() {
           </button>
         </>
       )}
+      <span style={{ flex: 1 }} />
+      <button
+        className={`filter-chip ${filter.showArchived ? 'active' : ''}`}
+        onClick={() => setFilter({ showArchived: !filter.showArchived })}
+        title={t('board.filter_show_archived_title')}
+      >
+        <Icon name="archive" size={11} />
+        {filter.showArchived ? t('board.filter_archived_on') : t('board.filter_archived_off')}
+      </button>
     </div>
   );
 }
