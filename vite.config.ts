@@ -98,6 +98,9 @@ export default defineConfig(({ mode }) => {
           if (id.includes('lucide-react')) return 'icons';
           if (id.includes('zustand')) return 'zustand';
           if (id.includes('workbox') || id.includes('vite-plugin-pwa')) return 'pwa';
+          // three.js + postprocessing nur fuer Hyperspeed-Background — eigener
+          // Lazy-Chunk damit das initial Bundle leicht bleibt (~600 KB sparen).
+          if (id.includes('node_modules/three') || id.includes('node_modules/postprocessing')) return 'three-bg';
           return 'vendor';
         },
       },

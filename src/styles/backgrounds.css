@@ -1054,3 +1054,80 @@ body[data-theme='glass-dark'] .bg-grainient-noise { opacity: 0.18; }
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
   z-index: 2;
 }
+
+/* =========================================================
+   Silk — flowing waves (FOoB-Gxa-gx, React-Bits-inspired)
+   ========================================================= */
+.bg-silk {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  opacity: 0.7;
+  filter: blur(28px) saturate(1.15);
+}
+.bg-silk.is-preview {
+  opacity: 0.95;
+  filter: blur(10px) saturate(1.25);
+}
+.bg-silk-svg {
+  position: absolute;
+  inset: -10%;
+  width: 120%;
+  height: 120%;
+}
+.bg-silk-wave {
+  mix-blend-mode: screen;
+  will-change: transform;
+  transform-origin: center;
+}
+.bg-silk-wave-1 { animation: bg-silk-drift-a 18s ease-in-out infinite; opacity: 0.85; }
+.bg-silk-wave-2 { animation: bg-silk-drift-b 24s ease-in-out infinite; opacity: 0.7; }
+.bg-silk-wave-3 { animation: bg-silk-drift-a 22s ease-in-out -6s infinite; opacity: 0.8; }
+.bg-silk-wave-4 { animation: bg-silk-drift-b 28s ease-in-out -12s infinite; opacity: 0.65; }
+
+@keyframes bg-silk-drift-a {
+  0%, 100% { transform: translate3d(0, 0, 0) skewX(0deg); }
+  33%      { transform: translate3d(-3%, 1.2%, 0) skewX(2deg); }
+  66%      { transform: translate3d(2.5%, -1%, 0) skewX(-1.5deg); }
+}
+@keyframes bg-silk-drift-b {
+  0%, 100% { transform: translate3d(0, 0, 0) skewX(0deg); }
+  40%      { transform: translate3d(3%, -1.5%, 0) skewX(-2deg); }
+  80%      { transform: translate3d(-2.5%, 1%, 0) skewX(1.5deg); }
+}
+
+/* Dark-Mode: Wellen werden weniger leuchtend, Grundfarben dunkler */
+body[data-theme='glass-dark'] .bg-silk {
+  opacity: 0.55;
+  filter: blur(34px) saturate(1.1);
+}
+body[data-theme='glass-dark'] .bg-silk-svg {
+  /* In Dark-Mode mischen wir die Wellen mit dem Akzent + tieferem Violett */
+  filter: hue-rotate(-8deg);
+}
+
+/* Preview-Variante im Picker: weniger Blur, mehr Detail sichtbar */
+.bg-silk.is-preview .bg-silk-wave {
+  animation-duration: 8s, 10s, 9s, 11s;
+}
+
+/* =========================================================
+   Hyperspeed — WebGL Three.js road (FOoB-Gxa-gx)
+   Container nimmt die volle Hoehe/Breite vom Parent.
+   ========================================================= */
+.bg-hyperspeed {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #000;
+}
+.bg-hyperspeed canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+.bg-hyperspeed.is-preview {
+  border-radius: 8px;
+}

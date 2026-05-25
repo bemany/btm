@@ -1433,6 +1433,10 @@ export const de = {
     dark_veil_desc: 'Dunkler Verlauf mit der Maus folgendem Schein.',
     grainient_name: 'Grainient',
     grainient_desc: 'Kräftige Pastell-Wolken mit grobem Filmkorn.',
+    silk_name: 'Silk',
+    silk_desc: 'Weich fließende Wellen, wie Seide im Licht.',
+    hyperspeed_name: 'Hyperspeed',
+    hyperspeed_desc: 'Rasende Neon-Autobahn in 3D (WebGL). Klick halten = beschleunigen.',
   },
 } as const;
 

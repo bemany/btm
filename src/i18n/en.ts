@@ -1424,5 +1424,9 @@ export const en: Translations = {
     dark_veil_desc: 'Dark gradient with a glow that follows your cursor.',
     grainient_name: 'Grainient',
     grainient_desc: 'Vibrant pastel clouds with coarse film grain.',
+    silk_name: 'Silk',
+    silk_desc: 'Soft flowing waves like silk in the light.',
+    hyperspeed_name: 'Hyperspeed',
+    hyperspeed_desc: 'Rushing neon highway in 3D (WebGL). Click & hold to speed up.',
   },
 };

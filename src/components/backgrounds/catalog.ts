@@ -33,7 +33,9 @@ export type BackgroundId =
   | 'light-pillar'
   | 'prism'
   | 'dark-veil'
-  | 'grainient';
+  | 'grainient'
+  | 'silk'
+  | 'hyperspeed';
 
 export interface BackgroundEntry {
   id: BackgroundId;
@@ -136,6 +138,20 @@ export const BACKGROUNDS: BackgroundEntry[] = [
     nameKey: 'backgrounds.grainient_name',
     descKey: 'backgrounds.grainient_desc',
     Component: lazy(() => import('./effects/Grainient').then((m) => ({ default: m.Grainient }))),
+    isNew: true,
+  },
+  {
+    id: 'silk',
+    nameKey: 'backgrounds.silk_name',
+    descKey: 'backgrounds.silk_desc',
+    Component: lazy(() => import('./effects/Silk').then((m) => ({ default: m.Silk }))),
+    isNew: true,
+  },
+  {
+    id: 'hyperspeed',
+    nameKey: 'backgrounds.hyperspeed_name',
+    descKey: 'backgrounds.hyperspeed_desc',
+    Component: lazy(() => import('./effects/Hyperspeed').then((m) => ({ default: m.Hyperspeed }))),
     isNew: true,
   },
 ];
