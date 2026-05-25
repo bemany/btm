@@ -9,6 +9,43 @@ im Repo.
 
 ---
 
+## 0.13.0 — 2026-05-25
+
+**Mobile-PWA, Detail-Bottom-Sheets, Hyperspeed-Background & 12 Feedbacks**
+
+### Features
+
+- **Mobile-PWA komplett neu** — 8 iOS-native Screens (Heute, Neue Aufgabe, Detail, Fokus-Timer, Foto→KI, Wochenboard, Profil, Lockscreen-Preview). Aktiv bei Viewport < 768px oder `?mobile=1`. Apple-Style Bottom-Sheets mit zwei Detents (medium 52vh ↔ large 88vh), Drag-Handle mit Swipe-to-Dismiss, Spring-Snap mit iOS-Easing, semi-transparenter Backdrop mit Blur. Tab-Wechsel 240ms Fade+Slide, Touch-Feedback (`:active` Scale), iOS-Tap-Highlight versteckt. Safe-Area-Padding (Notch + Home-Indicator), Input-Zoom unterbunden.
+- **NewTaskModal auf Board** statt Inline-Tile — Klick auf "+" öffnet zentriertes Modal mit allen Feldern (Titel Pflicht). Cmd/Ctrl+Enter speichert. _FuO6j_tbUS5_
+- **HoursMinutesInput** überall: Aufwand in getrennten H- und M-Feldern statt Dezimalzahl. Auto-Carry bei 60+ Min. _F0VxDj1glFV_
+- **Zeit als `Hh M`** statt Dezimalstunden auf Karten + Sessions (`42m` / `1h30` statt `0,7` / `1,5`). _F4ItOLZIZ2-_
+- **Timer-Auto-Move**: Timer-Start verschiebt Task automatisch in "In Arbeit" + merkt vorherige Spalte. Beim Stop oder Wechsel zurück. Web + Mobile + MCP. _FclpRr066St_
+- **Live-Session in Sessions-Liste**: virtuelle Row mit Akzent-Border, pulsierendem Dot, "LIVE"-Chip, tickender Stunden-Anzeige.
+- **Notification-Wizard nach Login**: Daily-Digest standardmäßig aus, einmaliger Dialog "E-Mail-Benachrichtigungen?" mit Toggles. Migration für alle User.
+- **Status-Wechsel im Mobile-Task-Detail**: Footer-Buttons je nach Spalte + Rolle.
+- **Checklisten in Aufgaben** — Sektion im Detail-Drawer, eigene DB-Tabelle. _FCXVQOSTCFp_
+- **Projekte nur durch Admins** — anlegen/bearbeiten/löschen. _Fpo1Iu0ndzL_
+- **TV-Dashboard zeigt alle Live-Timer** aus allen Spalten. _FQJzGtjPqc-_
+- **Termin-Konsolidierung auf TV** — gleiche Termine zusammengefasst mit Avatar-Stack. _FNl4YW89vBX_
+- **Admin-UI Split** + Aktivitätsleiste standardmäßig aus. _FEtt86HtKR3_
+- **Domain-Whitelisting für Self-Registration** via Admin-Sektion. _Fm16BUutfUO_
+- **Push-Geräte in Settings** mit Browser-Erkennung + Test-Push. _FRPyk3YmWAb_
+- **Meine Feedbacks in Settings** — alle eigenen Bug-Reports/Features mit Status + Resolution. _F92RWnkL_Iy_
+- **Review-Sektion auf "Meine Woche"** zeigt Projekte bei denen man Owner ist. _FyfRp-e2nzS_
+- **2 neue Backgrounds**: **Silk** (SVG-Wellen) + **Hyperspeed** (Three.js Neon-Highway, lazy-loaded). _FOoB-Gxa-gx_
+
+### Changes
+
+- **Beta-Stack `btm-beta.bethesna.org`** für Staging (eigene DB, PIN-Auth, `MAIL_DISABLED=true`).
+
+### Fixes
+
+- **Calendar-Overflow auf 13"-MacBook** — Termine-Spalte (`minmax(0, 1fr)`). _Fs0ppP5DH6r_
+- Diverse Dark-Mode Texte (Meine-Feedbacks-Tab) aufgehellt.
+- `dev-pin`-Auth setzt korrektes `__Secure-`-Cookie auf HTTPS.
+
+---
+
 ## 0.12.0 — 2026-05-14
 
 **Per-User-Akzentfarbe, OpenAI-AI, Claude-MCP-Wizard, Archiv & 20+ Bug-/Feature-Fixes**

@@ -49,6 +49,156 @@ export function tx(value: Localizable, locale: 'de' | 'en'): string {
 
 export const RELEASES: Release[] = [
   {
+    version: '0.13.0',
+    date: '2026-05-25',
+    title: {
+      de: 'Mobile-PWA, Detail-Bottom-Sheets, Hyperspeed-Background & 12 Feedbacks',
+      en: 'Mobile PWA, detail bottom sheets, Hyperspeed background & 12 feedbacks',
+    },
+    changes: [
+      {
+        kind: 'feature',
+        text: {
+          de: '**Mobile-PWA komplett neu**: 8 iOS-natives Screens (Heute, Neue Aufgabe, Detail, Fokus-Timer, Foto→KI, Wochenboard, Profil, Lockscreen-Preview) — aktiv bei Viewport < 768px oder `?mobile=1`. Apple-Style Bottom-Sheets mit zwei Detents (medium 52vh ↔ large 88vh), Drag-Handle mit Swipe-to-Dismiss, Spring-Snap mit iOS-Easing, semi-transparenter Backdrop mit Blur. Tab-Wechsel mit 240ms Fade+Slide, Touch-Feedback (`:active` Scale) auf allen Buttons/Cards/Chips, iOS-Tap-Highlight versteckt. Safe-Area-Padding (Notch + Home-Indicator), Input-Zoom unterbunden (font-size: 16px + viewport-meta `user-scalable=no`).',
+          en: '**Mobile PWA, full rebuild**: 8 iOS-native screens (Today, New Task, Detail, Focus Timer, Photo→AI, Week Board, Profile, Lockscreen preview) — active when viewport < 768px or `?mobile=1`. Apple-style bottom sheets with two detents (medium 52vh ↔ large 88vh), drag handle with swipe-to-dismiss, spring-snap with iOS easing, semi-transparent backdrop with blur. Tab transitions 240ms fade+slide, touch feedback (`:active` scale) on every button/card/chip, iOS tap-highlight hidden. Safe-area padding (notch + home indicator), input zoom prevented (font-size: 16px + viewport `user-scalable=no`).',
+        },
+      },
+      {
+        kind: 'feature',
+        text: {
+          de: '**Neue-Aufgabe-Modal auf dem Board** statt Inline-Tile: Klick auf "+" öffnet ein zentriertes Modal mit Titel (Pflicht) + Beschreibung, Projekt, Verantwortlich, Aufwand, Priorität, Fälligkeit. "Anlegen" oder "Anlegen & öffnen", Cmd/Ctrl+Enter speichert. _FuO6j_tbUS5_',
+          en: '**New-task modal on the board** instead of an inline tile: clicking "+" opens a centered modal with title (required) + description, project, assignee, effort, priority, due date. "Create" or "Create & open", Cmd/Ctrl+Enter to save. _FuO6j_tbUS5_',
+        },
+      },
+      {
+        kind: 'feature',
+        text: {
+          de: '**Hours-Minutes-Input überall**: Aufwand wird jetzt in getrennten H- und M-Feldern eingegeben statt als Dezimalzahl (`1h 30` statt `1.5`). Auto-Carry bei 60+ Minuten. Enter im H-Feld springt zum M-Feld. Greift im Board-NewTaskModal, Mobile-Create, Task-Detail Inline-Edit und in der Session-Liste (Edit + Add). _F0VxDj1glFV_',
+          en: '**Hours/minutes input everywhere**: effort is entered in separate H and M fields instead of as a decimal (`1h 30` instead of `1.5`). Auto-carry on 60+ minutes. Enter in the H field jumps to the M field. Applies in board NewTaskModal, mobile create, task detail inline edit and session list (edit + add). _F0VxDj1glFV_',
+        },
+      },
+      {
+        kind: 'feature',
+        text: {
+          de: '**Zeit als `Hh M`-Format statt Dezimalstunden**: Aufgabenkarten, Listenansicht, Session-Liste und Detail-Hero zeigen jetzt `42m` / `1h` / `1h30` statt `0,7` / `1,0` / `1,5h`. Lesbarer auf einen Blick. _F4ItOLZIZ2-_',
+          en: '**Time as `Hh M` instead of decimal hours**: task cards, list view, session list and detail hero now show `42m` / `1h` / `1h30` instead of `0.7` / `1.0` / `1.5h`. Easier to read at a glance. _F4ItOLZIZ2-_',
+        },
+      },
+      {
+        kind: 'feature',
+        text: {
+          de: '**Timer-Auto-Move**: Timer-Start schiebt die Aufgabe automatisch in "In Arbeit" und merkt sich die vorherige Spalte. Beim Stop oder beim Wechsel auf eine andere Aufgabe wandert sie zurück in die alte Spalte — außer sie wurde manuell weiterverschoben oder lag schon in Review/Erledigt. Gilt für Web, Mobile und MCP. _FclpRr066St_',
+          en: '**Timer auto-move**: starting the timer moves the task to "In progress" automatically and remembers the previous column. On stop or when switching to a different task, it goes back to the old column — unless it was manually moved or was already in review/done. Web, mobile and MCP. _FclpRr066St_',
+        },
+      },
+      {
+        kind: 'feature',
+        text: {
+          de: '**Live-Session in der Sessions-Liste**: aktuell laufender Timer erscheint als virtuelle Session-Row im Task-Detail mit Akzent-Border, pulsierendem Live-Dot, "LIVE"-Chip und tickender Stunden-Anzeige (1Hz). Verschwindet automatisch beim Stoppen, die echte Session wandert in die DB.',
+          en: '**Live session in the sessions list**: the currently running timer appears as a virtual session row in the task detail with accent border, pulsing live dot, "LIVE" chip and ticking hours display (1Hz). Disappears automatically on stop and the real session moves into the DB.',
+        },
+      },
+      {
+        kind: 'feature',
+        text: {
+          de: '**Notification-Wizard nach Login**: Daily-Digest ist standardmäßig aus. Beim nächsten Login erscheint einmalig ein Dialog "E-Mail-Benachrichtigungen?" mit Ja/Nein und Einzel-Toggles für Erwähnungen + Tägliche Zusammenfassung. Migration setzt `notify_digest_mail = false` für alle Bestands-User.',
+          en: '**Notification wizard after login**: daily digest is off by default. On the next login, a one-time dialog appears: "Email notifications?" with yes/no and individual toggles for mentions + daily digest. Migration sets `notify_digest_mail = false` for all existing users.',
+        },
+      },
+      {
+        kind: 'feature',
+        text: {
+          de: '**Status-Wechsel im Mobile-Task-Detail**: Footer-Buttons je nach Spalte + Rolle. Eigene aktive Aufgabe → "Zur Review" + "Timer starten"; Review-Aufgabe + Projektleiter → "Zurück" + "Erledigt"; Erledigte → "Wieder öffnen".',
+          en: '**Status switch in the mobile task detail**: footer buttons depend on column + role. Own active task → "To review" + "Start timer"; review task + project owner → "Back" + "Done"; done → "Reopen".',
+        },
+      },
+      {
+        kind: 'feature',
+        text: {
+          de: '**Checklisten in Aufgaben**: neue Sektion im Task-Detail-Drawer zwischen Beschreibung und Anhängen. Items hinzufügen, abhaken, löschen — mit Fortschrittsbalken. Eigene DB-Tabelle, sauber persistiert. _FCXVQOSTCFp_',
+          en: '**Checklists on tasks**: new section in the task detail drawer between description and attachments. Add items, check off, delete — with progress bar. Dedicated DB table, properly persisted. _FCXVQOSTCFp_',
+        },
+      },
+      {
+        kind: 'feature',
+        text: {
+          de: '**Projekte nur durch Admins**: Anlegen/Bearbeiten/Löschen ist Admin-only (Backend 403, Frontend versteckt Buttons, Command-Palette gefiltert). _Fpo1Iu0ndzL_',
+          en: '**Projects admin-only**: create/edit/delete is admin-only (backend 403, frontend hides buttons, command palette filtered). _Fpo1Iu0ndzL_',
+        },
+      },
+      {
+        kind: 'feature',
+        text: {
+          de: '**TV-Dashboard zeigt alle Live-Timer**: Aufgaben mit aktivem Timer erscheinen in "In Arbeit", auch wenn sie noch im Backlog/Geplant/Review stehen — mit Status-Badge und live tickender Pille. _FQJzGtjPqc-_',
+          en: '**TV dashboard shows all live timers**: tasks with an active timer appear in "In progress" even if still in backlog/planned/review — with status badge and live ticking pill. _FQJzGtjPqc-_',
+        },
+      },
+      {
+        kind: 'feature',
+        text: {
+          de: '**Termin-Konsolidierung auf TV**: gleiche Termine (Titel + Zeitraum + Location) werden nur einmal angezeigt, mit gestapelten Avataren aller Teilnehmer (max 4 sichtbar + Counter). _FNl4YW89vBX_',
+          en: '**TV calendar event deduplication**: identical events (title + time + location) are shown once with stacked attendee avatars (max 4 visible + counter). _FNl4YW89vBX_',
+        },
+      },
+      {
+        kind: 'feature',
+        text: {
+          de: '**Admin-UI Split**: User und Feedbacks nebeneinander, User-Sektion mit Karten/Liste-Toggle. Aktivitäts-Sidebar standardmäßig aus, per Toggle einblendbar. _FEtt86HtKR3_',
+          en: '**Admin UI split**: users and feedback side by side, user section with cards/list toggle. Activity sidebar off by default, toggle to show. _FEtt86HtKR3_',
+        },
+      },
+      {
+        kind: 'feature',
+        text: {
+          de: '**Domain-Whitelisting für Self-Registration**: Admin-Sektion mit erlaubten E-Mail-Domains. Nutzer mit whitelisteter Domain können sich per Magic-Link selbst registrieren — werden automatisch als Member ohne Projektzugriff angelegt. _Fm16BUutfUO_',
+          en: '**Domain whitelist for self-registration**: admin section with allowed email domains. Users with a whitelisted domain can self-register via magic link — added automatically as members without project access. _Fm16BUutfUO_',
+        },
+      },
+      {
+        kind: 'feature',
+        text: {
+          de: '**Push-Geräte in den Einstellungen**: alle registrierten Geräte mit Browser-Erkennung (Chrome/Android, Safari, Firefox, Edge) sehen, Test-Push senden, Gerät entfernen. _FRPyk3YmWAb_',
+          en: '**Push devices in settings**: see all registered devices with browser detection (Chrome/Android, Safari, Firefox, Edge), send a test push, remove devices. _FRPyk3YmWAb_',
+        },
+      },
+      {
+        kind: 'feature',
+        text: {
+          de: '**Eigene Feedbacks in den Einstellungen**: neuer Tab "Meine Feedbacks" zeigt alle selbst eingereichten Bug-Reports und Feature-Requests mit Status-Pill (Offen / In Arbeit / Erledigt / Verworfen) und Resolution-Notiz vom Admin. _F92RWnkL_Iy_',
+          en: '**My feedback in settings**: new tab "My feedback" shows all self-submitted bug reports and feature requests with status pill (open / in progress / done / wontfix) and the admin\'s resolution note. _F92RWnkL_Iy_',
+        },
+      },
+      {
+        kind: 'feature',
+        text: {
+          de: '**Review-Sektion auf "Meine Woche"** zeigt jetzt Aufgaben aus Projekten, bei denen du Verantwortlicher bist (nicht mehr eigene Tasks). _FyfRp-e2nzS_',
+          en: '**Review section in "My week"** now shows tasks from projects you own (not your own tasks). _FyfRp-e2nzS_',
+        },
+      },
+      {
+        kind: 'feature',
+        text: {
+          de: '**Zwei neue React-Bits-Backgrounds**: **Silk** (weich fließende SVG-Wellen, CSS-only) und **Hyperspeed** (3D Neon-Highway via Three.js + postprocessing, Click & hold = beschleunigen). Three-Chunk wird nur lazy bei Auswahl geladen, vendor-Bundle bleibt schlank. _FOoB-Gxa-gx_',
+          en: '**Two new React Bits backgrounds**: **Silk** (soft flowing SVG waves, CSS-only) and **Hyperspeed** (3D neon highway via Three.js + postprocessing, click & hold to speed up). Three chunk loads only lazily on selection, vendor bundle stays slim. _FOoB-Gxa-gx_',
+        },
+      },
+      {
+        kind: 'change',
+        text: {
+          de: '**Beta-Stack für Staging**: dedizierter `btm-beta.bethesna.org`-Stack (eigene DB, eigene API, eigene Domain) für Vorab-Tests. PIN-Auth statt Magic-Link, `MAIL_DISABLED=true` blockiert alle ausgehenden Mails.',
+          en: '**Beta stack for staging**: dedicated `btm-beta.bethesna.org` stack (own DB, own API, own domain) for pre-release tests. PIN auth instead of magic link, `MAIL_DISABLED=true` blocks all outgoing mail.',
+        },
+      },
+      {
+        kind: 'fix',
+        text: {
+          de: '**Calendar-Overflow auf 13"-MacBook**: Termine-Spalte schießt nicht mehr aus dem Grid (`minmax(0, 1fr)`). _Fs0ppP5DH6r_',
+          en: '**Calendar overflow on 13" MacBook**: the events column no longer overflows the grid (`minmax(0, 1fr)`). _Fs0ppP5DH6r_',
+        },
+      },
+    ],
+  },
+  {
     version: '0.12.1',
     date: '2026-05-14',
     title: {
