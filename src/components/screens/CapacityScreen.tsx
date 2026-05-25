@@ -1,7 +1,9 @@
 import type { CSSProperties } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useStore } from '../../store/store';
 import { Avatar } from '../shared/Avatar';
 import { useT, useLocale } from '../../i18n';
+import { listTasks, fromServerTask } from '../../data/api';
 
 export function CapacityScreen() {
   const tasks = useStore((s) => s.tasks);
@@ -10,11 +12,26 @@ export function CapacityScreen() {
   const [locale] = useLocale();
   const fmtNum = (h: number) => h.toFixed(1).replace('.', locale === 'en' ? '.' : ',');
 
+  // FEI436brUlv: gebuchte Stunden archivierter Aufgaben muessen weiter in
+  // die Kapazitaets-Summe einfliessen. Separate Query mit archived=all.
+  const allTasksQ = useQuery({
+    queryKey: ['btm', 'tasks', 'all-with-archived'],
+    queryFn: async () => {
+      const list = await listTasks({ archived: 'all' });
+      return list.map((s) => fromServerTask(s, []));
+    },
+    staleTime: 60_000,
+    refetchOnWindowFocus: true,
+  });
+  const allTasks = allTasksQ.data ?? tasks;
+
   const activeUsers = users.filter((u) => u.status === 'active');
   const rows = activeUsers.map((u) => {
-    const myTasks = tasks.filter((tk) => tk.who === u.id && tk.col !== 'done');
-    const planned = myTasks.reduce((a, b) => a + b.estH, 0);
-    const logged = tasks.filter((tk) => tk.who === u.id).reduce((a, b) => a + b.loggedH, 0);
+    // Planned: nur aktive, nicht-archivierte, nicht-done — das sind die kommenden Aufgaben
+    const myActiveTasks = tasks.filter((tk) => tk.who === u.id && tk.col !== 'done');
+    const planned = myActiveTasks.reduce((a, b) => a + b.estH, 0);
+    // Logged: ueber ALLE Tasks (auch archivierte) damit historische Stunden bleiben
+    const logged = allTasks.filter((tk) => tk.who === u.id).reduce((a, b) => a + b.loggedH, 0);
     return { ...u, full: u.name, role: u.jobTitle ?? '—', planned, logged };
   });
   const totalCap = rows.reduce((a, r) => a + r.cap, 0) || 1;

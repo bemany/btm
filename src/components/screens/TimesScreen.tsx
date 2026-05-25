@@ -9,7 +9,7 @@ import { showToast } from '../shared/Toast';
 import { fmtHMS, fmtMS, DEMO_TODAY } from '../../lib/format';
 import { computePomo } from '../../lib/pomodoro';
 import { TimeCell } from './TimeCell';
-import { listWeekSessions } from '../../data/api';
+import { listWeekSessions, listTasks, fromServerTask } from '../../data/api';
 import { SYNC_KEYS } from '../../data/sync';
 import { useAuth } from '../../auth/AuthContext';
 import { useT, useLocale } from '../../i18n';
@@ -67,7 +67,22 @@ export function TimesScreen() {
 
   const targetUser = users.find((u) => u.id === selectedUserId) ?? users.find((u) => u.id === currentUser);
   const me = { name: targetUser ? targetUser.name.split(' ')[0] || targetUser.name : '—' };
-  const targetTasks = tasks.filter((tk) => tk.who === selectedUserId);
+
+  // FEI436brUlv: Times-Screen muss auch archivierte Tasks aufloesen koennen,
+  // sonst tauchen die Stunden auf, aber ohne Titel/Projekt. Wir holen alle
+  // Tasks (inkl. archived) als zusaetzliche Query, mergen sie ueber den
+  // Store-Stand. Cache 60s.
+  const allTasksQ = useQuery({
+    queryKey: ['btm', 'tasks', 'all-with-archived'],
+    queryFn: async () => {
+      const list = await listTasks({ archived: 'all' });
+      return list.map((s) => fromServerTask(s, []));
+    },
+    staleTime: 60_000,
+    refetchOnWindowFocus: true,
+  });
+  const allTasks = allTasksQ.data ?? tasks;
+  const targetTasks = allTasks.filter((tk) => tk.who === selectedUserId);
 
   // Wochen-Navigation
   const shiftWeek = (deltaDays: number) => {
