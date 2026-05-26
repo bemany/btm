@@ -145,7 +145,7 @@ export const en: Translations = {
     push_registered_since: 'Since {date}',
     appearance_theme: 'Theme',
     appearance_brightness: 'Brightness',
-    appearance_intro: 'How BTM looks. Glass is translucent (macOS Sequoia), Studio denser and calmer.',
+    appearance_intro: 'How BTM looks. Pick light or dark — both use Glass (translucent, macOS Sequoia style).',
     appearance_accent: 'Accent color',
     appearance_accent_help: 'The accent color shows up everywhere in BTM — buttons, hover states, highlights. Pick a preset or define your own.',
     appearance_accent_custom: 'Custom color',

@@ -96,11 +96,10 @@ export function OnboardingTour({ replayKey = 0, theme, setTheme }: Props) {
   // ein zweites Mal.
   const lastHandledReplayKey = useRef<number>(-1);
 
+  // Studio-Themes (2026-05-26) deaktiviert — Onboarding zeigt nur Glass.
   const themeOptions: Array<{ id: ThemeMode; label: string; sub: string }> = [
     { id: 'glass', label: t('onboarding.theme_glass_light'), sub: t('onboarding.theme_glass_light_sub') },
     { id: 'glass-dark', label: t('onboarding.theme_glass_dark'), sub: t('onboarding.theme_glass_dark_sub') },
-    { id: 'default', label: t('onboarding.theme_studio_light'), sub: t('onboarding.theme_studio_light_sub') },
-    { id: 'default-dark', label: t('onboarding.theme_studio_dark'), sub: t('onboarding.theme_studio_dark_sub') },
   ];
   const viewOptions: Array<{ id: LayoutMode; icon: string; label: string; sub: string }> = [
     { id: 'kanban', icon: 'kanban-square', label: t('onboarding.view_kanban'), sub: t('onboarding.view_kanban_sub') },

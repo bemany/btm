@@ -147,7 +147,7 @@ export const de = {
     push_registered_since: 'Seit {date}',
     appearance_theme: 'Theme',
     appearance_brightness: 'Helligkeit',
-    appearance_intro: 'Wie BTM aussieht. Glass ist transluzent (macOS Sequoia), Studio dichter und ruhiger.',
+    appearance_intro: 'Wie BTM aussieht. Wähle zwischen hell und dunkel — beide nutzen Glass (transluzent, macOS-Sequoia-Stil).',
     appearance_accent: 'Akzentfarbe',
     appearance_accent_help: 'Die Akzentfarbe taucht überall in BTM auf — Buttons, Hover-States, Highlights. Nimm einen Preset oder wähle eine eigene Farbe.',
     appearance_accent_custom: 'Eigene Farbe',

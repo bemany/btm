@@ -33,35 +33,11 @@ export function AppearanceTab({ theme, setTheme, accentColor, setAccentColor }: 
     <div className="set-pane">
       <p className="set-intro">{t('settings.appearance_intro')}</p>
 
-      <div className="set-section-label">{t('settings.appearance_theme')}</div>
-      <div className="set-card-grid">
-        <button
-          type="button"
-          className={`set-card ${base === 'glass' ? 'is-active' : ''}`}
-          onClick={() => setTheme(composeTheme('glass', brightness))}
-        >
-          <span className="set-card-swatch glass" />
-          <span className="set-card-text">
-            <span className="set-card-title">{t('sidebar.profile_glass')}</span>
-            <span className="set-card-sub">{t('sidebar.profile_glass_sub')}</span>
-          </span>
-          {base === 'glass' && <Icon name="check" size={14} className="set-card-check" />}
-        </button>
-        <button
-          type="button"
-          className={`set-card ${base === 'default' ? 'is-active' : ''}`}
-          onClick={() => setTheme(composeTheme('default', brightness))}
-        >
-          <span className="set-card-swatch studio" />
-          <span className="set-card-text">
-            <span className="set-card-title">{t('sidebar.profile_studio')}</span>
-            <span className="set-card-sub">{t('sidebar.profile_studio_sub')}</span>
-          </span>
-          {base === 'default' && <Icon name="check" size={14} className="set-card-check" />}
-        </button>
-      </div>
-
-      <div className="set-section-label" style={{ marginTop: 22 }}>
+      {/* Studio-Theme deaktiviert (2026-05-26) — User koennen nur noch zwischen
+          Light/Dark des Glass-Themes waehlen. Solid-Studio-Themes bleiben als
+          ThemeMode-Werte erhalten, werden aber automatisch auf Glass migriert
+          (siehe App.tsx). */}
+      <div className="set-section-label">
         {t('settings.appearance_brightness')}
       </div>
       <div className="set-card-grid">

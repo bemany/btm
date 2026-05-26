@@ -108,10 +108,19 @@ if (typeof document !== 'undefined') {
   }
 }
 
+// Solid-Studio-Themes auf Glass migrieren (Studio wurde 2026-05-26 deaktiviert).
+function migrateLegacyTheme(t: ThemeMode): ThemeMode {
+  if (t === 'default') return 'glass';
+  if (t === 'default-dark') return 'glass-dark';
+  return t;
+}
+
 function loadTheme(): ThemeMode {
   try {
     const v = localStorage.getItem(THEME_STORAGE_KEY);
-    if (v && (ALL_THEMES as string[]).includes(v)) return v as ThemeMode;
+    if (v && (ALL_THEMES as string[]).includes(v)) {
+      return migrateLegacyTheme(v as ThemeMode);
+    }
   } catch {
     /* ignore */
   }
