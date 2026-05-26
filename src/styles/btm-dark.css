@@ -241,36 +241,38 @@ body[data-theme="glass-dark"] .timer-chip {
    Card-Background jetzt etwas Dichte (Cream-100 als feste Base + leichter
    White-Overlay als „Frost"), so dass die Akzentfarbe nur noch Hauch
    durchscheint und der Text immer scharf auf festem Untergrund sitzt. */
+/* FauFOzc_0MI: Glass-Dark — deutlich glasiger, kein fester cream-100-Boden
+   mehr, damit Background-Effekte durchscheinen koennen. Blur uebernimmt
+   die Text-Lesbarkeit. */
 body[data-theme="glass-dark"] .kpi,
 body[data-theme="glass-dark"] .task-card,
-body[data-theme="glass-dark"] .proj-card {
-  background:
-    linear-gradient(rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.06)),
-    var(--cream-100);
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  backdrop-filter: blur(18px) saturate(160%);
-  -webkit-backdrop-filter: blur(18px) saturate(160%);
+body[data-theme="glass-dark"] .proj-card,
+body[data-theme="glass-dark"] .admin-user-card,
+body[data-theme="glass-dark"] .set-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(26px) saturate(180%);
+  -webkit-backdrop-filter: blur(26px) saturate(180%);
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.06) inset,
-    0 1px 2px rgba(0, 0, 0, 0.25),
-    0 8px 24px rgba(0, 0, 0, 0.22);
+    0 8px 28px rgba(0, 0, 0, 0.32);
 }
 
 /* Kanban-Spalten in Dark-Glass: glasiger als die Tasks-Cards, damit
    sie als „Container" lesbar bleiben aber den Background durchschimmern
    lassen. */
 body[data-theme="glass-dark"] .k-col {
-  background: rgba(255, 255, 255, 0.025);
+  background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(22px) saturate(160%);
-  -webkit-backdrop-filter: blur(22px) saturate(160%);
+  backdrop-filter: blur(30px) saturate(180%);
+  -webkit-backdrop-filter: blur(30px) saturate(180%);
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.04) inset,
     0 8px 28px rgba(0, 0, 0, 0.22);
 }
 body[data-theme="glass-dark"] .k-col-head {
-  background: rgba(255, 255, 255, 0.04);
-  border-bottom-color: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom-color: rgba(255, 255, 255, 0.06);
 }
 body[data-theme="glass-dark"] .k-col-body.drop-target {
   background: rgba(var(--accent-rgb), 0.1);
@@ -280,10 +282,11 @@ body[data-theme="glass-dark"] .k-col-head .add {
   border-color: rgba(255, 255, 255, 0.12);
 }
 body[data-theme="glass-dark"] .task-card:hover {
-  background:
-    linear-gradient(rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.10)),
-    var(--cream-100);
-  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.08) inset,
+    0 12px 30px rgba(0, 0, 0, 0.38);
 }
 
 /* Timer-hero in Glass-Dark — frosted accent über fester Dark-Base, damit

@@ -1124,12 +1124,13 @@ body[data-theme="glass-dark"] .admin-side {
   background: rgba(255,255,255,0.04);
   border-left: 1px solid rgba(255,255,255,0.06);
 }
+/* FauFOzc_0MI: Admin-Cards systemweit glasiger */
 body[data-theme="glass-dark"] .admin-user-card,
 body[data-theme="glass-dark"] .admin-invite-card {
-  background: rgba(255,255,255,0.045);
-  border: 1px solid rgba(255,255,255,0.07);
-  backdrop-filter: blur(18px) saturate(160%);
-  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  backdrop-filter: blur(26px) saturate(180%);
+  -webkit-backdrop-filter: blur(26px) saturate(180%);
 }
 body[data-theme="glass"] .admin-side {
   background: rgba(255,255,255,0.4);
@@ -1139,10 +1140,10 @@ body[data-theme="glass"] .admin-side {
 }
 body[data-theme="glass"] .admin-user-card,
 body[data-theme="glass"] .admin-invite-card {
-  background: rgba(255,255,255,0.55);
-  border: 1px solid rgba(28,26,23,0.07);
-  backdrop-filter: blur(18px) saturate(160%);
-  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  background: rgba(255,255,255,0.18);
+  border: 1px solid rgba(255,255,255,0.45);
+  backdrop-filter: blur(26px) saturate(180%);
+  -webkit-backdrop-filter: blur(26px) saturate(180%);
 }
 
 /* Multi-Team-Membership im UserDrawer */
