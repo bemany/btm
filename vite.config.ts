@@ -92,15 +92,19 @@ export default defineConfig(({ mode }) => {
       output: {
         manualChunks: (id) => {
           if (!id.includes('node_modules')) return undefined;
-          if (id.includes('react-dom')) return 'react-dom';
-          if (id.includes('react')) return 'react';
-          if (id.includes('@tanstack')) return 'tanstack';
-          if (id.includes('lucide-react')) return 'icons';
-          if (id.includes('zustand')) return 'zustand';
-          if (id.includes('workbox') || id.includes('vite-plugin-pwa')) return 'pwa';
+          // WICHTIG: Pfad-basiert matchen statt id.includes('react') — sonst
+          // landen Libraries wie react-markdown, react-* etc. im react-Chunk
+          // und ziehen ihre ESM-Subdependencies mit, was zirkulaere Imports
+          // verursacht (Hydration-Error: "useState is undefined").
+          if (id.includes('node_modules/react-dom/')) return 'react-dom';
+          if (id.includes('node_modules/react/') || id.includes('node_modules/scheduler/')) return 'react';
+          if (id.includes('node_modules/@tanstack/')) return 'tanstack';
+          if (id.includes('node_modules/lucide-react/')) return 'icons';
+          if (id.includes('node_modules/zustand/')) return 'zustand';
+          if (id.includes('node_modules/workbox') || id.includes('node_modules/vite-plugin-pwa/')) return 'pwa';
           // three.js + postprocessing nur fuer Hyperspeed-Background — eigener
           // Lazy-Chunk damit das initial Bundle leicht bleibt (~600 KB sparen).
-          if (id.includes('node_modules/three') || id.includes('node_modules/postprocessing')) return 'three-bg';
+          if (id.includes('node_modules/three/') || id.includes('node_modules/postprocessing/')) return 'three-bg';
           return 'vendor';
         },
       },
