@@ -5,6 +5,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { useAuth } from '../../auth/AuthContext';
 import { Icon } from '../shared/Icon';
 import { showToast } from '../shared/Toast';
@@ -167,10 +169,27 @@ function ChatBubbleMsg({ msg }: ChatBubbleMsgProps) {
               </div>
             </details>
           ) : seg.content.trim() ? (
-            <div key={k} className="cb-bubble">
-              {seg.content.split('\n').map((line, j) => (
-                <div key={j}>{line || ' '}</div>
-              ))}
+            <div key={k} className="cb-bubble cb-bubble-md">
+              {isUser ? (
+                // User-Eingaben unveraendert anzeigen — kein Markdown-Parsing,
+                // sonst werden eingegebene Sonderzeichen falsch interpretiert.
+                seg.content.split('\n').map((line, j) => (
+                  <div key={j}>{line || ' '}</div>
+                ))
+              ) : (
+                // Assistant-Antworten als Markdown rendern (Listen, Code,
+                // **bold**, *italic*, Tabellen via remark-gfm, Links).
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    a: ({ children, ...props }) => (
+                      <a {...props} target="_blank" rel="noopener noreferrer">{children}</a>
+                    ),
+                  }}
+                >
+                  {seg.content}
+                </ReactMarkdown>
+              )}
             </div>
           ) : null,
         )}
