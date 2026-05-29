@@ -12,7 +12,7 @@
 import { useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as api from '../../data/api';
-import type { FeedbackEntry, FeedbackStatus, FeedbackType } from '../../data/api';
+import type { FeedbackEntry, FeedbackPriority, FeedbackStatus, FeedbackType } from '../../data/api';
 import { useStore } from '../../store/store';
 import { Icon } from '../shared/Icon';
 import { showToast } from '../shared/Toast';
@@ -21,6 +21,8 @@ import { useT, useLocale } from '../../i18n';
 const FEEDBACK_KEY = ['btm', 'feedback'] as const;
 
 const STATUS_OPTIONS: FeedbackStatus[] = ['open', 'in_progress', 'done', 'wontfix'];
+const PRIORITY_OPTIONS: FeedbackPriority[] = ['high', 'med', 'low'];
+const PRIORITY_RANK: Record<FeedbackPriority, number> = { high: 0, med: 1, low: 2 };
 
 export function FeedbackList() {
   const t = useT();
@@ -33,6 +35,9 @@ export function FeedbackList() {
   // sehen will, wechselt auf 'done' / 'wontfix' / 'all'.
   type StatusFilterValue = 'active' | 'all' | 'open' | 'in_progress' | 'done' | 'wontfix';
   const [statusFilter, setStatusFilter] = useState<StatusFilterValue>('active');
+  // Submitter-Filter (FpU3hZAA30w): 'all' = jeder, 'unknown' = anonyme/gelöschte,
+  // sonst userId. Default 'all'.
+  const [submitterFilter, setSubmitterFilter] = useState<string>('all');
   // Edit-Mode pro Item — null = keine Bearbeitung läuft.
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<{ title: string; body: string; type: FeedbackType }>({
@@ -73,22 +78,64 @@ export function FeedbackList() {
     };
   }, [items, filter]);
 
+  // Submitter-Optionen aus den vorhandenen Feedbacks aggregieren — nur Personen
+  // die wirklich was eingereicht haben tauchen im Dropdown auf.
+  const submitterOptions = useMemo(() => {
+    const counts = new Map<string, number>();
+    let unknown = 0;
+    for (const i of items) {
+      if (!i.submitterId) {
+        unknown += 1;
+        continue;
+      }
+      counts.set(i.submitterId, (counts.get(i.submitterId) ?? 0) + 1);
+    }
+    const rows = Array.from(counts.entries())
+      .map(([id, n]) => {
+        const u = users.find((x) => x.id === id);
+        return { id, name: u?.name ?? id.slice(0, 6), count: n };
+      })
+      .sort((a, b) => a.name.localeCompare(b.name));
+    return { rows, unknown };
+  }, [items, users]);
+
   const filtered = useMemo(() => {
-    // Erst nach Typ filtern, dann nach Status
+    // Erst nach Typ filtern, dann nach Status, dann nach Submitter
     let list = filter === 'all' ? items : items.filter((i) => i.type === filter);
     if (statusFilter === 'active') {
       list = list.filter((i) => i.status === 'open' || i.status === 'in_progress');
     } else if (statusFilter !== 'all') {
       list = list.filter((i) => i.status === statusFilter);
     }
-    return list;
-  }, [items, filter, statusFilter]);
+    if (submitterFilter === 'unknown') {
+      list = list.filter((i) => !i.submitterId);
+    } else if (submitterFilter !== 'all') {
+      list = list.filter((i) => i.submitterId === submitterFilter);
+    }
+    // Sortierung: erst nach Priority (high→med→low), dann nach createdAt desc.
+    // So bubble high-priority offene Items immer nach oben.
+    return [...list].sort((a, b) => {
+      const pa = PRIORITY_RANK[a.priority] ?? 1;
+      const pb = PRIORITY_RANK[b.priority] ?? 1;
+      if (pa !== pb) return pa - pb;
+      return b.createdAt.localeCompare(a.createdAt);
+    });
+  }, [items, filter, statusFilter, submitterFilter]);
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: FEEDBACK_KEY });
 
   const setStatus = async (id: string, status: FeedbackStatus) => {
     try {
       await api.updateFeedback(id, { status });
+      refresh();
+    } catch {
+      showToast(t('common.error_generic'));
+    }
+  };
+
+  const setPriority = async (id: string, priority: FeedbackPriority) => {
+    try {
+      await api.updateFeedback(id, { priority });
       refresh();
     } catch {
       showToast(t('common.error_generic'));
@@ -373,6 +420,31 @@ export function FeedbackList() {
             </option>
           </select>
         </div>
+        <div className="fb-admin-status-filter">
+          <label className="fb-admin-status-label" htmlFor="fb-submitter-filter-select">
+            {t('feedback.submitter_filter_label')}
+          </label>
+          <select
+            id="fb-submitter-filter-select"
+            className="fb-admin-status-select"
+            value={submitterFilter}
+            onChange={(e) => setSubmitterFilter(e.target.value)}
+          >
+            <option value="all">
+              {t('feedback.submitter_filter_all')} ({items.length})
+            </option>
+            {submitterOptions.rows.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.name} ({r.count})
+              </option>
+            ))}
+            {submitterOptions.unknown > 0 && (
+              <option value="unknown">
+                {t('feedback.submitter_filter_unknown')} ({submitterOptions.unknown})
+              </option>
+            )}
+          </select>
+        </div>
       </div>
 
       {selectedIds.size > 0 && (
@@ -416,7 +488,7 @@ export function FeedbackList() {
             return (
               <article
                 key={item.id}
-                className={`fb-admin-card status-${item.status} ${editingId === item.id ? 'is-editing' : ''} ${selectedIds.has(item.id) ? 'is-selected' : ''}`}
+                className={`fb-admin-card status-${item.status} priority-${item.priority} ${editingId === item.id ? 'is-editing' : ''} ${selectedIds.has(item.id) ? 'is-selected' : ''}`}
               >
                 <header className="fb-admin-card-head">
                   {editingId !== item.id && (
@@ -458,6 +530,20 @@ export function FeedbackList() {
                   ) : (
                     <h3 className="fb-admin-card-title">{item.title}</h3>
                   )}
+                  <select
+                    className={`fb-priority-select prio-${item.priority}`}
+                    value={item.priority}
+                    onChange={(e) => setPriority(item.id, e.target.value as FeedbackPriority)}
+                    disabled={editingId === item.id}
+                    title={t('feedback.priority_label')}
+                    aria-label={t('feedback.priority_label')}
+                  >
+                    {PRIORITY_OPTIONS.map((p) => (
+                      <option key={p} value={p}>
+                        {t(`feedback.priority_${p}` as 'feedback.priority_high')}
+                      </option>
+                    ))}
+                  </select>
                   <select
                     className="fb-status-select"
                     value={item.status}

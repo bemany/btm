@@ -9,6 +9,18 @@ im Repo.
 
 ---
 
+## 0.13.1 — 2026-05-29
+
+**Admin-Feedbacks: Priorität, Submitter-Filter, schmalere User-Spalte**
+
+- **Feature** — Priorisierung von Feedbacks (Hoch / Mittel / Niedrig — Default Mittel). Dropdown auf der Karte. Liste sortiert High → Med → Low, innerhalb nach Datum. Hoch-Prio offene Items bekommen einen roten Akzentstreifen am linken Rand. _FpU3hZAA30w_
+- **Feature** — Feedbacks nach Submitter filtern: neues "Eingereicht von"-Dropdown mit Personenliste + Anzahl, optional "Unbekannt". _FpU3hZAA30w_
+- **Change** — Admin-Split-Layout: User-Sektion schmaler, Feedback-Sektion bekommt ~60% statt 42%. _FpU3hZAA30w_
+
+DB-Migration: `0027_feedback_priority.sql` (`priority text NOT NULL DEFAULT 'med'` + Index).
+
+---
+
 ## 0.13.0 — 2026-05-25
 
 **Mobile-PWA, Detail-Bottom-Sheets, Hyperspeed-Background & 12 Feedbacks**

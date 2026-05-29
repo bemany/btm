@@ -49,6 +49,37 @@ export function tx(value: Localizable, locale: 'de' | 'en'): string {
 
 export const RELEASES: Release[] = [
   {
+    version: '0.13.1',
+    date: '2026-05-29',
+    title: {
+      de: 'Admin-Feedbacks: Priorität, Submitter-Filter, schmalere User-Spalte',
+      en: 'Admin feedbacks: priority, submitter filter, narrower user column',
+    },
+    changes: [
+      {
+        kind: 'feature',
+        text: {
+          de: '**Priorisierung von Feedbacks**: jedes Feedback hat jetzt eine Priorität (Hoch / Mittel / Niedrig — Default Mittel). Der Admin setzt sie per Dropdown direkt auf der Karte. Liste sortiert nach Priorität (Hoch → Mittel → Niedrig), innerhalb nach Datum. Hoch-Prio offene Items bekommen einen roten Akzentstreifen am linken Rand der Karte. _FpU3hZAA30w_',
+          en: '**Feedback priorities**: every feedback now has a priority (High / Medium / Low — default Medium). Admins set it via a dropdown on the card. List sorts by priority (High → Medium → Low), then by date. High-priority open items get a red accent stripe on the left edge of the card. _FpU3hZAA30w_',
+        },
+      },
+      {
+        kind: 'feature',
+        text: {
+          de: '**Feedbacks nach Submitter filtern**: neues Dropdown "Eingereicht von" im Admin-Screen. Listet alle Personen mit Feedbacks samt Anzahl, plus optional "Unbekannt" für anonyme/gelöschte Einreichungen. _FpU3hZAA30w_',
+          en: '**Filter feedbacks by submitter**: new "Submitted by" dropdown in the admin screen. Lists everyone with feedbacks together with the count, plus optional "Unknown" for anonymous / deleted submissions. _FpU3hZAA30w_',
+        },
+      },
+      {
+        kind: 'change',
+        text: {
+          de: '**Admin-Split-Layout neu gewichtet**: User-Sektion schmaler, Feedback-Sektion bekommt mehr Platz (von 42% auf ~60%) — Bug- und Feature-Titel haben jetzt Luft, ohne dass Title-Tags umbrechen. _FpU3hZAA30w_',
+          en: '**Admin split layout reweighted**: user section narrower, feedback section gets more room (from 42% to ~60%) — bug and feature titles now have breathing room without wrapping. _FpU3hZAA30w_',
+        },
+      },
+    ],
+  },
+  {
     version: '0.13.0',
     date: '2026-05-25',
     title: {

@@ -17,6 +17,7 @@ import { sendMail, feedbackResolvedEmail, appIconAttachment } from '../lib/maile
 
 const TypeEnum = z.enum(['bug', 'feature']);
 const StatusEnum = z.enum(['open', 'in_progress', 'done', 'wontfix']);
+const PriorityEnum = z.enum(['low', 'med', 'high']);
 
 const createSchema = z.object({
   type: TypeEnum,
@@ -37,6 +38,7 @@ const createSchema = z.object({
 
 const updateSchema = z.object({
   status: StatusEnum.optional(),
+  priority: PriorityEnum.optional(),
   adminNote: z.string().max(20_000).nullable().optional(),
   // Admin kann Title + Body korrigieren (z.B. Tippfehler, klarere Formulierung,
   // unsinnige Feature-Wünsche rebooten). type bleibt unveränderlich — wenn das
@@ -91,6 +93,7 @@ export const feedbackRoute = new Hono<{ Variables: Variables }>()
     const body = updateSchema.parse(await c.req.json());
     const patch: {
       status?: 'open' | 'in_progress' | 'done' | 'wontfix';
+      priority?: 'low' | 'med' | 'high';
       adminNote?: string | null;
       title?: string;
       body?: string;
@@ -98,6 +101,7 @@ export const feedbackRoute = new Hono<{ Variables: Variables }>()
       updatedAt: Date;
     } = { updatedAt: new Date() };
     if (body.status !== undefined) patch.status = body.status;
+    if (body.priority !== undefined) patch.priority = body.priority;
     if (body.adminNote !== undefined) patch.adminNote = body.adminNote;
     if (body.title !== undefined) patch.title = body.title;
     if (body.body !== undefined) patch.body = body.body;

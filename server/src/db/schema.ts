@@ -488,6 +488,10 @@ export const feedback = pgTable(
     status: text('status', { enum: ['open', 'in_progress', 'done', 'wontfix'] })
       .notNull()
       .default('open'),
+    // FpU3hZAA30w: Admin-Prioritaet fuer Sortierung im Admin-Screen
+    priority: text('priority', { enum: ['low', 'med', 'high'] })
+      .notNull()
+      .default('med'),
     adminNote: text('admin_note'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),

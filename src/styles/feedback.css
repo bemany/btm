@@ -341,6 +341,54 @@ body[data-theme="glass-dark"] .fb-admin-status-select {
   border-radius: 4px;
   padding: 3px 6px;
 }
+/* FpU3hZAA30w: Priority-Select neben Status. Farbig damit High auf einen
+   Blick sichtbar ist — orange (med ist default also weniger laut). */
+.fb-priority-select {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--cream-50);
+  border: 1px solid var(--ink-200);
+  border-radius: 4px;
+  padding: 3px 6px;
+  cursor: pointer;
+}
+.fb-priority-select.prio-high {
+  background: rgba(196, 84, 84, 0.14);
+  border-color: rgba(196, 84, 84, 0.45);
+  color: #8B2F2F;
+}
+.fb-priority-select.prio-med {
+  background: var(--cream-100);
+  color: var(--ink-700);
+}
+.fb-priority-select.prio-low {
+  background: transparent;
+  color: var(--ink-500);
+  border-style: dashed;
+}
+/* Linker farbiger Streifen am Card-Rand fuer high-prio offene Items. */
+.fb-admin-card.priority-high.status-open,
+.fb-admin-card.priority-high.status-in_progress {
+  box-shadow: inset 3px 0 0 0 rgba(196, 84, 84, 0.75);
+}
+body[data-theme="glass-dark"] .fb-priority-select,
+body[data-theme="default-dark"] .fb-priority-select {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: rgba(250, 247, 242, 0.85);
+}
+body[data-theme="glass-dark"] .fb-priority-select.prio-high,
+body[data-theme="default-dark"] .fb-priority-select.prio-high {
+  background: rgba(232, 124, 124, 0.22);
+  border-color: rgba(232, 124, 124, 0.55);
+  color: #F4B5B5;
+}
+body[data-theme="glass-dark"] .fb-priority-select.prio-low,
+body[data-theme="default-dark"] .fb-priority-select.prio-low {
+  background: transparent;
+  color: rgba(250, 247, 242, 0.45);
+}
 .fb-admin-card-body {
   font-size: 13px;
   line-height: 1.55;

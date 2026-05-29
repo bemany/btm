@@ -533,6 +533,7 @@ export async function adminMagicLink(userId: string): Promise<AdminMagicLinkResp
 
 export type FeedbackType = 'bug' | 'feature';
 export type FeedbackStatus = 'open' | 'in_progress' | 'done' | 'wontfix';
+export type FeedbackPriority = 'low' | 'med' | 'high';
 
 export interface FeedbackEntry {
   id: string;
@@ -544,6 +545,7 @@ export interface FeedbackEntry {
   contextUserAgent: string | null;
   submitterId: string | null;
   status: FeedbackStatus;
+  priority: FeedbackPriority;
   adminNote: string | null;
   createdAt: string;
   updatedAt: string;
@@ -573,6 +575,7 @@ export async function updateFeedback(
   id: string,
   patch: {
     status?: FeedbackStatus;
+    priority?: FeedbackPriority;
     adminNote?: string | null;
     title?: string;
     body?: string;

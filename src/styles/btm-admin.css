@@ -204,7 +204,10 @@ body[data-theme="default-dark"] .admin-side-close:hover {
    gestapelt auf schmaleren. */
 .admin-split {
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  /* FpU3hZAA30w: User-Spalte schmaler — Feedback-Sektion bekommt mehr Platz
+     (Bug/Feature-Titel + Body + Meta brauchen Breite, User-Tabelle reicht
+     mit Avatar+Name+Mail vorne dran). */
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
   gap: 22px;
   align-items: start;
 }
