@@ -13,14 +13,15 @@
   background: linear-gradient(135deg, var(--accent-500) 0%, var(--accent-600) 100%);
   color: #fff;
   border: none;
-  cursor: pointer;
+  cursor: grab;
+  touch-action: none;
   display: grid;
   place-items: center;
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.18) inset,
     0 4px 12px rgba(var(--accent-rgb), 0.32),
     0 12px 32px rgba(0, 0, 0, 0.18);
-  transition: transform 150ms var(--ease-out), box-shadow 150ms;
+  transition: transform 150ms var(--ease-out), box-shadow 150ms, right 220ms var(--ease-out), bottom 220ms var(--ease-out), top 220ms var(--ease-out), left 220ms var(--ease-out);
 }
 .cb-fab:hover {
   transform: translateY(-1px) scale(1.04);
@@ -31,6 +32,15 @@
 }
 .cb-fab:active {
   transform: scale(0.96);
+  cursor: grabbing;
+}
+/* F9rFkMkAMeF: free-drag — solange position null ist, gilt der Default
+   bottom-right oben. Sobald inline left/top gesetzt sind (via style),
+   ueberschreiben die. Im Drag entfaellt die transition damit die Bubble
+   1:1 dem Cursor folgt. */
+.cb-fab.is-dragging {
+  transition: none;
+  cursor: grabbing;
 }
 
 .cb-panel {

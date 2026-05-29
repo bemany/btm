@@ -14,6 +14,7 @@ import { useStore } from '../../store/store';
 import { Avatar } from '../shared/Avatar';
 import { Icon } from '../shared/Icon';
 import { useT, useLocale } from '../../i18n';
+import { NewTaskModal } from './NewTaskModal';
 
 export interface BoardTimelineProps {
   tasks: Task[];
@@ -85,6 +86,25 @@ export function BoardTimeline({ tasks }: BoardTimelineProps) {
 
   // Wochenanker — Default: aktuelle Woche (Lokal)
   const [weekStart, setWeekStart] = useState<Date>(() => mondayOfDate(new Date()));
+  // F9hw8vcx3ci: erledigte Aufgaben standardmaessig ausblenden, weil sie
+  // sonst die „Ohne Frist"-Spalte zumuellen. Toggle persistiert in
+  // localStorage damit der User die Praeferenz behaelt.
+  const [showCompleted, setShowCompletedState] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('btm.timeline.showCompleted') === '1';
+    } catch {
+      return false;
+    }
+  });
+  const setShowCompleted = (next: boolean) => {
+    setShowCompletedState(next);
+    try {
+      localStorage.setItem('btm.timeline.showCompleted', next ? '1' : '0');
+    } catch {
+      // localStorage kann in Privat-Tabs werfen — egal, State haelt
+    }
+  };
+  const visibleTasks = showCompleted ? tasks : tasks.filter((tk) => tk.col !== 'done');
   const shiftWeek = (delta: number) => {
     const d = new Date(weekStart);
     d.setDate(d.getDate() + delta);
@@ -113,6 +133,10 @@ export function BoardTimeline({ tasks }: BoardTimelineProps) {
   // Drag-State
   const [dragId, setDragId] = useState<string | null>(null);
   const [dragOverCell, setDragOverCell] = useState<string | null>(null);
+
+  // FXjEEm5q-_l: Neue-Aufgabe-Modal direkt aus einer Tageszelle. Speichert
+  // wer + welcher Tag schon vorausgefuellt sind. null = geschlossen.
+  const [newTaskFor, setNewTaskFor] = useState<{ assignee: string; due: string | null } | null>(null);
 
   const onDragStart = (e: DragEvent<HTMLDivElement>, taskId: string) => {
     setDragId(taskId);
@@ -157,10 +181,26 @@ export function BoardTimeline({ tasks }: BoardTimelineProps) {
   };
 
   const byPerson: Record<string, Task[]> = {};
-  tasks.forEach((tk) => {
+  visibleTasks.forEach((tk) => {
     if (!byPerson[tk.who]) byPerson[tk.who] = [];
     byPerson[tk.who].push(tk);
   });
+
+  // F44rPspkp5z: Tagessumme aller geplanten Stunden pro Spalte.
+  // F9hw8vcx3ci: erledigte sind hier raus (via visibleTasks) wenn der
+  // Toggle aus ist — die Summe zeigt also „noch zu tun" am Tag.
+  const dayTotalsH = [0, 0, 0, 0, 0];
+  let noDueTotalH = 0;
+  for (const tk of visibleTasks) {
+    const di = dueDayIndex(tk.due, weekStart);
+    if (di === 'out-of-week') continue;
+    if (di === 'no-due') noDueTotalH += tk.estH;
+    else dayTotalsH[di] += tk.estH;
+  }
+  // Counter neben dem Toggle: wie viele done-Tasks sind gerade ausgeblendet?
+  const hiddenCompletedCount = showCompleted
+    ? 0
+    : tasks.filter((tk) => tk.col === 'done' && dueDayIndex(tk.due, weekStart) !== 'out-of-week').length;
 
   const renderCard = (tk: Task) => {
     const projColor = projects.find((p) => p.id === tk.proj)?.color ?? 'var(--ink-300)';
@@ -225,6 +265,23 @@ export function BoardTimeline({ tasks }: BoardTimelineProps) {
           </button>
         </div>
         <div style={{ flex: 1 }} />
+        <button
+          type="button"
+          className={`tl-toggle ${showCompleted ? 'is-active' : ''}`}
+          onClick={() => setShowCompleted(!showCompleted)}
+          title={
+            showCompleted
+              ? t('board.timeline_hide_completed_title')
+              : t('board.timeline_show_completed_title', { count: hiddenCompletedCount })
+          }
+        >
+          <Icon name={showCompleted ? 'eye' : 'eye-off'} size={12} />
+          <span>
+            {showCompleted
+              ? t('board.timeline_completed_shown')
+              : t('board.timeline_completed_hidden', { count: hiddenCompletedCount })}
+          </span>
+        </button>
         <div className="tl-hint">{t('board.timeline_drag_hint')}</div>
       </div>
 
@@ -235,9 +292,27 @@ export function BoardTimeline({ tasks }: BoardTimelineProps) {
             <div key={d} className="tl-grid-head-cell">
               <div className="tl-grid-head-day">{d}</div>
               <div className="tl-grid-head-date">{fmtDay(dayDates[i])}</div>
+              {dayTotalsH[i] > 0 && (
+                <div
+                  className="tl-grid-head-sum"
+                  title={t('board.timeline_day_total_title', { hours: fmtNum(dayTotalsH[i]) })}
+                >
+                  {fmtNum(dayTotalsH[i])}h
+                </div>
+              )}
             </div>
           ))}
-          <div className="tl-grid-head-cell tl-no-due">{t('board.timeline_no_due')}</div>
+          <div className="tl-grid-head-cell tl-no-due">
+            {t('board.timeline_no_due')}
+            {noDueTotalH > 0 && (
+              <div
+                className="tl-grid-head-sum"
+                title={t('board.timeline_day_total_title', { hours: fmtNum(noDueTotalH) })}
+              >
+                {fmtNum(noDueTotalH)}h
+              </div>
+            )}
+          </div>
         </div>
 
         {Object.keys(byPerson).map((personId) => {
@@ -273,6 +348,18 @@ export function BoardTimeline({ tasks }: BoardTimelineProps) {
                     onDrop={(e) => onCellDrop(e, personId, i)}
                   >
                     {buckets[i].map(renderCard)}
+                    <button
+                      type="button"
+                      className="tl-cell-add"
+                      title={t('board.timeline_add_for_day', { day: fmtDay(dayDates[i]) })}
+                      aria-label={t('board.timeline_add_for_day', { day: fmtDay(dayDates[i]) })}
+                      onClick={() =>
+                        setNewTaskFor({ assignee: personId, due: isoDate(dayDates[i]) })
+                      }
+                    >
+                      <Icon name="plus" size={12} />
+                      <span>{t('board.timeline_add_short')}</span>
+                    </button>
                   </div>
                 );
               })}
@@ -288,6 +375,16 @@ export function BoardTimeline({ tasks }: BoardTimelineProps) {
                     onDrop={(e) => onCellDrop(e, personId, -1)}
                   >
                     {buckets[5].map(renderCard)}
+                    <button
+                      type="button"
+                      className="tl-cell-add"
+                      title={t('board.timeline_add_no_due')}
+                      aria-label={t('board.timeline_add_no_due')}
+                      onClick={() => setNewTaskFor({ assignee: personId, due: null })}
+                    >
+                      <Icon name="plus" size={12} />
+                      <span>{t('board.timeline_add_short')}</span>
+                    </button>
                   </div>
                 );
               })()}
@@ -295,6 +392,15 @@ export function BoardTimeline({ tasks }: BoardTimelineProps) {
           );
         })}
       </div>
+
+      {newTaskFor && (
+        <NewTaskModal
+          col="todo"
+          initialDue={newTaskFor.due}
+          initialAssignee={newTaskFor.assignee}
+          onClose={() => setNewTaskFor(null)}
+        />
+      )}
     </div>
   );
 }

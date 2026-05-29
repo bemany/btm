@@ -17,9 +17,13 @@ import { useT } from '../../i18n';
 export interface NewTaskModalProps {
   col: ColumnId;
   onClose: () => void;
+  // FXjEEm5q-_l: vorbelegen, wenn der "+"-Button aus einer Timeline-Zelle
+  // kommt (Tag/Person sind dann schon klar).
+  initialDue?: string | null;
+  initialAssignee?: string;
 }
 
-export function NewTaskModal({ col, onClose }: NewTaskModalProps) {
+export function NewTaskModal({ col, onClose, initialDue, initialAssignee }: NewTaskModalProps) {
   const t = useT();
   const projects = useStore((s) => s.projects);
   const users = useStore((s) => s.users);
@@ -45,8 +49,8 @@ export function NewTaskModal({ col, onClose }: NewTaskModalProps) {
   const [proj, setProj] = useState(initialProj);
   const [estH, setEstH] = useState(1.0);
   const [prio, setPrio] = useState<Priority>('med');
-  const [due, setDue] = useState<string>('');
-  const [assignee, setAssignee] = useState<string>(currentUser);
+  const [due, setDue] = useState<string>(initialDue ?? '');
+  const [assignee, setAssignee] = useState<string>(initialAssignee || currentUser);
   const [busy, setBusy] = useState(false);
   const titleRef = useRef<HTMLInputElement>(null);
 

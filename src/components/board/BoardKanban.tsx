@@ -191,9 +191,30 @@ export function BoardKanban({ tasks }: BoardKanbanProps) {
   };
   const onTaskClick = (tk: Task) => setUI({ taskDetailId: tk.id });
 
-  // Pro Spalte vorsortieren: zuerst nach due-Priority (überfällig oben),
-  // dann nach Task-Priority (high → med → low), zuletzt nach Insertion-Reihen-
-  // folge (originaler Array-Index → stabile Sortierung).
+  // FUxfszEfNN5: Sortier-Modus pro Kanban-Spalte. Default ist due+prio (siehe
+   // duePriorityScore), aber der User kann nach Erstellungsdatum sortieren
+   // damit alte unerledigte Aufgaben sichtbar werden.
+  type SortMode = 'default' | 'created_asc' | 'created_desc';
+  const [sortMode, setSortModeState] = useState<SortMode>(() => {
+    try {
+      const v = localStorage.getItem('btm.kanban.sort');
+      if (v === 'created_asc' || v === 'created_desc' || v === 'default') return v;
+    } catch {
+      /* ignore */
+    }
+    return 'default';
+  });
+  const setSortMode = (m: SortMode) => {
+    setSortModeState(m);
+    try {
+      localStorage.setItem('btm.kanban.sort', m);
+    } catch {
+      /* ignore */
+    }
+  };
+
+  // Pro Spalte vorsortieren: Default = due-Priority + Task-Priority;
+  // sonst nach createdAt asc/desc.
   const tasksByCol = useMemo(() => {
     const prioWeight = { high: 0, med: 1, low: 2 } as const;
     const byCol = new Map<ColumnId, Task[]>();
@@ -204,6 +225,11 @@ export function BoardKanban({ tasks }: BoardKanbanProps) {
     }
     for (const [, list] of byCol) {
       list.sort((a, b) => {
+        if (sortMode === 'created_asc' || sortMode === 'created_desc') {
+          const ca = a.createdAt ?? 0;
+          const cb = b.createdAt ?? 0;
+          return sortMode === 'created_asc' ? ca - cb : cb - ca;
+        }
         const ds = duePriorityScore(a) - duePriorityScore(b);
         if (ds !== 0) return ds;
         const pp = (prioWeight[a.prio] ?? 1) - (prioWeight[b.prio] ?? 1);
@@ -212,7 +238,7 @@ export function BoardKanban({ tasks }: BoardKanbanProps) {
       });
     }
     return byCol;
-  }, [tasks]);
+  }, [tasks, sortMode]);
 
   const archiveTask = useStore((s) => s.archiveTask);
   const onArchiveAllDone = async () => {
@@ -231,7 +257,23 @@ export function BoardKanban({ tasks }: BoardKanbanProps) {
   };
 
   return (
-    <div className="kanban">
+    <div className="kanban-wrap">
+      <div className="kanban-sort-bar">
+        <label htmlFor="kanban-sort-select" className="kanban-sort-label">
+          {t('board.kanban_sort_label')}
+        </label>
+        <select
+          id="kanban-sort-select"
+          className="kanban-sort-select"
+          value={sortMode}
+          onChange={(e) => setSortMode(e.target.value as SortMode)}
+        >
+          <option value="default">{t('board.kanban_sort_default')}</option>
+          <option value="created_desc">{t('board.kanban_sort_created_desc')}</option>
+          <option value="created_asc">{t('board.kanban_sort_created_asc')}</option>
+        </select>
+      </div>
+      <div className="kanban">
       {COLUMNS.map((col) => (
         <KanbanColumn
           key={col.id}
@@ -252,6 +294,7 @@ export function BoardKanban({ tasks }: BoardKanbanProps) {
       {newTaskCol && (
         <NewTaskModal col={newTaskCol} onClose={() => setNewTaskCol(null)} />
       )}
+      </div>
     </div>
   );
 }

@@ -781,11 +781,44 @@ body[data-theme="glass-dark"]   .archived-pill {
 .task-card .timer-btn { padding: 2px 6px; font-size: 10px; gap: 3px; }
 
 /* Kanban ----------------------------------------------------- */
+.kanban-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  height: 100%;
+  min-height: 0;
+}
+.kanban-sort-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-500);
+}
+.kanban-sort-label { text-transform: uppercase; letter-spacing: 0.05em; }
+.kanban-sort-select {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  background: var(--cream-50);
+  border: 1px solid var(--ink-200);
+  border-radius: 6px;
+  padding: 4px 8px;
+  color: var(--ink-900);
+  cursor: pointer;
+}
+body[data-theme="glass-dark"] .kanban-sort-select,
+body[data-theme="default-dark"] .kanban-sort-select {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: var(--cream-50);
+}
 .kanban {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 12px;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
 }
 .k-col {
   display: flex;
@@ -3343,6 +3376,52 @@ body[data-theme="default-dark"] .times-user-select {
   color: var(--ink-500);
   letter-spacing: 0.04em;
 }
+/* F9hw8vcx3ci: Toggle „erledigte zeigen/verstecken" in der Timeline-Toolbar.
+   Default-Zustand (versteckt) ist neutral, aktiviert (sichtbar) faerbt sich
+   in der Akzentfarbe damit man sieht: das normale Bild ist gefiltert. */
+.tl-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--cream-100);
+  border: 1px solid var(--ink-200);
+  border-radius: 999px;
+  color: var(--ink-700);
+  cursor: pointer;
+  transition: background 120ms, border-color 120ms, color 120ms;
+  margin-right: 12px;
+}
+.tl-toggle:hover {
+  background: var(--cream-50);
+  border-color: var(--ink-300);
+  color: var(--ink-900);
+}
+.tl-toggle.is-active {
+  background: rgba(var(--accent-rgb), 0.15);
+  border-color: rgba(var(--accent-rgb), 0.4);
+  color: var(--accent-700, var(--accent-500));
+}
+body[data-theme="glass-dark"] .tl-toggle,
+body[data-theme="default-dark"] .tl-toggle {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: rgba(250, 247, 242, 0.7);
+}
+body[data-theme="glass-dark"] .tl-toggle:hover,
+body[data-theme="default-dark"] .tl-toggle:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--cream-50);
+}
+body[data-theme="glass-dark"] .tl-toggle.is-active,
+body[data-theme="default-dark"] .tl-toggle.is-active {
+  background: rgba(var(--accent-rgb), 0.22);
+  border-color: rgba(var(--accent-rgb), 0.55);
+  color: rgba(var(--accent-rgb), 1);
+}
 
 .tl-grid {
   background: var(--cream-50);
@@ -3381,6 +3460,26 @@ body[data-theme="default-dark"] .times-user-select {
   color: var(--ink-500);
   margin-top: 2px;
 }
+.tl-grid-head-sum {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 1px 6px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--accent-700, var(--accent-500));
+  background: rgba(var(--accent-rgb), 0.12);
+  border: 1px solid rgba(var(--accent-rgb), 0.28);
+  border-radius: 999px;
+}
+body[data-theme="glass-dark"] .tl-grid-head-sum,
+body[data-theme="default-dark"] .tl-grid-head-sum {
+  color: rgba(var(--accent-rgb), 0.95);
+  background: rgba(var(--accent-rgb), 0.18);
+  border-color: rgba(var(--accent-rgb), 0.4);
+}
 .tl-no-due {
   background: rgba(0, 0, 0, 0.02);
   color: var(--ink-500) !important;
@@ -3418,6 +3517,47 @@ body[data-theme="default-dark"] .times-user-select {
 .tl-cell.is-drop-target {
   background: rgba(var(--accent-rgb), 0.08);
   box-shadow: inset 0 0 0 2px rgba(var(--accent-rgb), 0.4);
+}
+/* FXjEEm5q-_l: Plus-Button in jeder Tageszelle. Dezent in Ruhe, kommt erst
+   beim Hover ueber die Zelle deutlich raus damit die Tageskarten nicht
+   visuell ueberlagert werden. */
+.tl-cell-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: auto;
+  align-self: flex-start;
+  padding: 3px 7px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: transparent;
+  border: 1px dashed var(--ink-200);
+  border-radius: 999px;
+  color: var(--ink-500);
+  cursor: pointer;
+  opacity: 0.45;
+  transition: opacity 120ms, background 120ms, color 120ms, border-color 120ms;
+}
+.tl-cell:hover .tl-cell-add { opacity: 1; }
+.tl-cell-add:hover {
+  background: rgba(var(--accent-rgb), 0.1);
+  border-color: rgba(var(--accent-rgb), 0.5);
+  border-style: solid;
+  color: var(--accent-700, var(--accent-500));
+}
+body[data-theme="glass-dark"] .tl-cell-add,
+body[data-theme="default-dark"] .tl-cell-add {
+  border-color: rgba(255, 255, 255, 0.14);
+  color: rgba(250, 247, 242, 0.6);
+}
+body[data-theme="glass-dark"] .tl-cell-add:hover,
+body[data-theme="default-dark"] .tl-cell-add:hover {
+  background: rgba(var(--accent-rgb), 0.2);
+  border-color: rgba(var(--accent-rgb), 0.6);
+  color: rgba(var(--accent-rgb), 1);
 }
 .tl-card {
   background: var(--cream-100);

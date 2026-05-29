@@ -49,6 +49,58 @@ export function tx(value: Localizable, locale: 'de' | 'en'): string {
 
 export const RELEASES: Release[] = [
   {
+    version: '0.13.2',
+    date: '2026-05-29',
+    title: {
+      de: 'Wochenboard-Sanierung: Tagessummen, Plus-Button, Sortierung, Prio-Farben & freie KI-Blase',
+      en: 'Week-board cleanup: day totals, plus button, sort, priority colors & free-floating AI bubble',
+    },
+    changes: [
+      {
+        kind: 'feature',
+        text: {
+          de: '**Tagessummen in der Timeline**: jeder Tages-Spaltenkopf zeigt jetzt die Summe aller geplanten Stunden des Tages als kleine Pille. Auch für "Ohne Frist". So sieht man sofort wo noch Kapazität frei ist. _F44rPspkp5z_',
+          en: '**Day totals in the timeline**: each day column header now shows the sum of planned hours for that day as a small pill. Also for "No deadline". Capacity at a glance. _F44rPspkp5z_',
+        },
+      },
+      {
+        kind: 'feature',
+        text: {
+          de: '**Erledigte Aufgaben in der Timeline ausblenden** ist jetzt Standard — kein Zumüllen der "Ohne Frist"-Spalte mehr. Neuer Toggle "X erledigt versteckt" rechts in der Toolbar schaltet sie bei Bedarf zurück. Tagessummen rechnen entsprechend nur mit den sichtbaren Tasks. Wahl bleibt in localStorage. _F9hw8vcx3ci_',
+          en: '**Hide completed tasks in the timeline** is now the default — no more clogging the "No deadline" column. New "X done hidden" toggle in the toolbar brings them back. Day totals account for visible tasks only. Choice persists in localStorage. _F9hw8vcx3ci_',
+        },
+      },
+      {
+        kind: 'feature',
+        text: {
+          de: '**Plus-Button in jeder Timeline-Zelle**: kleiner "+ Plan"-Button pro Person × Tag (und "Ohne Frist"). Öffnet das Neue-Aufgabe-Modal mit Bearbeiter und Frist schon ausgefüllt. _FXjEEm5q-_l_',
+          en: '**Plus button in every timeline cell**: small "+ Plan" button per person × day (and "No deadline"). Opens the new-task modal with assignee and due date pre-filled. _FXjEEm5q-_l_',
+        },
+      },
+      {
+        kind: 'feature',
+        text: {
+          de: '**Kanban-Sortierung nach Erstellungsdatum**: neuer Selector oben in der Kanban-Ansicht. Optionen: Standard (Frist+Prio), Erstellungsdatum neu zuerst, Erstellungsdatum alt zuerst. Letzteres bringt alte unerledigte Aufgaben prominent nach oben. _FUxfszEfNN5_',
+          en: '**Kanban sort by creation date**: new selector at the top of the Kanban view. Options: default (due+priority), creation date newest first, creation date oldest first. The last surfaces old unresolved tasks. _FUxfszEfNN5_',
+        },
+      },
+      {
+        kind: 'feature',
+        text: {
+          de: '**KI-Blase frei verschiebbar**: greifen und irgendwohin auf den Screen ziehen, sie bleibt dort. Position persistiert in localStorage. Im Panel ein "Position zurücksetzen"-Button. _F9rFkMkAMeF_',
+          en: '**AI bubble is free-draggable**: grab and drop anywhere on screen, it stays. Position persists in localStorage. A reset-position button lives in the panel. _F9rFkMkAMeF_',
+        },
+      },
+      {
+        kind: 'change',
+        text: {
+          de: '**Prio-Punkt deutlich erkennbar**: Hoch = leuchtendes Rot (8px) mit Halo, Mittel = Bernstein, Niedrig = ruhiges Blaugrün. Vorher waren Mittel + Niedrig beide grau, Hoch ging in der Akzentfarbe unter. _FcQa5u3Ifxu_',
+          en: '**Priority dot now clearly readable**: High = vivid red (8px) with halo, Medium = amber, Low = soft teal. Previously medium + low were both grey and high blended with the accent color. _FcQa5u3Ifxu_',
+        },
+      },
+    ],
+  },
+  {
     version: '0.13.1',
     date: '2026-05-29',
     title: {

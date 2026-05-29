@@ -36,6 +36,48 @@ interface ChatResponse {
 
 const STORAGE_KEY = 'btm.chatBubble.history';
 const MAX_HISTORY = 40;
+// F9rFkMkAMeF: KI-Blase frei verschiebbar per Drag & Drop. Position wird als
+// {x, y} der Top-Left-Ecke in Viewport-Koordinaten gespeichert. Default
+// (null) faellt auf bottom-right via CSS zurueck.
+const POS_KEY = 'btm.chatBubble.position';
+const FAB_SIZE = 52;
+const PANEL_W = 380;
+const PANEL_H = 560;
+const EDGE_MARGIN = 8;
+interface BubblePosition { x: number; y: number }
+function loadPosition(): BubblePosition | null {
+  try {
+    const raw = localStorage.getItem(POS_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<BubblePosition>;
+    if (typeof parsed.x === 'number' && typeof parsed.y === 'number') {
+      return { x: parsed.x, y: parsed.y };
+    }
+  } catch {
+    /* ignore */
+  }
+  return null;
+}
+function clampFabPosition(p: BubblePosition): BubblePosition {
+  const maxX = Math.max(EDGE_MARGIN, window.innerWidth - FAB_SIZE - EDGE_MARGIN);
+  const maxY = Math.max(EDGE_MARGIN, window.innerHeight - FAB_SIZE - EDGE_MARGIN);
+  return {
+    x: Math.min(Math.max(EDGE_MARGIN, p.x), maxX),
+    y: Math.min(Math.max(EDGE_MARGIN, p.y), maxY),
+  };
+}
+function panelOriginFromFab(p: BubblePosition): { left: number; top: number } {
+  // Panel mit der Bubble in derselben Ecke ankern: wenn Bubble in der
+  // rechten/unteren Haelfte ist, soll das Panel nach links/oben ausklappen.
+  const right = p.x + FAB_SIZE / 2 > window.innerWidth / 2;
+  const bottom = p.y + FAB_SIZE / 2 > window.innerHeight / 2;
+  const left = right ? Math.max(EDGE_MARGIN, p.x + FAB_SIZE - PANEL_W) : p.x;
+  const top = bottom ? Math.max(EDGE_MARGIN, p.y + FAB_SIZE - PANEL_H) : p.y;
+  return {
+    left: Math.min(left, window.innerWidth - PANEL_W - EDGE_MARGIN),
+    top: Math.min(top, window.innerHeight - PANEL_H - EDGE_MARGIN),
+  };
+}
 
 function loadHistory(): ChatMsg[] {
   try {
@@ -207,6 +249,88 @@ export function ChatBubble() {
   const [busy, setBusy] = useState(false);
   const [messages, setMessages] = useState<ChatMsg[]>(loadHistory);
   const scrollRef = useRef<HTMLDivElement>(null);
+  // F9rFkMkAMeF: freie Position {x, y} in Viewport-Koordinaten. null =
+  // Default-Position (bottom-right ueber CSS).
+  const [position, setPositionState] = useState<BubblePosition | null>(loadPosition);
+  const [dragging, setDragging] = useState(false);
+  const dragRef = useRef<{
+    startPx: number;
+    startPy: number;
+    offsetX: number;
+    offsetY: number;
+    moved: boolean;
+  } | null>(null);
+  const persistPosition = (p: BubblePosition) => {
+    setPositionState(p);
+    try {
+      localStorage.setItem(POS_KEY, JSON.stringify(p));
+    } catch {
+      /* ignore */
+    }
+  };
+
+  // Bei Fenster-Resize Position neu clampen damit die Blase nicht
+  // out-of-bounds bleibt.
+  useEffect(() => {
+    if (!position) return;
+    const onResize = () => {
+      const clamped = clampFabPosition(position);
+      if (clamped.x !== position.x || clamped.y !== position.y) {
+        persistPosition(clamped);
+      }
+    };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [position?.x, position?.y]);
+
+  const onFabPointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
+    const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect();
+    dragRef.current = {
+      startPx: e.clientX,
+      startPy: e.clientY,
+      offsetX: e.clientX - rect.left,
+      offsetY: e.clientY - rect.top,
+      moved: false,
+    };
+    (e.currentTarget as HTMLButtonElement).setPointerCapture(e.pointerId);
+  };
+  const onFabPointerMove = (e: React.PointerEvent<HTMLButtonElement>) => {
+    const d = dragRef.current;
+    if (!d) return;
+    if (!d.moved && (Math.abs(e.clientX - d.startPx) > 4 || Math.abs(e.clientY - d.startPy) > 4)) {
+      d.moved = true;
+      setDragging(true);
+    }
+    if (d.moved) {
+      const next = clampFabPosition({ x: e.clientX - d.offsetX, y: e.clientY - d.offsetY });
+      setPositionState(next);
+    }
+  };
+  const onFabPointerUp = (e: React.PointerEvent<HTMLButtonElement>) => {
+    const d = dragRef.current;
+    dragRef.current = null;
+    try {
+      (e.currentTarget as HTMLButtonElement).releasePointerCapture(e.pointerId);
+    } catch {
+      /* ignore */
+    }
+    if (!d) return;
+    if (d.moved) {
+      setDragging(false);
+      if (position) persistPosition(position);
+      return;
+    }
+    setOpen(true);
+  };
+  const resetPosition = () => {
+    try {
+      localStorage.removeItem(POS_KEY);
+    } catch {
+      /* ignore */
+    }
+    setPositionState(null);
+  };
 
   useEffect(() => {
     saveHistory(messages);
@@ -273,16 +397,37 @@ export function ChatBubble() {
     <>
       {!open && (
         <button
-          className="cb-fab"
-          onClick={() => setOpen(true)}
+          className={`cb-fab ${dragging ? 'is-dragging' : ''}`}
+          style={
+            position
+              ? { left: position.x, top: position.y, right: 'auto', bottom: 'auto' }
+              : undefined
+          }
+          onPointerDown={onFabPointerDown}
+          onPointerMove={onFabPointerMove}
+          onPointerUp={onFabPointerUp}
           aria-label={t('chat_bubble.title')}
-          title={t('chat_bubble.title')}
+          title={t('chat_bubble.drag_hint')}
         >
           <Icon name="sparkles" size={18} />
         </button>
       )}
       {open && (
-        <div className="cb-panel" role="dialog" aria-label={t('chat_bubble.title')}>
+        <div
+          className="cb-panel"
+          style={
+            position
+              ? {
+                  ...(() => {
+                    const o = panelOriginFromFab(position);
+                    return { left: o.left, top: o.top, right: 'auto', bottom: 'auto' };
+                  })(),
+                }
+              : undefined
+          }
+          role="dialog"
+          aria-label={t('chat_bubble.title')}
+        >
           <div className="cb-header">
             <div className="cb-header-icon">
               <Icon name="sparkles" size={14} />
@@ -291,6 +436,16 @@ export function ChatBubble() {
               <div className="cb-header-title">{t('chat_bubble.title')}</div>
               <div className="cb-header-sub">{t('chat_bubble.sub')}</div>
             </div>
+            {position && (
+              <button
+                className="cb-icon-btn"
+                onClick={resetPosition}
+                title={t('chat_bubble.reset_position')}
+                aria-label={t('chat_bubble.reset_position')}
+              >
+                <Icon name="corner-down-right" size={13} />
+              </button>
+            )}
             <button
               className="cb-icon-btn"
               onClick={clear}

@@ -9,6 +9,19 @@ im Repo.
 
 ---
 
+## 0.13.2 — 2026-05-29
+
+**Wochenboard-Sanierung: Tagessummen, Plus-Button, Sortierung, Prio-Farben & freie KI-Blase**
+
+- **Feature** — Tagessummen pro Spalte im Timeline-Header (auch "Ohne Frist"). _F44rPspkp5z_
+- **Feature** — Erledigte Aufgaben in der Timeline standardmäßig ausgeblendet, Toggle mit Count "X erledigt versteckt". _F9hw8vcx3ci_
+- **Feature** — Plus-Button "Plan" in jeder Timeline-Zelle, öffnet Neue-Aufgabe-Modal mit Person + Tag vorausgefüllt. _FXjEEm5q-_l_
+- **Feature** — Kanban-Sortier-Selector: Standard / Erstellungsdatum neu zuerst / alt zuerst. _FUxfszEfNN5_
+- **Feature** — KI-Blase ist jetzt frei per Drag&Drop verschiebbar, Position persistiert. Reset-Button im Panel. _F9rFkMkAMeF_
+- **Change** — PrioDot komplett neu gefärbt: high = leuchtend rot mit Halo, med = bernstein, low = blaugrün. _FcQa5u3Ifxu_
+
+---
+
 ## 0.13.1 — 2026-05-29
 
 **Admin-Feedbacks: Priorität, Submitter-Filter, schmalere User-Spalte**
