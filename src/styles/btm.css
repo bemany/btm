@@ -3518,45 +3518,44 @@ body[data-theme="default-dark"] .tl-grid-head-sum {
   background: rgba(var(--accent-rgb), 0.08);
   box-shadow: inset 0 0 0 2px rgba(var(--accent-rgb), 0.4);
 }
-/* FXjEEm5q-_l: Plus-Button in jeder Tageszelle. Dezent in Ruhe, kommt erst
-   beim Hover ueber die Zelle deutlich raus damit die Tageskarten nicht
-   visuell ueberlagert werden. */
-.tl-cell-add {
+/* FXjEEm5q-_l → FaYo28_nSAw: Plus-Button ist jetzt im Header neben dem
+   Tagesdatum statt pro Person×Tag-Zelle. Compact Icon-Button, kommt im
+   Hover deutlich raus. */
+.tl-grid-head-date-row {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  margin-top: auto;
-  align-self: flex-start;
-  padding: 3px 7px;
-  font-family: var(--font-mono);
-  font-size: 9.5px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  gap: 6px;
+  margin-top: 2px;
+}
+.tl-grid-head-add {
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
   background: transparent;
-  border: 1px dashed var(--ink-200);
-  border-radius: 999px;
+  border: 1px solid var(--ink-200);
+  border-radius: 50%;
   color: var(--ink-500);
   cursor: pointer;
-  opacity: 0.45;
+  opacity: 0.55;
   transition: opacity 120ms, background 120ms, color 120ms, border-color 120ms;
 }
-.tl-cell:hover .tl-cell-add { opacity: 1; }
-.tl-cell-add:hover {
-  background: rgba(var(--accent-rgb), 0.1);
-  border-color: rgba(var(--accent-rgb), 0.5);
-  border-style: solid;
+.tl-grid-head-cell:hover .tl-grid-head-add { opacity: 1; }
+.tl-grid-head-add:hover {
+  background: rgba(var(--accent-rgb), 0.15);
+  border-color: rgba(var(--accent-rgb), 0.55);
   color: var(--accent-700, var(--accent-500));
 }
-body[data-theme="glass-dark"] .tl-cell-add,
-body[data-theme="default-dark"] .tl-cell-add {
-  border-color: rgba(255, 255, 255, 0.14);
-  color: rgba(250, 247, 242, 0.6);
+body[data-theme="glass-dark"] .tl-grid-head-add,
+body[data-theme="default-dark"] .tl-grid-head-add {
+  border-color: rgba(255, 255, 255, 0.18);
+  color: rgba(250, 247, 242, 0.65);
 }
-body[data-theme="glass-dark"] .tl-cell-add:hover,
-body[data-theme="default-dark"] .tl-cell-add:hover {
-  background: rgba(var(--accent-rgb), 0.2);
-  border-color: rgba(var(--accent-rgb), 0.6);
+body[data-theme="glass-dark"] .tl-grid-head-add:hover,
+body[data-theme="default-dark"] .tl-grid-head-add:hover {
+  background: rgba(var(--accent-rgb), 0.25);
+  border-color: rgba(var(--accent-rgb), 0.65);
   color: rgba(var(--accent-rgb), 1);
 }
 .tl-card {

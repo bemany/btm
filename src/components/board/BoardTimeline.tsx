@@ -384,7 +384,18 @@ export function BoardTimeline({ tasks }: BoardTimelineProps) {
           {dayLabels.map((d, i) => (
             <div key={d} className="tl-grid-head-cell">
               <div className="tl-grid-head-day">{d}</div>
-              <div className="tl-grid-head-date">{fmtDay(dayDates[i])}</div>
+              <div className="tl-grid-head-date-row">
+                <span className="tl-grid-head-date">{fmtDay(dayDates[i])}</span>
+                <button
+                  type="button"
+                  className="tl-grid-head-add"
+                  title={t('board.timeline_add_for_day', { day: fmtDay(dayDates[i]) })}
+                  aria-label={t('board.timeline_add_for_day', { day: fmtDay(dayDates[i]) })}
+                  onClick={() => setNewTaskFor({ assignee: '', due: isoDate(dayDates[i]) })}
+                >
+                  <Icon name="plus" size={11} />
+                </button>
+              </div>
               {dayTotalsH[i] > 0 && (
                 <div
                   className="tl-grid-head-sum"
@@ -396,7 +407,18 @@ export function BoardTimeline({ tasks }: BoardTimelineProps) {
             </div>
           ))}
           <div className="tl-grid-head-cell tl-no-due">
-            {t('board.timeline_no_due')}
+            <div className="tl-grid-head-date-row">
+              <span>{t('board.timeline_no_due')}</span>
+              <button
+                type="button"
+                className="tl-grid-head-add"
+                title={t('board.timeline_add_no_due')}
+                aria-label={t('board.timeline_add_no_due')}
+                onClick={() => setNewTaskFor({ assignee: '', due: null })}
+              >
+                <Icon name="plus" size={11} />
+              </button>
+            </div>
             {noDueTotalH > 0 && (
               <div
                 className="tl-grid-head-sum"
@@ -442,18 +464,6 @@ export function BoardTimeline({ tasks }: BoardTimelineProps) {
                     onDrop={(e) => onCellDrop(e, personId, i)}
                   >
                     {buckets[i].map((tk) => renderCard(tk, i))}
-                    <button
-                      type="button"
-                      className="tl-cell-add"
-                      title={t('board.timeline_add_for_day', { day: fmtDay(dayDates[i]) })}
-                      aria-label={t('board.timeline_add_for_day', { day: fmtDay(dayDates[i]) })}
-                      onClick={() =>
-                        setNewTaskFor({ assignee: personId, due: isoDate(dayDates[i]) })
-                      }
-                    >
-                      <Icon name="plus" size={12} />
-                      <span>{t('board.timeline_add_short')}</span>
-                    </button>
                   </div>
                 );
               })}
@@ -469,16 +479,6 @@ export function BoardTimeline({ tasks }: BoardTimelineProps) {
                     onDrop={(e) => onCellDrop(e, personId, -1)}
                   >
                     {buckets[5].map((tk) => renderCard(tk, -1))}
-                    <button
-                      type="button"
-                      className="tl-cell-add"
-                      title={t('board.timeline_add_no_due')}
-                      aria-label={t('board.timeline_add_no_due')}
-                      onClick={() => setNewTaskFor({ assignee: personId, due: null })}
-                    >
-                      <Icon name="plus" size={12} />
-                      <span>{t('board.timeline_add_short')}</span>
-                    </button>
                   </div>
                 );
               })()}
