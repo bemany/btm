@@ -299,6 +299,9 @@ export const liveTimers = pgTable('live_timers', {
   // FclpRr066St: gespeicherte vorherige Spalte fuer Auto-Move-Back.
   // null wenn Task schon in 'doing' war (kein Move beim Start).
   previousColumn: text('previous_column'),
+  // FGuP3nYfPfL: Zeitpunkt der letzten Long-Session-Warn-Push. Verhindert
+  // doppelte Notifications und steuert den 5-min-Rhythmus ab 90 Minuten.
+  lastWarningPushAt: timestamp('last_warning_push_at', { withTimezone: true }),
 });
 
 export const invitations = pgTable('invitations', {

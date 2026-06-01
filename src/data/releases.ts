@@ -49,6 +49,23 @@ export function tx(value: Localizable, locale: 'de' | 'en'): string {
 
 export const RELEASES: Release[] = [
   {
+    version: '0.13.4',
+    date: '2026-06-01',
+    title: {
+      de: 'Timer-Watchdog: Push-Warnung bei lang laufenden Sessions',
+      en: 'Timer watchdog: push warnings for long-running sessions',
+    },
+    changes: [
+      {
+        kind: 'feature',
+        text: {
+          de: '**Push-Warnung bei langen Timern**: läuft ein Live-Timer länger als 60 Minuten, kommt einmal eine Push-Nachricht ("Pause machen?"). Ab 90 Minuten schickt der Server alle 5 Minuten eine erneute Push ("Session jetzt beenden") bis der Timer gestoppt wird. Funktioniert auch wenn der Tab geschlossen ist — gilt für alle Geräte mit aktiviertem Push (Settings → Push-Notifications). _FGuP3nYfPfL_',
+          en: '**Push warning for long timers**: if a live timer runs for more than 60 minutes, you get one push ("Time for a break?"). After 90 minutes the server sends a push every 5 minutes ("Stop the session now") until the timer is stopped. Works with the tab closed too — fires on every device with push enabled (Settings → Push notifications). _FGuP3nYfPfL_',
+        },
+      },
+    ],
+  },
+  {
     version: '0.13.3',
     date: '2026-06-01',
     title: {

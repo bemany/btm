@@ -9,6 +9,18 @@ im Repo.
 
 ---
 
+## 0.13.4 — 2026-06-01
+
+**Timer-Watchdog: Push-Warnung bei lang laufenden Sessions (FGuP3nYfPfL)**
+
+- **Feature** — Backend-Scheduler tickt jede Minute durch alle laufenden Live-Timer:
+  - elapsed >= 60 min → 1x Push ("Pause machen?")
+  - elapsed >= 90 min → alle 5 min Push ("Session jetzt beenden")
+- DB-Migration `0029_timer_watchdog.sql`: `live_timers.last_warning_push_at timestamptz`.
+- Push-Tag `timer-watchdog-<userId>` — neue Notification ersetzt die vorherige (kein Lock-Screen-Stack).
+
+---
+
 ## 0.13.3 — 2026-06-01
 
 **Wochenplanung 2.0: Trennung Frist/Bearbeitungstag + Multi-Tag-Planung (F44rPspkp5z Phase 2)**

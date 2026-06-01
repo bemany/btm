@@ -121,3 +121,8 @@ startCalendarSyncScheduler();
 // und schickt In-App-Notification + E-Mail.
 import { startReminderScheduler } from './lib/reminder-scheduler.js';
 startReminderScheduler();
+
+// Timer-Watchdog (FGuP3nYfPfL) — schickt Push-Warnung wenn ein
+// Live-Timer >60 min laeuft (einmalig), ab >90 min im 5-min-Rhythmus.
+import { startTimerWatchdog } from './lib/timer-watchdog.js';
+startTimerWatchdog();
