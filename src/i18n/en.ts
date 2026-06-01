@@ -366,6 +366,8 @@ export const en: Translations = {
     timeline_add_short: 'Plan',
     timeline_add_for_day: 'Plan a new task for {day}',
     timeline_add_no_due: 'Add a new task without due date',
+    timeline_due_title: 'Deadline: {date}',
+    timeline_multi_title: 'Planned day {pos} of {total}',
     kanban_sort_label: 'Sort',
     kanban_sort_default: 'Default (due + priority)',
     kanban_sort_created_desc: 'Creation date (newest first)',
@@ -626,6 +628,11 @@ export const en: Translations = {
     my_empty: "You haven't submitted any feedback yet.",
     my_resolution_note: 'Note:',
     my_delete_confirm: 'Really delete this feedback?',
+  },
+  planned: {
+    label: 'Planned work days',
+    hint: 'Pick the days you plan to work on this. Empty = deadline applies.',
+    clear: 'Clear',
   },
   checklist: {
     heading: 'Checklist',

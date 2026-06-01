@@ -368,6 +368,8 @@ export const de = {
     timeline_add_short: 'Plan',
     timeline_add_for_day: 'Neue Aufgabe für {day} planen',
     timeline_add_no_due: 'Neue Aufgabe ohne Frist anlegen',
+    timeline_due_title: 'Frist: {date}',
+    timeline_multi_title: 'Plan-Tag {pos} von {total}',
     kanban_sort_label: 'Sortierung',
     kanban_sort_default: 'Standard (Frist + Priorität)',
     kanban_sort_created_desc: 'Erstellungsdatum (neu zuerst)',
@@ -628,6 +630,11 @@ export const de = {
     my_empty: 'Du hast noch kein Feedback eingereicht.',
     my_resolution_note: 'Notiz:',
     my_delete_confirm: 'Dieses Feedback wirklich löschen?',
+  },
+  planned: {
+    label: 'Geplante Bearbeitungstage',
+    hint: 'Wähle die Tage an denen du dran arbeiten willst. Leer = Frist gilt.',
+    clear: 'Zurücksetzen',
   },
   checklist: {
     heading: 'Checkliste',

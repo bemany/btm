@@ -43,6 +43,25 @@ function dueDayIndex(due: string | null | undefined, weekStart: Date): DuePlacem
   return days;
 }
 
+// F44rPspkp5z: In welchen Tag-Buckets der Wochenansicht soll die Task
+// auftauchen? plannedFor (falls gesetzt) hat Vorrang ueber due. Sind alle
+// Plantage ausserhalb dieser Woche → leer, Task waere gar nicht sichtbar
+// (wir fallen NICHT auf die Frist zurueck, weil der User aktiv geplant hat).
+type BucketKey = number | 'no-due';
+function bucketKeysForTask(tk: Task, weekStart: Date): BucketKey[] {
+  if (tk.plannedFor && tk.plannedFor.length > 0) {
+    const out: BucketKey[] = [];
+    for (const d of tk.plannedFor) {
+      const di = dueDayIndex(d, weekStart);
+      if (typeof di === 'number') out.push(di);
+    }
+    return out;
+  }
+  const di = dueDayIndex(tk.due, weekStart);
+  if (di === 'out-of-week') return [];
+  return [di];
+}
+
 function mondayOfDate(d: Date): Date {
   const out = new Date(d);
   out.setHours(0, 0, 0, 0);
@@ -130,21 +149,26 @@ export function BoardTimeline({ tasks }: BoardTimelineProps) {
     t('board.timeline_day_fr'),
   ];
 
-  // Drag-State
+  // Drag-State. F44rPspkp5z: wir tracken zusaetzlich den Source-Bucket-Index
+  // damit Multi-Tag-Plan-Verschiebungen sauber funktionieren (alter Tag raus,
+  // neuer Tag rein, restliche Plan-Tage bleiben).
   const [dragId, setDragId] = useState<string | null>(null);
+  const [dragSourceDayIdx, setDragSourceDayIdx] = useState<number | -1 | null>(null);
   const [dragOverCell, setDragOverCell] = useState<string | null>(null);
 
   // FXjEEm5q-_l: Neue-Aufgabe-Modal direkt aus einer Tageszelle. Speichert
   // wer + welcher Tag schon vorausgefuellt sind. null = geschlossen.
   const [newTaskFor, setNewTaskFor] = useState<{ assignee: string; due: string | null } | null>(null);
 
-  const onDragStart = (e: DragEvent<HTMLDivElement>, taskId: string) => {
+  const onDragStart = (e: DragEvent<HTMLDivElement>, taskId: string, sourceDayIdx: number | -1) => {
     setDragId(taskId);
+    setDragSourceDayIdx(sourceDayIdx);
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', taskId);
   };
   const onDragEnd = () => {
     setDragId(null);
+    setDragSourceDayIdx(null);
     setDragOverCell(null);
   };
   const onCellDragOver = (e: DragEvent<HTMLDivElement>, cellKey: string) => {
@@ -164,19 +188,37 @@ export function BoardTimeline({ tasks }: BoardTimelineProps) {
     if (!tk) return;
     const patch: Partial<Task> = {};
     if (tk.who !== targetPersonId) patch.who = targetPersonId;
-    let newDue: string | null;
-    if (targetDayIdx === -1) {
-      newDue = null;
+
+    const hasPlanned = !!tk.plannedFor && tk.plannedFor.length > 0;
+    const targetIso = targetDayIdx === -1 ? null : isoDate(dayDates[targetDayIdx]);
+    const sourceIso =
+      dragSourceDayIdx !== null && dragSourceDayIdx !== -1
+        ? isoDate(dayDates[dragSourceDayIdx])
+        : null;
+
+    if (hasPlanned) {
+      // F44rPspkp5z: Multi-Tag-Modus. Drag entfernt den Source-Tag und fuegt
+      // den Target-Tag hinzu (oder collapsed auf "ohne Frist"-Spalte).
+      const current = new Set(tk.plannedFor ?? []);
+      if (sourceIso) current.delete(sourceIso);
+      if (targetIso) current.add(targetIso);
+      const nextPlanned = Array.from(current).sort();
+      const prev = (tk.plannedFor ?? []).slice().sort();
+      const changed =
+        nextPlanned.length !== prev.length ||
+        nextPlanned.some((d, i) => d !== prev[i]);
+      if (changed) patch.plannedFor = nextPlanned;
     } else {
-      newDue = isoDate(dayDates[targetDayIdx]);
+      // Klassischer Modus: due wechselt. Backwards-compatible mit allem was
+      // vor 0.13.3 erstellt wurde.
+      if ((tk.due ?? null) !== targetIso) patch.due = targetIso;
     }
-    if (tk.due !== newDue && (tk.due ?? null) !== newDue) {
-      patch.due = newDue;
-    }
+
     if (Object.keys(patch).length > 0) {
       void updateTask(tk.id, patch);
     }
     setDragId(null);
+    setDragSourceDayIdx(null);
     setDragOverCell(null);
   };
 
@@ -186,31 +228,59 @@ export function BoardTimeline({ tasks }: BoardTimelineProps) {
     byPerson[tk.who].push(tk);
   });
 
-  // F44rPspkp5z: Tagessumme aller geplanten Stunden pro Spalte.
-  // F9hw8vcx3ci: erledigte sind hier raus (via visibleTasks) wenn der
-  // Toggle aus ist — die Summe zeigt also „noch zu tun" am Tag.
+  // F44rPspkp5z: Tagessumme. plannedFor mit mehreren Tagen → estH wird
+  // pro Plan-Tag voll gezaehlt (der User plant explizit „diesen Tag dafuer").
+  // F9hw8vcx3ci: erledigte sind via visibleTasks raus wenn Toggle aus ist.
   const dayTotalsH = [0, 0, 0, 0, 0];
   let noDueTotalH = 0;
   for (const tk of visibleTasks) {
-    const di = dueDayIndex(tk.due, weekStart);
-    if (di === 'out-of-week') continue;
-    if (di === 'no-due') noDueTotalH += tk.estH;
-    else dayTotalsH[di] += tk.estH;
+    const keys = bucketKeysForTask(tk, weekStart);
+    for (const k of keys) {
+      if (k === 'no-due') noDueTotalH += tk.estH;
+      else dayTotalsH[k] += tk.estH;
+    }
   }
   // Counter neben dem Toggle: wie viele done-Tasks sind gerade ausgeblendet?
+  // Hier zaehlen wir Tasks (nicht Bucket-Einsätze) — eine Multi-Tag-Done-Task
+  // ist immer noch eine einzige verborgene Aufgabe.
   const hiddenCompletedCount = showCompleted
     ? 0
-    : tasks.filter((tk) => tk.col === 'done' && dueDayIndex(tk.due, weekStart) !== 'out-of-week').length;
+    : tasks.filter((tk) => tk.col === 'done' && bucketKeysForTask(tk, weekStart).length > 0).length;
 
-  const renderCard = (tk: Task) => {
+  const renderCard = (tk: Task, sourceDayIdx: number | -1) => {
     const projColor = projects.find((p) => p.id === tk.proj)?.color ?? 'var(--ink-300)';
     const tone = COLUMN_TONE[tk.col] ?? 'var(--ink-500)';
+    // F44rPspkp5z: Frist-Label nur zeigen wenn due gesetzt UND der aktuelle
+    // Plan-Tag != der Frist-Tag (sonst doppelt-info). Bei "Ohne Frist"-Bucket
+    // (sourceDayIdx -1) und vorhandenem due zeigen wir das Datum auch.
+    const dueIdx = dueDayIndex(tk.due, weekStart);
+    const showDueLabel =
+      !!tk.due &&
+      ((sourceDayIdx !== -1 && dueIdx !== sourceDayIdx) || sourceDayIdx === -1);
+    // Multi-Tag-Hinweis: wenn mehrere Plan-Tage gesetzt sind, kleine Anzeige
+    // "Tag X/Y" damit der User sieht: dieser Card erscheint auch woanders.
+    const planned = tk.plannedFor ?? [];
+    const showMultiTag = planned.length > 1;
+    let multiTagPos = 0;
+    if (showMultiTag && sourceDayIdx !== -1) {
+      const todayIso = isoDate(dayDates[sourceDayIdx]);
+      const sorted = [...planned].sort();
+      multiTagPos = sorted.indexOf(todayIso) + 1;
+    }
+    const fmtDueLabel = (): string => {
+      if (!tk.due) return '';
+      if (tk.due === 'today') return t('common.today');
+      if (tk.due === 'tomorrow') return t('common.tomorrow');
+      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(tk.due);
+      if (!m) return '';
+      return `${m[3]}.${m[2]}.`;
+    };
     return (
       <div
-        key={tk.id}
+        key={`${tk.id}-${sourceDayIdx}`}
         className={`tl-card ${dragId === tk.id ? 'is-dragging' : ''}`}
         draggable
-        onDragStart={(e) => onDragStart(e, tk.id)}
+        onDragStart={(e) => onDragStart(e, tk.id, sourceDayIdx)}
         onDragEnd={onDragEnd}
         onClick={() => setUI({ taskDetailId: tk.id })}
         style={{
@@ -228,6 +298,29 @@ export function BoardTimeline({ tasks }: BoardTimelineProps) {
           {tk.title.slice(0, 50)}
           {tk.title.length > 50 ? '…' : ''}
         </div>
+        {(showDueLabel || showMultiTag) && (
+          <div className="tl-card-meta">
+            {showDueLabel && (
+              <span
+                className="tl-card-due"
+                title={t('board.timeline_due_title', { date: fmtDueLabel() })}
+              >
+                <Icon name="flag" size={9} /> {fmtDueLabel()}
+              </span>
+            )}
+            {showMultiTag && multiTagPos > 0 && (
+              <span
+                className="tl-card-multi"
+                title={t('board.timeline_multi_title', {
+                  pos: multiTagPos,
+                  total: planned.length,
+                })}
+              >
+                {multiTagPos}/{planned.length}
+              </span>
+            )}
+          </div>
+        )}
       </div>
     );
   };
@@ -320,9 +413,10 @@ export function BoardTimeline({ tasks }: BoardTimelineProps) {
           const list = byPerson[personId];
           const buckets: Task[][] = [[], [], [], [], [], []];
           for (const tk of list) {
-            const di = dueDayIndex(tk.due, weekStart);
-            if (di === 'out-of-week') continue; // außerhalb dieser Woche → skip
-            buckets[di === 'no-due' ? 5 : di].push(tk);
+            const keys = bucketKeysForTask(tk, weekStart);
+            for (const k of keys) {
+              buckets[k === 'no-due' ? 5 : k].push(tk);
+            }
           }
           return (
             <div key={personId} className="tl-row">
@@ -347,7 +441,7 @@ export function BoardTimeline({ tasks }: BoardTimelineProps) {
                     }}
                     onDrop={(e) => onCellDrop(e, personId, i)}
                   >
-                    {buckets[i].map(renderCard)}
+                    {buckets[i].map((tk) => renderCard(tk, i))}
                     <button
                       type="button"
                       className="tl-cell-add"
@@ -374,7 +468,7 @@ export function BoardTimeline({ tasks }: BoardTimelineProps) {
                     }}
                     onDrop={(e) => onCellDrop(e, personId, -1)}
                   >
-                    {buckets[5].map(renderCard)}
+                    {buckets[5].map((tk) => renderCard(tk, -1))}
                     <button
                       type="button"
                       className="tl-cell-add"

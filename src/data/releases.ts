@@ -49,6 +49,30 @@ export function tx(value: Localizable, locale: 'de' | 'en'): string {
 
 export const RELEASES: Release[] = [
   {
+    version: '0.13.3',
+    date: '2026-06-01',
+    title: {
+      de: 'Wochenplanung 2.0: Trennung Frist/Bearbeitungstag + Multi-Tag-Planung',
+      en: 'Week planning 2.0: separate deadline/work day + multi-day planning',
+    },
+    changes: [
+      {
+        kind: 'feature',
+        text: {
+          de: '**Frist ≠ Bearbeitungstag**: Aufgaben haben jetzt zwei separate Datumsfelder. Die **Frist** (due) bleibt unverändert wo sie immer war, und parallel wählst du im Detail-Drawer einen oder mehrere **geplante Bearbeitungstage**. Die Wochenansicht rendert die Aufgabe an jedem Plan-Tag, das Frist-Datum wird zusätzlich als kleines rotes Label angezeigt wenn es vom Plan-Tag abweicht. Wenn keine Plan-Tage gesetzt sind, gilt wie bisher die Frist (kein Bruch für bestehende Tasks). _F44rPspkp5z_',
+          en: '**Deadline ≠ work day**: tasks now have two separate date fields. The **deadline** (due) stays where it always was, and in parallel you pick one or more **planned work days** in the detail drawer. The week view renders the task on each planned day; the deadline shows up as a small red label whenever it differs from the work day. Empty planned-days falls back to deadline (no break for existing tasks). _F44rPspkp5z_',
+        },
+      },
+      {
+        kind: 'feature',
+        text: {
+          de: '**Multi-Tag-Planung**: eine Aufgabe kann jetzt auf mehreren Tagen gleichzeitig geplant werden. Im Detail-Drawer eine Pillen-Reihe mit den nächsten zwei Werktag-Wochen — Klick toggled an/aus. Die Karte erscheint dann an jedem dieser Tage in der Wochenansicht mit kleinem "Tag X/Y"-Marker. Drag&Drop zwischen Tagen verschiebt nur den jeweiligen Plan-Tag, die anderen bleiben unberührt. _F44rPspkp5z_',
+          en: '**Multi-day planning**: a task can be planned across several days. In the detail drawer, a pill row covers the next two work-day weeks — click to toggle. The card then shows up on every selected day in the week view with a small "day X/Y" marker. Drag&drop between days moves just that day, the others stay put. _F44rPspkp5z_',
+        },
+      },
+    ],
+  },
+  {
     version: '0.13.2',
     date: '2026-05-29',
     title: {

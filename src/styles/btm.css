@@ -3602,6 +3602,143 @@ body[data-theme="default-dark"] .tl-cell-add:hover {
   color: var(--ink-900);
   word-break: break-word;
 }
+/* F44rPspkp5z: Multi-Tag-Picker im TaskDetail-Drawer */
+.planned-picker {
+  background: var(--cream-100);
+  border: 1px solid var(--ink-100);
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 18px;
+}
+.planned-picker-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+.planned-picker-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-900);
+}
+.planned-picker-hint {
+  font-size: 11px;
+  color: var(--ink-500);
+  flex: 1;
+  min-width: 0;
+}
+.planned-picker-clear {
+  background: transparent;
+  border: 1px solid var(--ink-200);
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 10px;
+  color: var(--ink-500);
+  cursor: pointer;
+}
+.planned-picker-clear:hover { color: var(--ink-900); border-color: var(--ink-300); }
+.planned-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  gap: 4px;
+}
+.planned-picker-pill {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 6px 4px;
+  border: 1px solid var(--ink-200);
+  border-radius: 6px;
+  background: var(--cream-50);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  transition: background 120ms, border-color 120ms, color 120ms;
+}
+.planned-picker-pill.is-week-start { box-shadow: inset 2px 0 0 0 var(--ink-200); }
+.planned-picker-pill:hover { border-color: var(--ink-300); }
+.planned-picker-pill.is-active {
+  background: rgba(var(--accent-rgb), 0.18);
+  border-color: rgba(var(--accent-rgb), 0.6);
+  color: var(--accent-700, var(--accent-500));
+  box-shadow: inset 0 0 0 1px rgba(var(--accent-rgb), 0.3);
+}
+.planned-picker-dow {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-500);
+}
+.planned-picker-pill.is-active .planned-picker-dow {
+  color: var(--accent-700, var(--accent-500));
+}
+.planned-picker-date { font-size: 10px; font-weight: 600; color: var(--ink-900); }
+.planned-picker-pill.is-active .planned-picker-date { color: var(--accent-700, var(--accent-500)); }
+body[data-theme="glass-dark"] .planned-picker,
+body[data-theme="default-dark"] .planned-picker {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+body[data-theme="glass-dark"] .planned-picker-pill,
+body[data-theme="default-dark"] .planned-picker-pill {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+body[data-theme="glass-dark"] .planned-picker-pill.is-active,
+body[data-theme="default-dark"] .planned-picker-pill.is-active {
+  background: rgba(var(--accent-rgb), 0.25);
+  border-color: rgba(var(--accent-rgb), 0.6);
+}
+body[data-theme="glass-dark"] .planned-picker-date,
+body[data-theme="default-dark"] .planned-picker-date { color: var(--cream-50); }
+
+/* F44rPspkp5z: Meta-Zeile mit Frist-Label + Multi-Tag-Anzeige */
+.tl-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+.tl-card-due {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: rgba(216, 69, 60, 0.12);
+  color: #B5392F;
+  border: 1px solid rgba(216, 69, 60, 0.25);
+}
+.tl-card-multi {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: rgba(var(--accent-rgb), 0.14);
+  color: var(--accent-700, var(--accent-500));
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+body[data-theme="glass-dark"] .tl-card-due,
+body[data-theme="default-dark"] .tl-card-due {
+  background: rgba(232, 100, 92, 0.2);
+  color: #F8B3AB;
+  border-color: rgba(232, 100, 92, 0.4);
+}
+body[data-theme="glass-dark"] .tl-card-multi,
+body[data-theme="default-dark"] .tl-card-multi {
+  background: rgba(var(--accent-rgb), 0.22);
+  color: rgba(var(--accent-rgb), 1);
+}
 
 /* Glass-Mode */
 body[data-theme="glass"] .tl-toolbar,

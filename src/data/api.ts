@@ -29,6 +29,8 @@ export interface ServerTask {
   estH: number;
   loggedH: number;
   due: string | null;
+  /** F44rPspkp5z: Liste ISO-Date-Strings, Server liefert immer ein Array (default []). */
+  plannedFor: string[];
   projectId: string | null;
   assigneeId: string | null;
   createdById: string | null;
@@ -100,6 +102,7 @@ export function fromServerTask(s: ServerTask, sessions: ServerSession[] = []): T
     loggedH: s.loggedH,
     prio: s.priority,
     due: (s.due ?? undefined) as Task['due'],
+    plannedFor: Array.isArray(s.plannedFor) ? s.plannedFor : [],
     sessions: sessions.map(fromServerSession),
     createdAt: new Date(s.createdAt).getTime(),
     parentTaskId: s.parentTaskId,
@@ -191,6 +194,7 @@ export interface CreateTaskInput {
   priority?: Priority;
   estH?: number;
   due?: string | null;
+  plannedFor?: string[];
   projectId?: string | null;
   assigneeId?: string | null;
   parentTaskId?: string | null;

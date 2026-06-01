@@ -89,6 +89,7 @@ function mapPatchToServer(patch: Partial<Task>): api.UpdateTaskInput {
   if ('proj' in patch) out.projectId = patch.proj ?? null;
   if ('who' in patch) out.assigneeId = patch.who || null;
   if ('due' in patch) out.due = (patch.due as string | null | undefined) ?? null;
+  if ('plannedFor' in patch) out.plannedFor = patch.plannedFor ?? [];
   if ('parentTaskId' in patch) out.parentTaskId = patch.parentTaskId ?? null;
   return out;
 }

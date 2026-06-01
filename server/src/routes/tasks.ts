@@ -28,6 +28,12 @@ function safeExt(filename: string): string {
 const ColumnEnum = z.enum(['todo', 'planned', 'doing', 'review', 'done']);
 const PrioEnum = z.enum(['low', 'med', 'high']);
 
+// F44rPspkp5z: plannedFor sind ISO-Datumsstrings (YYYY-MM-DD). Wir lassen max
+// 10 Eintraege zu — eine Aufgabe ueber 2 Wochen zu planen ist denkbar, mehr
+// wirkt willkuerlich. Reihenfolge ist signifikant fuer Anzeige (chronologisch
+// hilft Lesbarkeit, wir sortieren aber im Frontend).
+const PlannedDayString = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'invalid ISO date');
+
 const createSchema = z.object({
   title: z.string().min(1).max(300),
   description: z.string().max(10_000).optional().nullable(),
@@ -35,6 +41,7 @@ const createSchema = z.object({
   priority: PrioEnum.default('med'),
   estH: z.number().min(0).max(200).default(1),
   due: z.string().max(50).optional().nullable(),
+  plannedFor: z.array(PlannedDayString).max(10).optional(),
   projectId: z.string().nullable().optional(),
   assigneeId: z.string().nullable().optional(),
   parentTaskId: z.string().nullable().optional(),
@@ -72,6 +79,7 @@ export const tasksRoute = new Hono<{ Variables: Variables }>()
         estH: tasks.estH,
         loggedH: tasks.loggedH,
         due: tasks.due,
+        plannedFor: tasks.plannedFor,
         projectId: tasks.projectId,
         assigneeId: tasks.assigneeId,
         createdById: tasks.createdById,
@@ -107,6 +115,7 @@ export const tasksRoute = new Hono<{ Variables: Variables }>()
         priority: body.priority,
         estH: body.estH,
         due: body.due ?? null,
+        plannedFor: body.plannedFor ?? [],
         projectId: body.projectId ?? null,
         assigneeId: body.assigneeId ?? user.id,
         createdById: user.id,

@@ -236,6 +236,10 @@ export const tasks = pgTable(
     estH: real('est_h').notNull().default(1),
     loggedH: real('logged_h').notNull().default(0),
     due: text('due'), // 'today' | 'tomorrow' | ISO-Date | NULL
+    // F44rPspkp5z: Liste der Tage an denen aktiv geplant wird zu arbeiten.
+    // Getrennt von due (= Frist). Empty array → fallback auf due-Tag in der
+    // Timeline. Sonst rendert die Karte in jedem dieser Tage.
+    plannedFor: jsonb('planned_for').$type<string[]>().notNull().default([]),
     projectId: text('project_id').references(() => projects.id, { onDelete: 'set null' }),
     assigneeId: text('assignee_id').references(() => users.id, { onDelete: 'set null' }),
     createdById: text('created_by_id').references(() => users.id, { onDelete: 'set null' }),

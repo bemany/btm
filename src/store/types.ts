@@ -63,6 +63,9 @@ export interface Task {
   loggedH: number;
   prio: Priority;
   due?: string | 'today' | 'tomorrow' | null;
+  /** F44rPspkp5z: Tage an denen aktiv geplant wird zu arbeiten (ISO-Dates).
+   *  Empty/undef → Timeline fällt auf `due` zurück. Mehrere Einträge = Multi-Tag. */
+  plannedFor?: string[];
   sessions: Session[];
   createdAt: number;
   attachments?: Array<{ name: string; size?: number }>;

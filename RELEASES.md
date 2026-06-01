@@ -9,6 +9,21 @@ im Repo.
 
 ---
 
+## 0.13.3 — 2026-06-01
+
+**Wochenplanung 2.0: Trennung Frist/Bearbeitungstag + Multi-Tag-Planung (F44rPspkp5z Phase 2)**
+
+- **Feature** — Aufgaben haben jetzt ein separates `plannedFor`-Feld (jsonb-Array von ISO-Dates) parallel zu `due`. Plan-Tag(e) und Frist können auseinanderlaufen.
+- **Feature** — Multi-Tag-Picker im TaskDetail-Drawer: Pillen-Reihe für 2 Werktag-Wochen, Klick-Toggle, "Zurücksetzen"-Button.
+- **Feature** — Wochenansicht rendert Aufgaben auf jedem Plan-Tag (statt nur am Frist-Tag). Karten zeigen "Tag X/Y" wenn Multi-Tag-Plan.
+- **Feature** — Frist-Label als kleines rotes Badge auf Karten in der Timeline, sobald Frist vom Plan-Tag abweicht.
+- **Change** — Drag&Drop in der Timeline: bei plannedFor-getriebenen Aufgaben wird beim Drag nur der Source-Tag entfernt und Target-Tag hinzugefügt, andere Plan-Tage bleiben. Klassischer Fallback (due-getrieben) unverändert.
+- **Change** — Tagessummen in der Timeline rechnen jetzt mit `plannedFor`-Buckets — eine Multi-Tag-Aufgabe zählt an jedem Plan-Tag voll.
+
+DB-Migration: `0028_planned_for.sql` (`planned_for jsonb NOT NULL DEFAULT '[]'` + GIN-Index).
+
+---
+
 ## 0.13.2 — 2026-05-29
 
 **Wochenboard-Sanierung: Tagessummen, Plus-Button, Sortierung, Prio-Farben & freie KI-Blase**

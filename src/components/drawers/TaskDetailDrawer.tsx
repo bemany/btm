@@ -13,6 +13,7 @@ import { HoursMinutesInput } from '../shared/HoursMinutesInput';
 import { SessionsSection } from '../sessions/SessionsSection';
 import { TaskTimeline } from '../sessions/TaskTimeline';
 import { DatePicker } from '../shared/DatePicker';
+import { PlannedDaysPicker } from './PlannedDaysPicker';
 import { SubtasksSection } from './SubtasksSection';
 import { AttachmentsSection } from './AttachmentsSection';
 import { ChecklistSection } from './ChecklistSection';
@@ -327,6 +328,11 @@ export function TaskDetailDrawer({ id }: TaskDetailDrawerProps) {
               mono
             />
           </div>
+
+          <PlannedDaysPicker
+            value={t.plannedFor ?? []}
+            onChange={(next) => updateTask(t.id, { plannedFor: next })}
+          />
 
           <div
             style={{
