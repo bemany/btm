@@ -423,7 +423,7 @@ body[data-theme='glass-dark'] .sb-quick-toggle {
 body[data-theme='default-dark'] .sb-quick-btn:hover,
 body[data-theme='glass-dark'] .sb-quick-btn:hover {
   background: rgba(255, 255, 255, 0.06);
-  color: var(--cream-50);
+  color: var(--ink-900);
 }
 
 .sb-quick-btn .sb-profile-swatch {

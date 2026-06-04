@@ -815,7 +815,9 @@ body[data-theme="glass-dark"] .kanban-sort-select,
 body[data-theme="default-dark"] .kanban-sort-select {
   background: rgba(255, 255, 255, 0.06);
   border-color: rgba(255, 255, 255, 0.12);
-  color: var(--cream-50);
+  /* Dark-Mode-Fix 2026-06-04: var(--cream-50) ist im Dark #1A1815 (= Page-BG,
+     dunkel). var(--ink-900) ist hier korrekt — im Dark = #F4EFE7 (hell). */
+  color: var(--ink-900);
 }
 .kanban {
   display: grid;
@@ -3432,7 +3434,7 @@ body[data-theme="default-dark"] .cap-week-today {
   color: rgba(250, 247, 242, 0.8);
 }
 body[data-theme="glass-dark"] .cap-week-kw,
-body[data-theme="default-dark"] .cap-week-kw { color: var(--cream-50); }
+body[data-theme="default-dark"] .cap-week-kw { color: var(--ink-900); }
 .tl-hint {
   font-family: var(--font-mono);
   font-size: 10px;
@@ -3477,7 +3479,7 @@ body[data-theme="default-dark"] .tl-toggle {
 body[data-theme="glass-dark"] .tl-toggle:hover,
 body[data-theme="default-dark"] .tl-toggle:hover {
   background: rgba(255, 255, 255, 0.08);
-  color: var(--cream-50);
+  color: var(--ink-900);
 }
 body[data-theme="glass-dark"] .tl-toggle.is-active,
 body[data-theme="default-dark"] .tl-toggle.is-active {
@@ -3757,7 +3759,7 @@ body[data-theme="default-dark"] .planned-picker-pill.is-active {
   border-color: rgba(var(--accent-rgb), 0.6);
 }
 body[data-theme="glass-dark"] .planned-picker-date,
-body[data-theme="default-dark"] .planned-picker-date { color: var(--cream-50); }
+body[data-theme="default-dark"] .planned-picker-date { color: var(--ink-900); }
 
 /* F44rPspkp5z: Meta-Zeile mit Frist-Label + Multi-Tag-Anzeige */
 .tl-card-meta {

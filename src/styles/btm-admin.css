@@ -63,7 +63,7 @@ body[data-theme="default-dark"] .admin-side-close {
 body[data-theme="glass-dark"] .admin-side-close:hover,
 body[data-theme="default-dark"] .admin-side-close:hover {
   background: rgba(255, 255, 255, 0.06);
-  color: var(--cream-50);
+  color: var(--ink-900);
 }
 
 .admin-main {
@@ -247,7 +247,8 @@ body[data-theme="glass-dark"] .admin-feedback-link,
 body[data-theme="default-dark"] .admin-feedback-link {
   background: rgba(255, 255, 255, 0.04);
   border-color: rgba(255, 255, 255, 0.1);
-  color: var(--cream-50);
+  /* Dark-Mode-Fix 2026-06-04: var(--cream-50) ist im Dark dunkel → ink-900. */
+  color: var(--ink-900);
 }
 /* Back-Button im AdminFeedbackScreen. */
 .admin-feedback-back {
@@ -296,7 +297,7 @@ body[data-theme="default-dark"] .admin-view-btn {
 }
 body[data-theme="glass-dark"] .admin-view-btn:hover,
 body[data-theme="default-dark"] .admin-view-btn:hover {
-  color: var(--cream-50);
+  color: var(--ink-900);
   background: rgba(255, 255, 255, 0.05);
 }
 body[data-theme="glass-dark"] .admin-view-btn.active,
@@ -395,7 +396,7 @@ body[data-theme="glass-dark"] .admin-domains-add input,
 body[data-theme="default-dark"] .admin-domains-add input {
   background: rgba(255, 255, 255, 0.04);
   border-color: rgba(255, 255, 255, 0.1);
-  color: var(--cream-50);
+  color: var(--ink-900);
 }
 body[data-theme="glass-dark"] .admin-domains-empty,
 body[data-theme="default-dark"] .admin-domains-empty {
@@ -473,7 +474,8 @@ body[data-theme="default-dark"] .admin-user-table td {
 }
 body[data-theme="glass-dark"] .admin-user-row-name-main,
 body[data-theme="default-dark"] .admin-user-row-name-main {
-  color: var(--cream-50);
+  /* Dark-Mode-Fix 2026-06-04: cream-50 ist im Dark dunkel → ink-900. */
+  color: var(--ink-900);
 }
 body[data-theme="glass-dark"] .admin-user-row-name-sub,
 body[data-theme="default-dark"] .admin-user-row-name-sub {
