@@ -51,6 +51,9 @@ export function CompletionNoteModal() {
 
   if (!prompt) return null;
   const task = tasks.find((x) => x.id === prompt.taskId);
+  // FFZUYjxdE5I: Texte je nach Ziel-Status. Review = „zur Pruefung
+  // einreichen" Wording, Done = „abschliessen" wie gehabt.
+  const isReview = prompt.targetCol === 'review';
 
   const submitWith = () => {
     if (busy) return;
@@ -71,23 +74,25 @@ export function CompletionNoteModal() {
     <div className="cnm-backdrop" onClick={cancel} role="presentation">
       <div className="cnm-modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="cnm-title">
         <header className="cnm-head">
-          <div className="cnm-head-icon">
-            <Icon name="check-circle" size={16} />
+          <div className={`cnm-head-icon ${isReview ? 'is-review' : ''}`}>
+            <Icon name={isReview ? 'eye' : 'check-circle'} size={16} />
           </div>
           <div className="cnm-head-text">
-            <h2 id="cnm-title" className="cnm-title">{t('completion.title')}</h2>
+            <h2 id="cnm-title" className="cnm-title">
+              {isReview ? t('completion.title_review') : t('completion.title')}
+            </h2>
             <p className="cnm-sub">
               {task ? task.title : ''}
             </p>
           </div>
         </header>
-        <p className="cnm-hint">{t('completion.hint')}</p>
+        <p className="cnm-hint">{isReview ? t('completion.hint_review') : t('completion.hint')}</p>
         <textarea
           ref={taRef}
           className="cnm-textarea"
           value={note}
           onChange={(e) => setNote(e.target.value)}
-          placeholder={t('completion.placeholder')}
+          placeholder={isReview ? t('completion.placeholder_review') : t('completion.placeholder')}
           rows={5}
           maxLength={4000}
           disabled={busy}
@@ -101,7 +106,7 @@ export function CompletionNoteModal() {
             {t('completion.skip')}
           </button>
           <button type="button" className="cnm-btn cnm-btn-primary" onClick={submitWith} disabled={busy || !note.trim()}>
-            <Icon name="check" size={12} /> {t('completion.save')}
+            <Icon name="check" size={12} /> {isReview ? t('completion.save_review') : t('completion.save')}
           </button>
         </div>
         <div className="cnm-shortcut">{t('completion.shortcut')}</div>

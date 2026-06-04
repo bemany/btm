@@ -48,6 +48,11 @@
   color: #4A6839;
   flex-shrink: 0;
 }
+/* FFZUYjxdE5I: Review-Variante in amber statt gruen. */
+.cnm-head-icon.is-review {
+  background: rgba(200, 160, 76, 0.22);
+  color: #8B6E2F;
+}
 .cnm-head-text { flex: 1; min-width: 0; }
 .cnm-title {
   margin: 0;

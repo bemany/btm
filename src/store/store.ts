@@ -51,10 +51,11 @@ interface BTMActions {
   updateProject: (id: string, patch: Partial<Project>) => Promise<void>;
   deleteProject: (id: string) => Promise<void>;
 
-  // FMcAHI4aMlL: Modal-Prompt beim Aufgaben-Abschluss. Wer eine Task auf
-  // 'done' verschiebt, wird gefragt eine kurze Notiz zu hinterlassen (was
-  // war das Ergebnis?). Notiz landet als Task-Comment.
-  completionPrompt: { taskId: string } | null;
+  // FMcAHI4aMlL / FFZUYjxdE5I: Modal-Prompt beim Aufgaben-Statuswechsel auf
+  // 'review' ODER 'done'. Wer den Status verschiebt — egal ob via Kanban-DnD,
+  // Status-Dropdown im Detail-Drawer oder anderen Pfaden — wird gebeten eine
+  // kurze Notiz zu hinterlassen.
+  completionPrompt: { taskId: string; targetCol: 'review' | 'done' } | null;
   /** Loest einen offenen Prompt mit Notiz auf und fuehrt den Move aus. */
   resolveCompletionPrompt: (action: 'with-note' | 'skip' | 'cancel', note?: string) => Promise<void>;
 
@@ -114,13 +115,14 @@ export const useStore = create<BTMStore>()(
       setInvitations: (invitations) => set({ invitations }),
 
       moveTask: async (taskId, toCol) => {
-        // FMcAHI4aMlL: Beim Move auf 'done' Notiz-Prompt einblenden.
-        // Wir blocken den Move bis der User im Modal entscheidet — der
-        // resolveCompletionPrompt-Aufruf macht den Move dann tatsaechlich.
-        // Ausnahme: Task ist schon 'done' (z.B. Re-Drop auf done-Spalte).
+        // FMcAHI4aMlL / FFZUYjxdE5I: Beim Move auf 'review' oder 'done'
+        // Notiz-Prompt einblenden. Wir blocken den Move bis der User im Modal
+        // entscheidet — der resolveCompletionPrompt-Aufruf macht den Move
+        // dann tatsaechlich. Ausnahme: Task ist schon in der Zielspalte (z.B.
+        // Re-Drop auf dieselbe Spalte).
         const current = get().tasks.find((t) => t.id === taskId);
-        if (toCol === 'done' && current && current.col !== 'done') {
-          set({ completionPrompt: { taskId } });
+        if ((toCol === 'done' || toCol === 'review') && current && current.col !== toCol) {
+          set({ completionPrompt: { taskId, targetCol: toCol } });
           return;
         }
         const before = get().tasks;
@@ -143,21 +145,22 @@ export const useStore = create<BTMStore>()(
         if (!prompt) return;
         set({ completionPrompt: null });
         if (action === 'cancel') return;
-        const taskId = prompt.taskId;
+        const { taskId, targetCol } = prompt;
         const before = get().tasks;
-        // Optimistic move auf 'done'
-        set({ tasks: before.map((t) => (t.id === taskId ? { ...t, col: 'done' } : t)) });
+        // Optimistic Move auf die Ziel-Spalte
+        set({ tasks: before.map((t) => (t.id === taskId ? { ...t, col: targetCol } : t)) });
         try {
           if (action === 'with-note' && note && note.trim()) {
             // Comment vor dem Move posten, damit die Reihenfolge in der
-            // Aktivitaets-Timeline sauber ist: erst Notiz, dann „done".
+            // Aktivitaets-Timeline sauber ist: erst Notiz, dann Status-
+            // Wechsel.
             await api.createComment({
               subjectType: 'task',
               subjectId: taskId,
               body: note.trim(),
             }).catch((e) => console.warn('completion note save failed', e));
           }
-          const updated = await api.updateTask(taskId, { column: 'done' });
+          const updated = await api.updateTask(taskId, { column: targetCol });
           set((s) => ({
             tasks: s.tasks.map((t) => (t.id === updated.id ? api.fromServerTask(updated, []) : t)),
           }));
@@ -195,6 +198,42 @@ export const useStore = create<BTMStore>()(
       },
 
       updateTask: async (id, patch) => {
+        // FFZUYjxdE5I: Status-Wechsel auf 'review' oder 'done' via
+        // updateTask (Detail-Drawer-Dropdown, Mobile-Sheet, AI-Tool-Calls
+        // etc.) muss genauso den Completion-Note-Prompt triggern wie das
+        // Kanban-DnD. Wir ziehen die Spalten-Aenderung raus und delegieren
+        // an moveTask, der den Prompt-Hook hat — restliche Patch-Felder
+        // werden zuerst gespeichert.
+        if (patch.col === 'review' || patch.col === 'done') {
+          const current = get().tasks.find((t) => t.id === id);
+          if (current && current.col !== patch.col) {
+            const { col: targetCol, ...rest } = patch;
+            // Nicht-Spalten-Felder gleich persistieren (z.B. Titel-Edit
+            // gleichzeitig). moveTask kuemmert sich danach um die Spalte
+            // und triggert den Prompt.
+            if (Object.keys(rest).length > 0) {
+              const before = get().tasks;
+              set({ tasks: before.map((t) => (t.id === id ? { ...t, ...rest } : t)) });
+              try {
+                const serverPatch = mapPatchToServer(rest);
+                if (Object.keys(serverPatch).length > 0) {
+                  const updated = await api.updateTask(id, serverPatch);
+                  set((s) => ({
+                    tasks: s.tasks.map((t) =>
+                      t.id === id ? { ...api.fromServerTask(updated, []), sessions: t.sessions } : t,
+                    ),
+                  }));
+                }
+              } catch (e) {
+                set({ tasks: before });
+                console.error('updateTask (non-col fields) failed', e);
+                return;
+              }
+            }
+            await get().moveTask(id, targetCol);
+            return;
+          }
+        }
         const before = get().tasks;
         // Optimistic
         set({ tasks: before.map((t) => (t.id === id ? { ...t, ...patch } : t)) });

@@ -466,6 +466,26 @@ body[data-theme="glass-dark"]   .timer-hero .proj-tag {
   background: rgba(255, 255, 255, 0.1);
   color: rgba(255, 255, 255, 0.88);
 }
+/* Dark-Mode-Check 2026-06-04: generischer ProjTag in Listen war hellweiss
+   auf dunkel — cream-100 zwar dunkel definiert, aber der ink-700-Text
+   wurde zu schwarz und der Hintergrund zu hell wahrgenommen. Glas-Tint
+   plus heller Text fuer alle ProjTags ausser dem Hero-Override oben. */
+body[data-theme="default-dark"] .proj-tag,
+body[data-theme="glass-dark"]   .proj-tag {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(250, 247, 242, 0.85);
+}
+/* Dark-Mode-Check 2026-06-04: Timeline-Achsen-Labels (Datum + Range im
+   Header der Wochenansicht, Hour-Marker in /times) waren zu blass —
+   --ink-500 reicht nicht fuer 9-10px Mono-Text. Eine Stufe heller. */
+body[data-theme="default-dark"] .tl-grid-head-date,
+body[data-theme="glass-dark"]   .tl-grid-head-date,
+body[data-theme="default-dark"] .tl-nav-range,
+body[data-theme="glass-dark"]   .tl-nav-range,
+body[data-theme="default-dark"] .cap-week-range,
+body[data-theme="glass-dark"]   .cap-week-range {
+  color: rgba(250, 247, 242, 0.7);
+}
 
 /* Timer-Chip (Topbar) — Hintergrund ist im Dark-Glass schon
    rgba-weiß, der Text muss hell statt dark cream sein */

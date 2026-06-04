@@ -9,6 +9,17 @@ im Repo.
 
 ---
 
+## 0.14.1 — 2026-06-04
+
+**Notiz-Prompt ab Review + alle Pfade · Dark-Mode-Feinschliff**
+
+- **Fix** — Completion-Note-Prompt feuert jetzt auch beim Move auf `review` (eigene Texte), nicht nur `done`. Store-completionPrompt bekommt `targetCol`-Feld. _FFZUYjxdE5I_
+- **Fix** — Prompt wird auch aus updateTask getriggert (Drawer-Dropdown, Mobile-Sheet, AI). updateTask zieht col-Wechsel raus, persistiert restliche Felder und delegiert an moveTask. _FFZUYjxdE5I_
+- **Fix** — `accentColor.ts` ACCENT_PRESETS labelKeys auf `settings.appearance_accent_preset_*` (war `appearance.*`, falscher Namespace).
+- **Fix** — Dark-Mode: ProjTag-Override, Timeline/Capacity-Datum-Range heller.
+
+---
+
 ## 0.14.0 — 2026-06-04
 
 **Sammelbearbeitung 6 Feedbacks**

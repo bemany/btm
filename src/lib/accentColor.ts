@@ -163,12 +163,16 @@ export function applyAccent(hex: string | null): void {
 }
 
 /** Vordefinierte Presets — gerade Werte, klein gehalten, freundliche Töne. */
+// Dark-Mode-Fix: labelKeys liegen im i18n unter `settings.appearance_accent_preset_*`,
+// nicht unter `appearance.accent_preset_*` (alter Namespace). Sonst rendert
+// der Translator den Raw-Key, der per CSS-Ellipsis zu „appearan…" gekuerzt
+// wird (gesehen im Dark-Mode-Check 2026-06-04).
 export const ACCENT_PRESETS: Array<{ id: string; hex: string; labelKey: string }> = [
-  { id: 'orange', hex: '#c85a2c', labelKey: 'appearance.accent_preset_orange' },
-  { id: 'purple', hex: '#7c3aed', labelKey: 'appearance.accent_preset_purple' },
-  { id: 'blue', hex: '#2563eb', labelKey: 'appearance.accent_preset_blue' },
-  { id: 'teal', hex: '#0d9488', labelKey: 'appearance.accent_preset_teal' },
-  { id: 'green', hex: '#16a34a', labelKey: 'appearance.accent_preset_green' },
-  { id: 'pink', hex: '#db2777', labelKey: 'appearance.accent_preset_pink' },
-  { id: 'red', hex: '#dc2626', labelKey: 'appearance.accent_preset_red' },
+  { id: 'orange', hex: '#c85a2c', labelKey: 'settings.appearance_accent_preset_orange' },
+  { id: 'purple', hex: '#7c3aed', labelKey: 'settings.appearance_accent_preset_purple' },
+  { id: 'blue', hex: '#2563eb', labelKey: 'settings.appearance_accent_preset_blue' },
+  { id: 'teal', hex: '#0d9488', labelKey: 'settings.appearance_accent_preset_teal' },
+  { id: 'green', hex: '#16a34a', labelKey: 'settings.appearance_accent_preset_green' },
+  { id: 'pink', hex: '#db2777', labelKey: 'settings.appearance_accent_preset_pink' },
+  { id: 'red', hex: '#dc2626', labelKey: 'settings.appearance_accent_preset_red' },
 ];

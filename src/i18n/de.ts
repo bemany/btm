@@ -638,9 +638,13 @@ export const de = {
   },
   completion: {
     title: 'Aufgabe abschließen',
+    title_review: 'Zur Prüfung einreichen',
     hint: 'Schreib kurz auf was rausgekommen ist — das hilft dem Team später nachzuvollziehen, was erledigt wurde.',
+    hint_review: 'Schreib kurz auf was du gemacht hast — so weiß der Reviewer worauf er schauen soll.',
     placeholder: 'Was wurde gemacht? Was ist das Ergebnis?',
+    placeholder_review: 'Was wurde gemacht? Worauf soll der Reviewer schauen?',
     save: 'Mit Notiz abschließen',
+    save_review: 'Mit Notiz einreichen',
     skip: 'Ohne Notiz',
     cancel: 'Abbrechen',
     shortcut: 'Cmd/Ctrl+Enter zum Speichern · Esc zum Abbrechen',

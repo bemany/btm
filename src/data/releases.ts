@@ -49,6 +49,37 @@ export function tx(value: Localizable, locale: 'de' | 'en'): string {
 
 export const RELEASES: Release[] = [
   {
+    version: '0.14.1',
+    date: '2026-06-04',
+    title: {
+      de: 'Notiz-Prompt ab Review + alle Pfade · Dark-Mode-Feinschliff',
+      en: 'Completion note from review on + every path · dark-mode polish',
+    },
+    changes: [
+      {
+        kind: 'fix',
+        text: {
+          de: '**Notiz-Prompt schon bei "Zur Prüfung"**: bisher poppte das Notiz-Modal erst beim Wechsel auf "Erledigt" auf. Jetzt fragt es auch beim Wechsel auf "Review" mit eigenem Wording ("Zur Prüfung einreichen — Was soll der Reviewer prüfen?"). _FFZUYjxdE5I_',
+          en: '**Note prompt also on "Review"**: the note modal used to open only when moving to "Done". Now it also opens on "Review" with dedicated wording ("Submit for review — what should the reviewer check?"). _FFZUYjxdE5I_',
+        },
+      },
+      {
+        kind: 'fix',
+        text: {
+          de: '**Notiz-Prompt funktioniert jetzt aus allen Pfaden**: vorher griff der Hook nur beim Kanban-Drag&Drop. Status-Wechsel aus dem Detail-Drawer, aus dem Mobile-Sheet oder über die KI haben das Modal nicht ausgelöst. Jetzt fängt der Store-Hook auch updateTask-Aufrufe ab und delegiert. _FFZUYjxdE5I_',
+          en: '**Note prompt now fires from every path**: the hook only ran on kanban drag&drop before. Status changes from the detail drawer, mobile sheet or the AI did not trigger the modal. Now the store hook intercepts updateTask calls too and delegates. _FFZUYjxdE5I_',
+        },
+      },
+      {
+        kind: 'fix',
+        text: {
+          de: '**Dark-Mode-Polish (3 Sachen)**: Akzentfarben-Presets in den Einstellungen zeigten "appearan…" statt der Farbnamen (i18n-Namespace-Mismatch). Projekt-Tags in der Board-Liste waren hellweiß auf dunkel — jetzt mit Glas-Tint. Timeline- und Capacity-Wochen-Labels eine Stufe heller damit das Datum lesbar ist.',
+          en: '**Dark-mode polish (3 things)**: accent presets in Settings showed "appearan…" instead of color names (i18n namespace mismatch). Project tags in the board list were bright white on dark — now with a glass tint. Timeline and capacity week labels one step brighter so the date is readable.',
+        },
+      },
+    ],
+  },
+  {
     version: '0.14.0',
     date: '2026-06-04',
     title: {

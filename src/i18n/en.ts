@@ -636,9 +636,13 @@ export const en: Translations = {
   },
   completion: {
     title: 'Complete task',
+    title_review: 'Submit for review',
     hint: 'Jot down what the result was — helps the team understand later what got done.',
+    hint_review: 'Jot down what you did — so the reviewer knows what to look at.',
     placeholder: 'What did you do? What is the outcome?',
+    placeholder_review: 'What did you do? What should the reviewer check?',
     save: 'Save & complete',
+    save_review: 'Submit with note',
     skip: 'Without note',
     cancel: 'Cancel',
     shortcut: 'Cmd/Ctrl+Enter to save · Esc to cancel',
