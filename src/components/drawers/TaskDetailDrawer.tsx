@@ -356,7 +356,7 @@ export function TaskDetailDrawer({ id }: TaskDetailDrawerProps) {
                 <button
                   className="tb-btn accent"
                   onClick={() => {
-                    startTimer(t.id, true);
+                    startTimer(t.id);
                     showToast(tr('week.timer_pomo_started'));
                   }}
                 >

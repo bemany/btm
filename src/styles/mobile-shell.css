@@ -870,12 +870,19 @@ body[data-theme="glass-dark"] .mob-sheet-foot {
   font-weight: 600;
 }
 .mob-create-body {
+  /* FtkF6nfsdTm: war overflow: hidden — hat das mob-sheet-scroll-Verhalten
+     ueberschrieben und damit Scroll im Create-Sheet komplett blockiert.
+     Jetzt scroll-able mit iOS-Momentum. */
   flex: 1;
+  min-height: 0;
   padding: 12px 14px 0;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  overflow: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
 }
 
 .mob-input-wrap {
@@ -940,6 +947,18 @@ body[data-theme="glass-dark"] .mob-sheet-foot {
   flex-wrap: wrap;
   gap: 4px;
 }
+/* FtkF6nfsdTm: Projekt-Chip-Reihe im Create-Sheet horizontal scrollbar,
+   damit auch Projekte mit langem Namen + viele Projekte gleichzeitig
+   erreichbar bleiben (Fuhrpark war als 5. weggefallen). */
+.mob-chip-row-scroll {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 4px;
+}
+.mob-chip-row-scroll::-webkit-scrollbar { display: none; }
+.mob-chip-row-scroll .mob-chip { flex-shrink: 0; }
 .mob-chip {
   display: inline-flex;
   align-items: center;

@@ -128,7 +128,7 @@ export function TaskCard({ task, dragging, onDragStart, onDragEnd, onClick }: Ta
               className="timer-btn"
               onClick={(e: MouseEvent) => {
                 e.stopPropagation();
-                startTimer(task.id, true);
+                startTimer(task.id);
                 showToast(t('board.timer_started_pomo_toast'));
               }}
               title={t('board.card_timer_start_title')}

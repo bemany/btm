@@ -38,6 +38,8 @@ interface Item {
   label: string;
   icon: string;
   count?: number | null;
+  /** FclU83tVeNu: visuell eingerueckt als Sub-Navigation. */
+  isSubItem?: boolean;
 }
 
 export function Sidebar({
@@ -128,6 +130,13 @@ export function Sidebar({
     },
   ];
   const adminItem: Item = { id: 'admin', label: t('sidebar.admin'), icon: 'shield-check' };
+  // FclU83tVeNu: Feedback als Unter-Eintrag der Verwaltung.
+  const adminFeedbackItem: Item = {
+    id: 'admin_feedback',
+    label: t('sidebar.admin_feedback'),
+    icon: 'message-square',
+    isSubItem: true,
+  };
   // Esref-Wunsch FR0_IIsrpwo: Updates wandert nach unten (über Profil),
   // die drei Extras-Items kommen in eine zusammenklappbare Gruppe.
   const extrasItems: Item[] = [
@@ -226,6 +235,15 @@ export function Sidebar({
           >
             <Icon name={adminItem.icon} size={18} className="sb-icon" />
             <span className="sb-label">{adminItem.label}</span>
+          </button>
+          <button
+            key={adminFeedbackItem.id}
+            className={`sb-item sb-sub-item ${active === adminFeedbackItem.id ? 'active' : ''}`}
+            onClick={() => setActive(adminFeedbackItem.id)}
+            title={adminFeedbackItem.label}
+          >
+            <Icon name={adminFeedbackItem.icon} size={16} className="sb-icon" />
+            <span className="sb-label">{adminFeedbackItem.label}</span>
           </button>
         </div>
       )}

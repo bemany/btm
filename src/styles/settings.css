@@ -187,6 +187,36 @@ body[data-theme='glass-dark'] .set-nav {
   color: var(--ink-500);
   margin-bottom: 8px;
 }
+/* FopYCYAqsYX: einfache Toggle-Zeile mit Checkbox + Title/Sub. */
+.set-toggle-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--ink-100);
+  border-radius: 8px;
+  background: var(--cream-100);
+  cursor: pointer;
+}
+.set-toggle-row input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  flex-shrink: 0;
+  accent-color: var(--accent-500);
+}
+.set-toggle-text { display: flex; flex-direction: column; gap: 2px; }
+.set-toggle-title { font-size: 13px; font-weight: 600; color: var(--ink-900); }
+.set-toggle-sub { font-size: 11px; color: var(--ink-500); }
+body[data-theme="glass-dark"] .set-toggle-row,
+body[data-theme="default-dark"] .set-toggle-row {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+body[data-theme="glass-dark"] .set-toggle-title,
+body[data-theme="default-dark"] .set-toggle-title { color: rgba(250, 247, 242, 0.95); }
+body[data-theme="glass-dark"] .set-toggle-sub,
+body[data-theme="default-dark"] .set-toggle-sub { color: rgba(250, 247, 242, 0.55); }
 
 .set-card-grid {
   display: grid;

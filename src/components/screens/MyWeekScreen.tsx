@@ -256,7 +256,7 @@ export function MyWeekScreen({ setActive }: MyWeekScreenProps) {
                     className="timer-btn"
                     onClick={(e) => {
                       e.stopPropagation();
-                      startTimer(tk.id, true);
+                      startTimer(tk.id);
                       showToast(t('week.timer_pomo_started'));
                     }}
                   >
@@ -378,7 +378,7 @@ function QuickStartModal({ onClose, onStarted }: QuickStartModalProps) {
         setBusy(false);
         return;
       }
-      await startTimer(created.id, true);
+      await startTimer(created.id);
       showToast(t('week.quickstart_started'));
       onStarted();
     } catch {

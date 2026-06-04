@@ -149,7 +149,12 @@ export function MobScreenProfile() {
               )}
             </div>
           )}
-          <div className="mob-prof-row">
+          {/* FtkF6nfsdTm: Rows oeffnen jetzt das SettingsModal mit dem
+              entsprechenden Tab (vorher nur ChevronRight ohne Funktion). */}
+          <div
+            className="mob-prof-row"
+            onClick={() => window.dispatchEvent(new CustomEvent('btm:open-settings', { detail: { tab: 'appearance' } }))}
+          >
             <div className="mob-prof-row-icon a-red"><Icon name="timer" size={13} /></div>
             <div className="mob-prof-row-main">
               <div className="mob-prof-row-title">{t('mobile.profile_pomodoro')}</div>
@@ -157,7 +162,10 @@ export function MobScreenProfile() {
             </div>
             <Icon name="chevron-right" size={13} style={{ color: 'var(--ink-400)' }} />
           </div>
-          <div className="mob-prof-row">
+          <div
+            className="mob-prof-row"
+            onClick={() => window.dispatchEvent(new CustomEvent('btm:open-settings', { detail: { tab: 'profile' } }))}
+          >
             <div className="mob-prof-row-icon a-green"><Icon name="target" size={13} /></div>
             <div className="mob-prof-row-main">
               <div className="mob-prof-row-title">{t('mobile.profile_daily_goal')}</div>
@@ -169,7 +177,10 @@ export function MobScreenProfile() {
 
         <div className="mob-prof-section-h">{t('mobile.profile_section_account')}</div>
         <div className="mob-prof-group">
-          <div className="mob-prof-row">
+          <div
+            className="mob-prof-row"
+            onClick={() => window.dispatchEvent(new CustomEvent('btm:open-settings', { detail: { tab: 'calendar' } }))}
+          >
             <div className="mob-prof-row-icon a-amber"><Icon name="link-2" size={13} /></div>
             <div className="mob-prof-row-main">
               <div className="mob-prof-row-title">{t('mobile.profile_calendar')}</div>
@@ -177,7 +188,10 @@ export function MobScreenProfile() {
             </div>
             <Icon name="chevron-right" size={13} style={{ color: 'var(--ink-400)' }} />
           </div>
-          <div className="mob-prof-row">
+          <div
+            className="mob-prof-row"
+            onClick={() => window.dispatchEvent(new CustomEvent('btm:open-settings', { detail: { tab: 'data' } }))}
+          >
             <div className="mob-prof-row-icon a-slate"><Icon name="shield-check" size={13} /></div>
             <div className="mob-prof-row-main">
               <div className="mob-prof-row-title">{t('mobile.profile_privacy')}</div>

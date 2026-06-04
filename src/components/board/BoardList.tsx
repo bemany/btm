@@ -80,7 +80,7 @@ export function BoardList({ tasks }: BoardListProps) {
                 className="timer-btn"
                 onClick={(e) => {
                   e.stopPropagation();
-                  startTimer(tk.id, true);
+                  startTimer(tk.id);
                   showToast(t('toast.timer_started'));
                 }}
               >

@@ -148,7 +148,7 @@ export function ChromePluginScreen() {
                         <button
                           className="cp-task-play"
                           onClick={() => {
-                            startTimer(t.id, true);
+                            startTimer(t.id);
                             showToast('Timer gestartet');
                           }}
                         >

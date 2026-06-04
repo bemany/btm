@@ -216,6 +216,52 @@ body[data-theme="default-dark"] .admin-side-close:hover {
     grid-template-columns: 1fr;
   }
 }
+/* FclU83tVeNu: Feedback wurde auf eigene Unterseite verlegt — admin-split
+   im Hauptscreen hat damit nur noch die User-Sektion. */
+.admin-split.admin-split-single { grid-template-columns: 1fr; }
+/* Link-Row unter dem User-Block, springt zur Feedback-Unterseite. */
+.admin-feedback-link-row {
+  display: flex;
+  margin-top: 14px;
+}
+.admin-feedback-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--cream-100);
+  border: 1px solid var(--ink-200);
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: var(--ink-900);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: background 100ms, border-color 100ms;
+}
+.admin-feedback-link:hover {
+  background: var(--cream-50);
+  border-color: var(--accent-500);
+  color: var(--accent-500);
+}
+body[data-theme="glass-dark"] .admin-feedback-link,
+body[data-theme="default-dark"] .admin-feedback-link {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: var(--cream-50);
+}
+/* Back-Button im AdminFeedbackScreen. */
+.admin-feedback-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: transparent;
+  border: 0;
+  color: var(--ink-500);
+  font-size: 12px;
+  padding: 0 0 6px;
+  cursor: pointer;
+}
+.admin-feedback-back:hover { color: var(--accent-500); }
 
 /* View-Toggle (Karten / Liste) — kompakt, im Section-Head */
 .admin-view-toggle {

@@ -51,6 +51,13 @@ interface BTMActions {
   updateProject: (id: string, patch: Partial<Project>) => Promise<void>;
   deleteProject: (id: string) => Promise<void>;
 
+  // FMcAHI4aMlL: Modal-Prompt beim Aufgaben-Abschluss. Wer eine Task auf
+  // 'done' verschiebt, wird gefragt eine kurze Notiz zu hinterlassen (was
+  // war das Ergebnis?). Notiz landet als Task-Comment.
+  completionPrompt: { taskId: string } | null;
+  /** Loest einen offenen Prompt mit Notiz auf und fuehrt den Move aus. */
+  resolveCompletionPrompt: (action: 'with-note' | 'skip' | 'cancel', note?: string) => Promise<void>;
+
   // UI-State (rein lokal)
   setUI: (patch: Partial<UIState>) => void;
   setFilter: (patch: Partial<Filter>) => void;
@@ -107,6 +114,15 @@ export const useStore = create<BTMStore>()(
       setInvitations: (invitations) => set({ invitations }),
 
       moveTask: async (taskId, toCol) => {
+        // FMcAHI4aMlL: Beim Move auf 'done' Notiz-Prompt einblenden.
+        // Wir blocken den Move bis der User im Modal entscheidet — der
+        // resolveCompletionPrompt-Aufruf macht den Move dann tatsaechlich.
+        // Ausnahme: Task ist schon 'done' (z.B. Re-Drop auf done-Spalte).
+        const current = get().tasks.find((t) => t.id === taskId);
+        if (toCol === 'done' && current && current.col !== 'done') {
+          set({ completionPrompt: { taskId } });
+          return;
+        }
         const before = get().tasks;
         // Optimistic
         set({ tasks: before.map((t) => (t.id === taskId ? { ...t, col: toCol } : t)) });
@@ -118,6 +134,36 @@ export const useStore = create<BTMStore>()(
         } catch (e) {
           set({ tasks: before });
           console.error('moveTask failed', e);
+        }
+      },
+
+      completionPrompt: null,
+      resolveCompletionPrompt: async (action, note) => {
+        const prompt = get().completionPrompt;
+        if (!prompt) return;
+        set({ completionPrompt: null });
+        if (action === 'cancel') return;
+        const taskId = prompt.taskId;
+        const before = get().tasks;
+        // Optimistic move auf 'done'
+        set({ tasks: before.map((t) => (t.id === taskId ? { ...t, col: 'done' } : t)) });
+        try {
+          if (action === 'with-note' && note && note.trim()) {
+            // Comment vor dem Move posten, damit die Reihenfolge in der
+            // Aktivitaets-Timeline sauber ist: erst Notiz, dann „done".
+            await api.createComment({
+              subjectType: 'task',
+              subjectId: taskId,
+              body: note.trim(),
+            }).catch((e) => console.warn('completion note save failed', e));
+          }
+          const updated = await api.updateTask(taskId, { column: 'done' });
+          set((s) => ({
+            tasks: s.tasks.map((t) => (t.id === updated.id ? api.fromServerTask(updated, []) : t)),
+          }));
+        } catch (e) {
+          set({ tasks: before });
+          console.error('completion move failed', e);
         }
       },
 
@@ -202,7 +248,17 @@ export const useStore = create<BTMStore>()(
         }
       },
 
-      startTimer: async (taskId, withPomodoro = true) => {
+      startTimer: async (taskId, withPomodoro) => {
+        // FopYCYAqsYX: Pomodoro-Default kommt aus localStorage. Default an,
+        // Arne (und alle die Pomodoro nicht brauchen) koennen es in den
+        // Settings ausschalten.
+        if (withPomodoro === undefined) {
+          try {
+            withPomodoro = localStorage.getItem('btm.pomodoroDefault') !== 'off';
+          } catch {
+            withPomodoro = true;
+          }
+        }
         try {
           const live = await api.startServerTimer(taskId, withPomodoro);
           set({ timer: api.fromServerLiveTimer(live) });

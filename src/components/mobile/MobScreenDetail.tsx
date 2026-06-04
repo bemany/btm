@@ -256,7 +256,7 @@ export function MobScreenDetail({ taskId, onClose }: Props) {
           type="button"
           className="mob-sheet-primary"
           onClick={() => {
-            startTimer(task.id, true);
+            startTimer(task.id);
             showToast(t('mobile.timer_started_toast'));
             onClose();
           }}

@@ -292,7 +292,15 @@ export function BoardTimeline({ tasks }: BoardTimelineProps) {
           <span className="tl-card-status" style={{ background: tone }}>
             {t(`column.${tk.col}` as 'column.todo')}
           </span>
-          <span className="tl-card-hours">{fmtNum(tk.estH)}h</span>
+          <span
+            className="tl-card-hours"
+            title={t('board.timeline_hours_title', {
+              logged: fmtNum(tk.loggedH),
+              planned: fmtNum(tk.estH),
+            })}
+          >
+            {tk.loggedH > 0 ? `${fmtNum(tk.loggedH)}/${fmtNum(tk.estH)}h` : `${fmtNum(tk.estH)}h`}
+          </span>
         </div>
         <div className="tl-card-title">
           {tk.title.slice(0, 50)}

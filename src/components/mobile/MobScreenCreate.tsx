@@ -61,7 +61,7 @@ export function MobScreenCreate({ onClose, onCreated }: Props) {
       });
       if (created) {
         if (startAfter) {
-          await startTimer(created.id, true);
+          await startTimer(created.id);
         }
         showToast(startAfter ? t('mobile.create_started_toast') : t('mobile.create_saved_toast'));
         onCreated(created.id, startAfter);
@@ -73,7 +73,10 @@ export function MobScreenCreate({ onClose, onCreated }: Props) {
     }
   };
 
-  const visibleProjects = projects.slice(0, 4);
+  // FtkF6nfsdTm: vorher .slice(0, 4) — Projekte ab Position 5 (z.B. Fuhrpark)
+  // waren auf Mobile gar nicht waehlbar. Jetzt alle anzeigen mit horizontal
+  // scrollbarer Chip-Reihe.
+  const visibleProjects = projects;
   const dueChips: Array<{ id: DueChip; label: string; icon: string }> = [
     { id: 'today', label: t('common.today'), icon: 'sun' },
     { id: 'tomorrow', label: t('common.tomorrow'), icon: 'sunrise' },
@@ -134,7 +137,7 @@ export function MobScreenCreate({ onClose, onCreated }: Props) {
               <span>{t('mobile.create_field_project')}</span>
               <span className="mob-opt">{t('mobile.create_optional')}</span>
             </div>
-            <div className="mob-chip-row">
+            <div className="mob-chip-row mob-chip-row-scroll">
               {visibleProjects.map((p) => (
                 <div
                   key={p.id}

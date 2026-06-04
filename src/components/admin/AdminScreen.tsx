@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useStore } from '../../store/store';
 import type { AppUser, AppInvitation } from '../../store/types';
 import { Icon } from '../shared/Icon';
-import { FeedbackList } from './FeedbackList';
+import { navigate } from '../../router';
 import { Avatar } from '../shared/Avatar';
 import { showToast } from '../shared/Toast';
 import * as api from '../../data/api';
@@ -205,8 +205,10 @@ export function AdminScreen() {
             </div>
           )}
 
-          {/* FEtt86HtKR3: User und Feedbacks nebeneinander */}
-          <div className="admin-split">
+          {/* FEtt86HtKR3 (alt) — bis FclU83tVeNu: User + Feedbacks waren
+              nebeneinander. Feedback hat jetzt eine eigene Unterseite
+              /admin/feedback, hier bleibt nur noch die User-Sektion. */}
+          <div className="admin-split admin-split-single">
             <div className="admin-section">
               <div className="admin-section-head">
                 <Icon name="users" size={14} />
@@ -256,13 +258,18 @@ export function AdminScreen() {
               )}
             </div>
 
-            <section className="admin-section admin-feedback-section">
-              <div className="admin-section-head">
-                <Icon name="message-square" size={14} />
-                <h3>{t('feedback.admin_heading')}</h3>
-              </div>
-              <FeedbackList />
-            </section>
+          </div>
+
+          <div className="admin-feedback-link-row">
+            <button
+              type="button"
+              className="admin-feedback-link"
+              onClick={() => navigate('/admin/feedback')}
+            >
+              <Icon name="message-square" size={14} />
+              <span>{t('admin.feedback_link')}</span>
+              <Icon name="chevron-right" size={12} />
+            </button>
           </div>
 
           <AllowedDomainsSection />

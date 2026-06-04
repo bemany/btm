@@ -44,6 +44,7 @@ export function Topbar({ active, setActive, collapsed, setCollapsed }: TopbarPro
     chrome: { crumb: t('topbar.title_chrome'), meta: t('topbar.meta_chrome') },
     tv: { crumb: t('topbar.title_tv'), meta: t('topbar.meta_tv') },
     admin: { crumb: t('topbar.title_admin'), meta: t('topbar.meta_admin') },
+    admin_feedback: { crumb: t('topbar.title_admin'), meta: t('topbar.meta_admin') },
     releases: { crumb: t('topbar.title_releases'), meta: t('topbar.meta_releases') },
   };
 

@@ -26,6 +26,7 @@ import './styles/mobile.css';
 import './styles/onboarding.css';
 import './styles/releases.css';
 import './styles/chat-bubble.css';
+import './styles/completion-note-modal.css';
 import './styles/mobile-app.css';
 import './styles/mobile-shell.css';
 import './styles/settings.css';

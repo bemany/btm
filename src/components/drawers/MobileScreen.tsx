@@ -88,7 +88,7 @@ export function MobileScreen() {
                     ) : (
                       <button
                         onClick={() => {
-                          startTimer(t.id, true);
+                          startTimer(t.id);
                           showToast('Timer + Pomo gestartet');
                         }}
                         style={{

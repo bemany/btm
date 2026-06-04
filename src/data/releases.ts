@@ -49,6 +49,58 @@ export function tx(value: Localizable, locale: 'de' | 'en'): string {
 
 export const RELEASES: Release[] = [
   {
+    version: '0.14.0',
+    date: '2026-06-04',
+    title: {
+      de: '6 Feedbacks: Completion-Note, Pomodoro-Default, Mobile-Fixes, Capacity-Woche, Timeline-Logged, Feedback-Subseite',
+      en: '6 feedbacks: completion note, pomodoro default, mobile fixes, capacity week, timeline logged, feedback subpage',
+    },
+    changes: [
+      {
+        kind: 'feature',
+        text: {
+          de: '**Abschluss-Notiz beim Aufgaben-Erledigen**: wer eine Aufgabe auf "Erledigt" verschiebt, wird gefragt eine kurze Notiz zu hinterlassen ("Was wurde gemacht?"). Notiz wandert als Kommentar an die Task und taucht in der Activity-Timeline + Detail-Ansicht auf. Cmd/Ctrl+Enter speichert, Esc bricht ab, "Ohne Notiz" als Skip-Option. _FMcAHI4aMlL_',
+          en: '**Completion note on done**: moving a task to "Done" now opens a modal asking for a short note ("What did you do?"). The note is saved as a comment and shows up in the activity timeline + detail view. Cmd/Ctrl+Enter saves, Esc cancels, "Without note" as skip option. _FMcAHI4aMlL_',
+        },
+      },
+      {
+        kind: 'feature',
+        text: {
+          de: '**Pomodoro-Fokus standardmäßig abschaltbar**: neuer Toggle in Einstellungen → Erscheinungsbild → Timer. Aus = neue Timer starten ohne Pomodoro-Block-Logik. Per Browser/Gerät einstellbar. _FopYCYAqsYX_',
+          en: '**Pomodoro focus default toggle**: new switch in Settings → Appearance → Timer. Off = new timers start without pomodoro blocks. Per browser/device. _FopYCYAqsYX_',
+        },
+      },
+      {
+        kind: 'fix',
+        text: {
+          de: '**Mobile-Bugs (3 in einem)**: (a) Scroll im Neue-Aufgabe-Sheet auf Mobile war blockiert — overflow-hidden überschrieb das Sheet-Scroll. (b) Projekt-Picker zeigte nur die ersten 4 Projekte — Projekte wie "Fuhrpark" auf Position 5+ waren unerreichbar. Jetzt alle in einer horizontal scrollbaren Chip-Reihe. (c) Profil-Rows Pomodoro, Tagesziel, Kalender und Datenschutz öffnen jetzt das Settings-Modal mit dem passenden Tab — vorher nur Deko. _FtkF6nfsdTm_',
+          en: '**Mobile bugs (3 in one)**: (a) Scrolling in the new-task sheet on mobile was blocked — overflow:hidden overrode the sheet scroll. (b) Project picker showed only the first 4 projects — anything from #5 onwards (e.g. "Fuhrpark") was unreachable. Now all in a horizontally scrollable chip row. (c) Profile rows Pomodoro, Daily goal, Calendar and Privacy now open the Settings modal on the right tab — used to be decorative only. _FtkF6nfsdTm_',
+        },
+      },
+      {
+        kind: 'feature',
+        text: {
+          de: '**Wochenauswahl im Kapazitäts-Screen**: Prev / KW-Label / Today / Next direkt im Header. "Geplant"-Spalten und KPIs zeigen jetzt nur Stunden für die gewählte Woche (multi-Tag-Plan zählt pro Plan-Tag voll). Erfasste Stunden bleiben Lifetime-Summe. _F8O1Z0G38WT_',
+          en: '**Week selector in capacity screen**: prev / KW label / today / next in the header. "Planned" columns and KPIs only show hours for the selected week (multi-day plans count per planned day). Logged hours stay as lifetime sum. _F8O1Z0G38WT_',
+        },
+      },
+      {
+        kind: 'change',
+        text: {
+          de: '**Erfasste Zeit auf Timeline-Karten**: zusätzlich zur geplanten Zeit zeigt jede Karte jetzt "Xh erfasst / Yh geplant" sobald Sessions gebucht sind (vorher nur "Yh"). _FCAJJVj3gXG_',
+          en: '**Logged time on timeline cards**: in addition to planned time, each card now shows "X h logged / Y h planned" once sessions exist (used to be just "Yh"). _FCAJJVj3gXG_',
+        },
+      },
+      {
+        kind: 'change',
+        text: {
+          de: '**Bug-Reports & Features als eigene Verwaltungs-Unterseite**: raus aus dem Admin-Hauptscreen, jetzt unter /admin/feedback mit eigenem Sidebar-Sub-Eintrag. _FclU83tVeNu_',
+          en: '**Bug reports & features as their own management subpage**: moved out of the main admin screen into /admin/feedback with its own sidebar sub-entry. _FclU83tVeNu_',
+        },
+      },
+    ],
+  },
+  {
     version: '0.13.4',
     date: '2026-06-01',
     title: {

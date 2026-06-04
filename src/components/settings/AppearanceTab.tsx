@@ -4,6 +4,7 @@ import type { ThemeMode } from '../../store/types';
 import { composeTheme, decomposeTheme } from '../../store/types';
 import { useT } from '../../i18n';
 import { ACCENT_DEFAULT, ACCENT_PRESETS, isValidAccentHex } from '../../lib/accentColor';
+import { getPomodoroDefault, setPomodoroDefault } from '../../lib/preferences';
 
 export interface AppearanceTabProps {
   theme: ThemeMode;
@@ -16,6 +17,14 @@ export interface AppearanceTabProps {
 export function AppearanceTab({ theme, setTheme, accentColor, setAccentColor }: AppearanceTabProps) {
   const t = useT();
   const { base, brightness } = decomposeTheme(theme);
+
+  // FopYCYAqsYX: Pomodoro-Default-Toggle. Per-Browser ueber localStorage.
+  const [pomodoroOn, setPomodoroOn] = useState<boolean>(() => getPomodoroDefault());
+  const togglePomodoroDefault = () => {
+    const next = !pomodoroOn;
+    setPomodoroOn(next);
+    setPomodoroDefault(next);
+  };
 
   // Lokaler State für den Color-Picker — Live-Preview im Input ohne sofort
   // PATCH-Storm. Wir commiten erst onBlur oder bei Preset-Klick.
@@ -151,6 +160,22 @@ export function AppearanceTab({ theme, setTheme, accentColor, setAccentColor }: 
           </button>
         )}
       </div>
+
+      <div className="set-section-label" style={{ marginTop: 24 }}>
+        {t('settings.appearance_timer_section')}
+      </div>
+      <label className="set-toggle-row">
+        <input
+          type="checkbox"
+          checked={pomodoroOn}
+          onChange={togglePomodoroDefault}
+          aria-label={t('settings.appearance_pomodoro_default')}
+        />
+        <span className="set-toggle-text">
+          <span className="set-toggle-title">{t('settings.appearance_pomodoro_default')}</span>
+          <span className="set-toggle-sub">{t('settings.appearance_pomodoro_default_sub')}</span>
+        </span>
+      </label>
     </div>
   );
 }

@@ -1,0 +1,165 @@
+/* FMcAHI4aMlL: Completion-Note-Modal beim Aufgaben-Abschluss. */
+
+.cnm-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1500;
+  background: rgba(28, 26, 23, 0.5);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  animation: cnm-fade-in 160ms ease-out;
+}
+@keyframes cnm-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.cnm-modal {
+  width: 100%;
+  max-width: 520px;
+  background: var(--cream-50);
+  border: 1px solid var(--ink-200);
+  border-radius: 12px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.22);
+  padding: 18px 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: cnm-pop 180ms cubic-bezier(0.2, 0.85, 0.4, 1);
+}
+@keyframes cnm-pop {
+  from { transform: translateY(6px) scale(0.98); opacity: 0; }
+  to   { transform: translateY(0) scale(1);     opacity: 1; }
+}
+.cnm-head {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.cnm-head-icon {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(94, 127, 78, 0.18);
+  color: #4A6839;
+  flex-shrink: 0;
+}
+.cnm-head-text { flex: 1; min-width: 0; }
+.cnm-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink-900);
+  line-height: 1.2;
+}
+.cnm-sub {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--ink-500);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cnm-hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--ink-700);
+  line-height: 1.45;
+}
+.cnm-textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 110px;
+  padding: 10px 12px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  line-height: 1.45;
+  background: var(--cream-100);
+  border: 1px solid var(--ink-200);
+  border-radius: 8px;
+  color: var(--ink-900);
+}
+.cnm-textarea:focus {
+  outline: none;
+  border-color: var(--accent-500);
+  box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.18);
+}
+.cnm-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.cnm-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 12px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background 100ms, border-color 100ms, color 100ms, opacity 100ms;
+}
+.cnm-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.cnm-btn-ghost {
+  background: transparent;
+  border-color: var(--ink-200);
+  color: var(--ink-500);
+}
+.cnm-btn-ghost:hover { border-color: var(--ink-300); color: var(--ink-900); }
+.cnm-btn-secondary {
+  background: var(--cream-100);
+  border-color: var(--ink-200);
+  color: var(--ink-700);
+}
+.cnm-btn-secondary:hover { background: var(--cream-50); color: var(--ink-900); }
+.cnm-btn-primary {
+  background: linear-gradient(135deg, var(--accent-500), var(--accent-600));
+  color: #fff;
+  border-color: transparent;
+}
+.cnm-btn-primary:hover { filter: brightness(1.06); }
+.cnm-shortcut {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink-500);
+  text-align: right;
+  margin-top: -4px;
+}
+
+body[data-theme="glass-dark"] .cnm-modal,
+body[data-theme="default-dark"] .cnm-modal {
+  background: #1A1815;
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+}
+body[data-theme="glass-dark"] .cnm-title,
+body[data-theme="default-dark"] .cnm-title { color: rgba(250, 247, 242, 0.95); }
+body[data-theme="glass-dark"] .cnm-sub,
+body[data-theme="default-dark"] .cnm-sub { color: rgba(250, 247, 242, 0.55); }
+body[data-theme="glass-dark"] .cnm-hint,
+body[data-theme="default-dark"] .cnm-hint { color: rgba(250, 247, 242, 0.75); }
+body[data-theme="glass-dark"] .cnm-textarea,
+body[data-theme="default-dark"] .cnm-textarea {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: rgba(250, 247, 242, 0.95);
+}
+body[data-theme="glass-dark"] .cnm-btn-ghost,
+body[data-theme="default-dark"] .cnm-btn-ghost {
+  border-color: rgba(255, 255, 255, 0.14);
+  color: rgba(250, 247, 242, 0.6);
+}
+body[data-theme="glass-dark"] .cnm-btn-secondary,
+body[data-theme="default-dark"] .cnm-btn-secondary {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: rgba(250, 247, 242, 0.75);
+}
+body[data-theme="glass-dark"] .cnm-shortcut,
+body[data-theme="default-dark"] .cnm-shortcut { color: rgba(250, 247, 242, 0.45); }

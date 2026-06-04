@@ -26,6 +26,7 @@ import * as api from './data/api';
 import { MyWeekScreen } from './components/screens/MyWeekScreen';
 import { BoardScreen } from './components/board/BoardScreen';
 import { ChatBubble } from './components/chat-bubble/ChatBubble';
+import { CompletionNoteModal } from './components/completion/CompletionNoteModal';
 import { OnboardingTour } from './components/onboarding/OnboardingTour';
 import { NotifyPrompt } from './components/onboarding/NotifyPrompt';
 import { ReleaseModal } from './components/onboarding/ReleaseModal';
@@ -49,6 +50,9 @@ const InboxScreen = lazy(() =>
 );
 const AdminScreen = lazy(() =>
   import('./components/admin/AdminScreen').then((m) => ({ default: m.AdminScreen })),
+);
+const AdminFeedbackScreen = lazy(() =>
+  import('./components/admin/AdminFeedbackScreen').then((m) => ({ default: m.AdminFeedbackScreen })),
 );
 const MobileScreen = lazy(() =>
   import('./components/drawers/MobileScreen').then((m) => ({ default: m.MobileScreen })),
@@ -284,6 +288,7 @@ export function App() {
         <OnboardingTour replayKey={tourReplay} theme={theme} setTheme={setTheme} />
         <NotifyPrompt />
         <ReleaseModal />
+        <CompletionNoteModal />
       </>
     );
   }
@@ -328,7 +333,8 @@ export function App() {
               {active === 'releases' && <ReleasesScreen />}
               {active === 'inbox' && <InboxScreen />}
               {active === 'admin' && authUser?.role === 'admin' && <AdminScreen />}
-              {active === 'admin' && authUser?.role !== 'admin' && (
+              {active === 'admin_feedback' && authUser?.role === 'admin' && <AdminFeedbackScreen />}
+              {(active === 'admin' || active === 'admin_feedback') && authUser?.role !== 'admin' && (
                 <div className="page">
                   <h1>Kein Zugriff</h1>
                   <p>Diese Seite ist nur für Admins.</p>
@@ -364,6 +370,7 @@ export function App() {
         <NotifyPrompt />
       <ReleaseModal />
       <ChatBubble />
+      <CompletionNoteModal />
     </>
   );
 }

@@ -164,7 +164,7 @@ export function MobScreenHeute({ onOpenTask }: Props) {
                 <button
                   type="button"
                   className="mob-task-row-start"
-                  onClick={(e) => { e.stopPropagation(); startTimer(tk.id, true); showToast(t('mobile.timer_started_toast')); }}
+                  onClick={(e) => { e.stopPropagation(); startTimer(tk.id); showToast(t('mobile.timer_started_toast')); }}
                   aria-label={t('mobile.start')}
                 >
                   <Icon name="play" size={9} />
@@ -207,7 +207,7 @@ export function MobScreenHeute({ onOpenTask }: Props) {
                 <button
                   type="button"
                   className="mob-task-row-start"
-                  onClick={(e) => { e.stopPropagation(); startTimer(tk.id, true); showToast(t('mobile.timer_started_toast')); }}
+                  onClick={(e) => { e.stopPropagation(); startTimer(tk.id); showToast(t('mobile.timer_started_toast')); }}
                   aria-label={t('mobile.start')}
                 >
                   <Icon name="play" size={9} />

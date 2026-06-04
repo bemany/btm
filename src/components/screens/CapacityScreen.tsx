@@ -1,9 +1,63 @@
 import type { CSSProperties } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useStore } from '../../store/store';
 import { Avatar } from '../shared/Avatar';
+import { Icon } from '../shared/Icon';
 import { useT, useLocale } from '../../i18n';
 import { listTasks, fromServerTask } from '../../data/api';
+import type { Task } from '../../store/types';
+
+// F8O1Z0G38WT: Wochenauswahl. Helper-Logik kommt 1:1 aus BoardTimeline.
+function mondayOfDate(d: Date): Date {
+  const out = new Date(d);
+  out.setHours(0, 0, 0, 0);
+  const dow = (out.getDay() || 7) - 1;
+  out.setDate(out.getDate() - dow);
+  return out;
+}
+function isoDate(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+function isoWeek(d: Date): number {
+  const target = new Date(d.valueOf());
+  const dayNr = (d.getDay() + 6) % 7;
+  target.setDate(target.getDate() - dayNr + 3);
+  const firstThursday = target.valueOf();
+  target.setMonth(0, 1);
+  if (target.getDay() !== 4) {
+    target.setMonth(0, 1 + ((4 - target.getDay() + 7) % 7));
+  }
+  return 1 + Math.ceil((firstThursday - target.valueOf()) / 604800000);
+}
+type DuePlacement = number | 'no-due' | 'out-of-week';
+function dueDayIndex(due: string | null | undefined, weekStart: Date): DuePlacement {
+  if (!due) return 'no-due';
+  if (due === 'today') return 0;
+  if (due === 'tomorrow') return 1;
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(due);
+  if (!m) return 'no-due';
+  const target = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  const days = Math.round((target.getTime() - weekStart.getTime()) / 86400000);
+  if (days < 0 || days > 4) return 'out-of-week';
+  return days;
+}
+// Wie viele Stunden plant der User in dieser Woche fuer diese Task? Multi-
+// Tag-Plan zaehlt mehrfach (jeder Plan-Tag bucht estH). Tasks ohne Plan-Tag
+// fallen zurueck auf die Frist.
+function plannedHoursInWeek(tk: Task, weekStart: Date): number {
+  if (tk.plannedFor && tk.plannedFor.length > 0) {
+    let count = 0;
+    for (const d of tk.plannedFor) {
+      const di = dueDayIndex(d, weekStart);
+      if (typeof di === 'number') count += 1;
+    }
+    return count * tk.estH;
+  }
+  const di = dueDayIndex(tk.due, weekStart);
+  if (typeof di === 'number') return tk.estH;
+  return 0;
+}
 
 export function CapacityScreen() {
   const tasks = useStore((s) => s.tasks);
@@ -11,6 +65,20 @@ export function CapacityScreen() {
   const t = useT();
   const [locale] = useLocale();
   const fmtNum = (h: number) => h.toFixed(1).replace('.', locale === 'en' ? '.' : ',');
+
+  // Wochenanker — Default: aktuelle Woche.
+  const [weekStart, setWeekStart] = useState<Date>(() => mondayOfDate(new Date()));
+  const shiftWeek = (delta: number) => {
+    const d = new Date(weekStart);
+    d.setDate(d.getDate() + delta);
+    setWeekStart(d);
+  };
+  const goToday = () => setWeekStart(mondayOfDate(new Date()));
+  const fmtDay = (d: Date) =>
+    d.toLocaleDateString(locale === 'en' ? 'en-US' : 'de-DE', { day: '2-digit', month: '2-digit' });
+  const friday = new Date(weekStart);
+  friday.setDate(friday.getDate() + 4);
+  const kw = isoWeek(weekStart);
 
   // FEI436brUlv: gebuchte Stunden archivierter Aufgaben muessen weiter in
   // die Kapazitaets-Summe einfliessen. Separate Query mit archived=all.
@@ -27,10 +95,14 @@ export function CapacityScreen() {
 
   const activeUsers = users.filter((u) => u.status === 'active');
   const rows = activeUsers.map((u) => {
-    // Planned: nur aktive, nicht-archivierte, nicht-done — das sind die kommenden Aufgaben
+    // Planned: nur Tasks, die in der aktuell ausgewaehlten Woche einen
+    // Plan-Tag haben (oder ohne plannedFor eine Frist in der Woche). Erledigte
+    // raus — wer fertig ist, blockt keine Kapazitaet mehr.
     const myActiveTasks = tasks.filter((tk) => tk.who === u.id && tk.col !== 'done');
-    const planned = myActiveTasks.reduce((a, b) => a + b.estH, 0);
-    // Logged: ueber ALLE Tasks (auch archivierte) damit historische Stunden bleiben
+    const planned = myActiveTasks.reduce((a, b) => a + plannedHoursInWeek(b, weekStart), 0);
+    // Logged: ueber ALLE Tasks (auch archivierte) — Lifetime-Summe, nicht
+    // wochengefiltert. Pro Woche aufzuteilen braeuchte Session-Daten die hier
+    // nicht im Store sind.
     const logged = allTasks.filter((tk) => tk.who === u.id).reduce((a, b) => a + b.loggedH, 0);
     return { ...u, full: u.name, role: u.jobTitle ?? '—', planned, logged };
   });
@@ -43,10 +115,39 @@ export function CapacityScreen() {
       <div className="page-head">
         <div className="left">
           <div className="eyebrow">{t('capacity.eyebrow')}</div>
-          <h1>{t('capacity.title', { kw: 19 })}</h1>
+          <h1>{t('capacity.title', { kw })}</h1>
           <div className="subtitle">
             {t('capacity.sub', { count: rows.length, totalCap })}
           </div>
+        </div>
+        <div className="cap-week-nav">
+          <button
+            type="button"
+            className="cap-week-btn"
+            onClick={() => shiftWeek(-7)}
+            title={t('times.prev_week')}
+            aria-label={t('times.prev_week')}
+          >
+            <Icon name="chevron-left" size={14} />
+          </button>
+          <div className="cap-week-label">
+            <span className="cap-week-kw">KW {kw}</span>
+            <span className="cap-week-range">
+              {fmtDay(weekStart)} – {fmtDay(friday)}
+            </span>
+          </div>
+          <button
+            type="button"
+            className="cap-week-btn"
+            onClick={() => shiftWeek(7)}
+            title={t('times.next_week')}
+            aria-label={t('times.next_week')}
+          >
+            <Icon name="chevron-right" size={14} />
+          </button>
+          <button type="button" className="cap-week-today" onClick={goToday}>
+            {t('common.today')}
+          </button>
         </div>
       </div>
 

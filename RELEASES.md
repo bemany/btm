@@ -9,6 +9,19 @@ im Repo.
 
 ---
 
+## 0.14.0 — 2026-06-04
+
+**Sammelbearbeitung 6 Feedbacks**
+
+- **Feature** — Abschluss-Notiz beim Move auf "Done": Modal mit Textarea, Notiz als Comment auf der Task. Globaler Hook im Store. _FMcAHI4aMlL_
+- **Feature** — Pomodoro-Default umschaltbar: Toggle in Einstellungen → Erscheinungsbild → Timer. Per-Browser localStorage. _FopYCYAqsYX_
+- **Fix** — Mobile-Bugs gefixt: (a) Scroll im Create-Sheet (overflow:hidden überschrieb mob-sheet-scroll), (b) Projekt-Picker zeigte nur 4 Projekte → jetzt alle in horizontal scrollbarer Chip-Reihe, (c) Profil-Rows Pomodoro/Tagesziel/Kalender/Datenschutz öffnen jetzt Settings-Modal via window-event. _FtkF6nfsdTm_
+- **Feature** — Capacity-Screen Wochenauswahl: Prev/KW/Today/Next im Header, plannedHoursInWeek berücksichtigt plannedFor + due-Fallback. _F8O1Z0G38WT_
+- **Change** — Timeline-Karten zeigen `loggedH/estH` sobald gebuchte Stunden > 0. _FCAJJVj3gXG_
+- **Change** — FeedbackList raus aus AdminScreen, neue Route /admin/feedback mit AdminFeedbackScreen, Sidebar-Sub-Item, Back-Link. _FclU83tVeNu_
+
+---
+
 ## 0.13.4 — 2026-06-01
 
 **Timer-Watchdog: Push-Warnung bei lang laufenden Sessions (FGuP3nYfPfL)**
