@@ -49,6 +49,23 @@ export function tx(value: Localizable, locale: 'de' | 'en'): string {
 
 export const RELEASES: Release[] = [
   {
+    version: '0.16.1',
+    date: '2026-06-05',
+    title: {
+      de: 'Dark-Mode-Kontraste der Inbox-Abnahme',
+      en: 'Dark-mode contrast for inbox sign-off',
+    },
+    changes: [
+      {
+        kind: 'fix',
+        text: {
+          de: '**Texte der Abnahme-Karte im Dark-Mode klarer**: Die hellen Texte waren halbtransparent über dem farbig getönten Hintergrund , dadurch schien die Tönung durch und sie wirkten muddy/bräunlich. Jetzt opake Farb-Tokens und ein solider Karten-Hintergrund, sauberer Kontrast.',
+          en: '**Sign-off card text clearer in dark mode**: the light text was semi-transparent over the tinted background, so the tint bled through and looked muddy. Now opaque color tokens and a solid card background for crisp contrast.',
+        },
+      },
+    ],
+  },
+  {
     version: '0.16.0',
     date: '2026-06-05',
     title: {

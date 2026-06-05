@@ -9,6 +9,14 @@ im Repo.
 
 ---
 
+## 0.16.1 - 2026-06-05
+
+**Dark-Mode-Kontraste der Inbox-Abnahme**
+
+- **fix** Abnahme-Karte im Dark-Mode: halbtransparente helle Textfarben (`rgba(250,247,242,…)`) ließen den farbigen Hintergrund-Tint durchscheinen und wirkten muddy. Auf opake ink-Tokens umgestellt (`--ink-900/800`), Karten-Hintergrund von durchscheinendem Glas auf soliden `#232019`, Header und Resolution-Box mit klarem Kontrast. Verifiziert per Standalone-Render-Screenshot in `glass-dark`.
+
+---
+
 ## 0.16.0 - 2026-06-05
 
 **Feedback-Abnahme direkt in der Inbox**
