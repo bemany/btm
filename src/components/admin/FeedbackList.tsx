@@ -24,6 +24,27 @@ const STATUS_OPTIONS: FeedbackStatus[] = ['open', 'in_progress', 'done', 'wontfi
 const PRIORITY_OPTIONS: FeedbackPriority[] = ['high', 'med', 'low'];
 const PRIORITY_RANK: Record<FeedbackPriority, number> = { high: 0, med: 1, low: 2 };
 
+// FTKnjlXNVlH: Hat der Reporter einen vorherigen Loesungsversuch abgelehnt, gibt
+// das Claude den noetigen Kontext fuer den zweiten Anlauf - was beim letzten Mal
+// umgesetzt wurde (adminNote) und warum es nicht gepasst hat (reporterConfirmationNote).
+function appendReporterRejection(lines: string[], item: FeedbackEntry, heading = '##'): void {
+  if (item.reporterConfirmation !== 'rejected') return;
+  lines.push(`${heading} ⚠️ Vorheriger Versuch wurde vom Reporter abgelehnt`);
+  lines.push('');
+  lines.push(
+    'Dieses Feedback wurde schon einmal als erledigt markiert, der Reporter hat das Ergebnis aber zurückgewiesen. Berücksichtige beim neuen Anlauf gezielt, was noch fehlte.',
+  );
+  lines.push('');
+  if (item.adminNote) {
+    lines.push(`**Was beim letzten Mal umgesetzt wurde:** ${item.adminNote}`);
+    lines.push('');
+  }
+  if (item.reporterConfirmationNote) {
+    lines.push(`**Warum der Reporter es ablehnte:** ${item.reporterConfirmationNote}`);
+    lines.push('');
+  }
+}
+
 export function FeedbackList() {
   const t = useT();
   const [locale] = useLocale();
@@ -221,6 +242,7 @@ export function FeedbackList() {
     lines.push('');
     lines.push(item.body);
     lines.push('');
+    appendReporterRejection(lines, item);
     lines.push('## Kontext zum BTM-Repo');
     lines.push('');
     lines.push('- Repo: https://github.com/bemany/btm');
@@ -322,6 +344,7 @@ export function FeedbackList() {
       lines.push('');
       lines.push(item.body);
       lines.push('');
+      appendReporterRejection(lines, item, '###');
     });
     lines.push('---');
     lines.push('');

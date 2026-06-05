@@ -9,6 +9,14 @@ im Repo.
 
 ---
 
+## 0.15.2 - 2026-06-05
+
+**Claude-Prompt enthält Reporter-Ablehnung**
+
+- **change** Der „Prompt für Claude Code"-Generator (Einzel + Sammel) hängt bei einem vom Reporter abgelehnten Feedback (`reporterConfirmation = 'rejected'`) jetzt einen Block an: was beim letzten Versuch umgesetzt wurde (`adminNote`) und warum der Reporter es ablehnte (`reporterConfirmationNote`). Damit hat Claude beim zweiten Anlauf den nötigen Kontext. _FTKnjlXNVlH_
+
+---
+
 ## 0.15.1 - 2026-06-05
 
 **Feedback lädt spürbar schneller + Screenshots ansehen**

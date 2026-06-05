@@ -49,6 +49,23 @@ export function tx(value: Localizable, locale: 'de' | 'en'): string {
 
 export const RELEASES: Release[] = [
   {
+    version: '0.15.2',
+    date: '2026-06-05',
+    title: {
+      de: 'Claude-Prompt enthält Reporter-Ablehnung',
+      en: 'Claude prompt includes reporter rejection',
+    },
+    changes: [
+      {
+        kind: 'change',
+        text: {
+          de: '**„Prompt für Claude Code" kennt jetzt den Vorversuch**: Wurde ein Feedback vom Reporter abgelehnt und wieder geöffnet, enthält der kopierte Prompt (einzeln + Sammel) jetzt einen Block mit dem, was beim letzten Mal umgesetzt wurde, und der Begründung des Reporters. So startet Claude den zweiten Anlauf nicht blind. _FTKnjlXNVlH_',
+          en: '**"Prompt for Claude Code" now knows the previous attempt**: when a reporter rejected and reopened a feedback, the copied prompt (single + batch) now includes a block with what was done last time and the reporter\'s reason. Claude no longer starts the second attempt blind. _FTKnjlXNVlH_',
+        },
+      },
+    ],
+  },
+  {
     version: '0.15.1',
     date: '2026-06-05',
     title: {
