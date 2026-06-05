@@ -609,6 +609,8 @@ export const en: Translations = {
     status_done: 'Done',
     status_wontfix: "Won't fix",
     copy_prompt: 'Copy prompt for Claude Code',
+    view_screenshot: 'View screenshot',
+    screenshot_gone: 'Screenshot no longer available.',
     open_in_claude: 'Open in Claude',
     prompt_copied: 'Prompt copied. Paste it into Claude Code.',
     delete_confirm: 'Really delete this entry?',

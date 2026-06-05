@@ -611,6 +611,8 @@ export const de = {
     status_done: 'Erledigt',
     status_wontfix: 'Verworfen',
     copy_prompt: 'Prompt für Claude Code kopieren',
+    view_screenshot: 'Screenshot ansehen',
+    screenshot_gone: 'Screenshot nicht mehr verfügbar.',
     open_in_claude: 'In Claude öffnen',
     prompt_copied: 'Prompt in Zwischenablage. Einfach in Claude Code einfügen.',
     delete_confirm: 'Diesen Eintrag wirklich löschen?',

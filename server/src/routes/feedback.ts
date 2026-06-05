@@ -6,7 +6,7 @@
 // DELETE /:id           — entfernen (Admin oder Submitter)
 
 import { Hono } from 'hono';
-import { and, desc, eq, or } from 'drizzle-orm';
+import { and, desc, eq, or, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { nanoid } from 'nanoid';
 import { db } from '../db/client.js';
@@ -60,6 +60,31 @@ const confirmSchema = z.object({
   note: z.string().max(20_000).optional().nullable(),
 });
 
+// Explizite Spaltenauswahl OHNE screenshot_base64. Der Screenshot ist als
+// Data-URI bis zu ~8 MB gross; ihn in Liste/Create-Response mitzuladen blaeht
+// die Payload auf zig MB auf (war die Ursache fuer 600-900ms GET /feedback).
+// Stattdessen nur ein hasScreenshot-Flag; das Bild kommt on-demand ueber
+// GET /:id/screenshot.
+const FEEDBACK_LIST_COLUMNS = {
+  id: feedback.id,
+  type: feedback.type,
+  title: feedback.title,
+  body: feedback.body,
+  contextPath: feedback.contextPath,
+  contextTheme: feedback.contextTheme,
+  contextUserAgent: feedback.contextUserAgent,
+  submitterId: feedback.submitterId,
+  status: feedback.status,
+  priority: feedback.priority,
+  adminNote: feedback.adminNote,
+  reporterConfirmation: feedback.reporterConfirmation,
+  reporterConfirmationNote: feedback.reporterConfirmationNote,
+  reporterConfirmedAt: feedback.reporterConfirmedAt,
+  createdAt: feedback.createdAt,
+  updatedAt: feedback.updatedAt,
+  hasScreenshot: sql<boolean>`${feedback.screenshotBase64} is not null`,
+} as const;
+
 export const feedbackRoute = new Hono<{ Variables: Variables }>()
   .use('*', requireAuth)
   .get('/', async (c) => {
@@ -69,8 +94,8 @@ export const feedbackRoute = new Hono<{ Variables: Variables }>()
         ? undefined
         : eq(feedback.submitterId, me.id);
     const list = await (filter
-      ? db.select().from(feedback).where(filter)
-      : db.select().from(feedback))
+      ? db.select(FEEDBACK_LIST_COLUMNS).from(feedback).where(filter)
+      : db.select(FEEDBACK_LIST_COLUMNS).from(feedback))
       .orderBy(desc(feedback.createdAt));
     return c.json({ feedback: list });
   })
@@ -91,7 +116,7 @@ export const feedbackRoute = new Hono<{ Variables: Variables }>()
         screenshotBase64: body.screenshotBase64 ?? null,
         submitterId: me.id,
       })
-      .returning();
+      .returning(FEEDBACK_LIST_COLUMNS);
     return c.json({ feedback: row }, 201);
   })
   .patch('/:id', async (c) => {
@@ -124,14 +149,18 @@ export const feedbackRoute = new Hono<{ Variables: Variables }>()
     if (body.title !== undefined) patch.title = body.title;
     if (body.body !== undefined) patch.body = body.body;
     if (body.type !== undefined) patch.type = body.type;
-    const [row] = await db.update(feedback).set(patch).where(eq(feedback.id, id)).returning();
+    const [row] = await db.update(feedback).set(patch).where(eq(feedback.id, id)).returning(FEEDBACK_LIST_COLUMNS);
     if (!row) return c.json({ error: 'not found' }, 404);
     return c.json({ feedback: row });
   })
   .delete('/:id', async (c) => {
     const me = c.get('user')!;
     const id = c.req.param('id');
-    const [item] = await db.select().from(feedback).where(eq(feedback.id, id)).limit(1);
+    const [item] = await db
+      .select({ submitterId: feedback.submitterId })
+      .from(feedback)
+      .where(eq(feedback.id, id))
+      .limit(1);
     if (!item) return c.json({ error: 'not found' }, 404);
     if (me.role !== 'admin' && item.submitterId !== me.id) {
       return c.json({ error: 'forbidden' }, 403);
@@ -167,7 +196,7 @@ export const feedbackRoute = new Hono<{ Variables: Variables }>()
         updatedAt: new Date(),
       })
       .where(eq(feedback.id, id))
-      .returning();
+      .returning(FEEDBACK_LIST_COLUMNS);
     if (!row) return c.json({ error: 'not found' }, 404);
 
     // 2. Submitter laden (für Notify-Prefs + E-Mail)
@@ -235,7 +264,11 @@ export const feedbackRoute = new Hono<{ Variables: Variables }>()
     const { approved, note } = confirmSchema.parse(await c.req.json().catch(() => ({})));
     const trimmedNote = (note ?? '').trim() || null;
 
-    const [item] = await db.select().from(feedback).where(eq(feedback.id, id)).limit(1);
+    const [item] = await db
+      .select({ submitterId: feedback.submitterId, status: feedback.status })
+      .from(feedback)
+      .where(eq(feedback.id, id))
+      .limit(1);
     if (!item) return c.json({ error: 'not found' }, 404);
     if (item.submitterId !== me.id) return c.json({ error: 'forbidden' }, 403);
     if (item.status !== 'done') {
@@ -253,7 +286,7 @@ export const feedbackRoute = new Hono<{ Variables: Variables }>()
           updatedAt: new Date(),
         })
         .where(eq(feedback.id, id))
-        .returning();
+        .returning(FEEDBACK_LIST_COLUMNS);
       return c.json({ feedback: row });
     }
 
@@ -268,7 +301,7 @@ export const feedbackRoute = new Hono<{ Variables: Variables }>()
         updatedAt: new Date(),
       })
       .where(eq(feedback.id, id))
-      .returning();
+      .returning(FEEDBACK_LIST_COLUMNS);
 
     // Alle aktiven Admins benachrichtigen (In-App + Push).
     const admins = await db
@@ -295,6 +328,25 @@ export const feedbackRoute = new Hono<{ Variables: Variables }>()
     );
 
     return c.json({ feedback: row });
+  })
+
+  // ── Screenshot on-demand ───────────────────────────────────────────
+  // Liefert den (potenziell mehrere MB grossen) Screenshot-Data-URI einzeln,
+  // damit die Liste ihn nicht mitschleppen muss. Admin sieht jeden, ein
+  // Nicht-Admin nur seinen eigenen Eintrag.
+  .get('/:id/screenshot', async (c) => {
+    const me = c.get('user')!;
+    const id = c.req.param('id');
+    const [row] = await db
+      .select({ submitterId: feedback.submitterId, screenshotBase64: feedback.screenshotBase64 })
+      .from(feedback)
+      .where(eq(feedback.id, id))
+      .limit(1);
+    if (!row) return c.json({ error: 'not found' }, 404);
+    if (me.role !== 'admin' && row.submitterId !== me.id) {
+      return c.json({ error: 'forbidden' }, 403);
+    }
+    return c.json({ screenshot: row.screenshotBase64 ?? null });
   });
 
 void or;

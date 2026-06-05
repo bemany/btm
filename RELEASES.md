@@ -9,6 +9,15 @@ im Repo.
 
 ---
 
+## 0.15.1 - 2026-06-05
+
+**Feedback lädt spürbar schneller + Screenshots ansehen**
+
+- **fix** Feedback-Liste bis zu 1000x kleinere Antwort: `GET /api/feedback` machte ein `SELECT *` und lud damit alle hinterlegten Screenshots mit (~26 MB base64 in der `feedback`-Tabelle, eigentlicher Textinhalt nur ~20 kB), obwohl die Liste sie nie anzeigte. Jetzt explizite Spaltenauswahl ohne `screenshot_base64`, dafür ein abgeleitetes `hasScreenshot`-Flag. Alle `returning()`-Aufrufe (create/patch/resolve/confirm) ebenfalls auf das schlanke Schema. Antwortzeit von 600-900 ms auf wenige ms.
+- **feature** Neuer Endpoint `GET /api/feedback/:id/screenshot` lädt das Bild on-demand (Admin oder Submitter). Admin-Feedback-Liste bekommt einen „Screenshot ansehen"-Button mit Lightbox. Screenshots wurden vorher hochgeladen, aber nirgends angezeigt.
+
+---
+
 ## 0.15.0 - 2026-06-05
 
 **Reporter bestätigt erledigte Feedbacks**

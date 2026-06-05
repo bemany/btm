@@ -555,6 +555,9 @@ export interface FeedbackEntry {
   reporterConfirmation: 'confirmed' | 'rejected' | null;
   reporterConfirmationNote: string | null;
   reporterConfirmedAt: string | null;
+  /** True wenn ein Screenshot hinterlegt ist. Das Bild selbst kommt on-demand
+   *  ueber getFeedbackScreenshot(id) (Liste schleppt die MB-Daten nicht mit). */
+  hasScreenshot: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -598,6 +601,13 @@ export async function updateFeedback(
 }
 export async function deleteFeedback(id: string): Promise<void> {
   await apiFetch(`/feedback/${id}`, { method: 'DELETE' });
+}
+/** Laedt den Screenshot-Data-URI eines Feedbacks on-demand (null wenn keiner). */
+export async function getFeedbackScreenshot(id: string): Promise<string | null> {
+  const { screenshot } = await apiFetch<{ screenshot: string | null }>(
+    `/feedback/${id}/screenshot`,
+  );
+  return screenshot;
 }
 /**
  * FTKnjlXNVlH: Reporter nimmt ein erledigtes Feedback ab (`approved=true`)

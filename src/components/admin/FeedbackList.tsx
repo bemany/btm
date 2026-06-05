@@ -46,6 +46,20 @@ export function FeedbackList() {
     type: 'bug',
   });
   const [savingEdit, setSavingEdit] = useState(false);
+  // Screenshot-Lightbox (on-demand geladen, nicht in der Liste). null = zu.
+  const [shot, setShot] = useState<{ id: string; url: string | null; loading: boolean } | null>(
+    null,
+  );
+  const openScreenshot = async (id: string) => {
+    setShot({ id, url: null, loading: true });
+    try {
+      const url = await api.getFeedbackScreenshot(id);
+      setShot({ id, url, loading: false });
+    } catch {
+      showToast(t('common.error_generic'));
+      setShot(null);
+    }
+  };
   // Multi-Select für Sammel-Prompt (FwQQWBHfTid). Set von Feedback-IDs.
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const toggleSelect = (id: string) => {
@@ -647,6 +661,16 @@ export function FeedbackList() {
                       >
                         <Icon name="pencil" size={11} /> {t('feedback.edit_btn')}
                       </button>
+                      {item.hasScreenshot && (
+                        <button
+                          type="button"
+                          className="fb-action-btn"
+                          onClick={() => openScreenshot(item.id)}
+                          title={t('feedback.view_screenshot')}
+                        >
+                          <Icon name="image" size={11} /> {t('feedback.view_screenshot')}
+                        </button>
+                      )}
                       <button
                         type="button"
                         className="fb-action-btn"
@@ -676,6 +700,33 @@ export function FeedbackList() {
               </article>
             );
           })}
+        </div>
+      )}
+
+      {shot && (
+        <div className="fb-shot-overlay" onClick={() => setShot(null)} role="dialog" aria-modal="true">
+          <button
+            type="button"
+            className="fb-shot-close"
+            onClick={() => setShot(null)}
+            aria-label={t('common.close')}
+          >
+            <Icon name="x" size={18} />
+          </button>
+          {shot.loading ? (
+            <div className="fb-shot-loading">
+              <Icon name="loader-circle" size={28} className="login-spin" />
+            </div>
+          ) : shot.url ? (
+            <img
+              src={shot.url}
+              alt=""
+              className="fb-shot-img"
+              onClick={(e) => e.stopPropagation()}
+            />
+          ) : (
+            <div className="fb-shot-loading">{t('feedback.screenshot_gone')}</div>
+          )}
         </div>
       )}
     </div>

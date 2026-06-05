@@ -49,6 +49,30 @@ export function tx(value: Localizable, locale: 'de' | 'en'): string {
 
 export const RELEASES: Release[] = [
   {
+    version: '0.15.1',
+    date: '2026-06-05',
+    title: {
+      de: 'Feedback lädt spürbar schneller + Screenshots ansehen',
+      en: 'Feedback loads noticeably faster + view screenshots',
+    },
+    changes: [
+      {
+        kind: 'fix',
+        text: {
+          de: '**Feedback-Liste bis zu 1000x kleinere Antwort**: Die Liste hat bisher bei jedem Laden alle hinterlegten Screenshots (zusammen ~26 MB als base64) mitgeladen, obwohl sie gar nicht angezeigt wurden. Jetzt kommt nur noch ein „hat Screenshot"-Flag mit, das Bild wird erst beim Anklicken geladen. `GET /api/feedback` fiel von 600-900 ms auf wenige Millisekunden.',
+          en: '**Feedback list response up to 1000x smaller**: the list used to load every attached screenshot (~26 MB of base64 total) on each fetch even though they were never shown. Now only a "has screenshot" flag travels with the list and the image loads on click. `GET /api/feedback` dropped from 600-900 ms to a few milliseconds.',
+        },
+      },
+      {
+        kind: 'feature',
+        text: {
+          de: '**Screenshots im Admin-Feedback ansehen**: Einträge mit Screenshot zeigen jetzt einen „Screenshot ansehen"-Button, der das Bild in einer Lightbox öffnet. Vorher wurden Screenshots zwar hochgeladen, konnten aber nirgends angeschaut werden.',
+          en: '**View screenshots in admin feedback**: entries with a screenshot now have a "View screenshot" button that opens the image in a lightbox. Screenshots were uploaded before but could not be viewed anywhere.',
+        },
+      },
+    ],
+  },
+  {
     version: '0.15.0',
     date: '2026-06-05',
     title: {
