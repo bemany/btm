@@ -6,7 +6,7 @@ import { Hono } from 'hono';
 import { and, desc, eq, isNull, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '../db/client.js';
-import { notifications } from '../db/schema.js';
+import { notifications, feedback } from '../db/schema.js';
 import { requireAuth, type Variables } from '../lib/context.js';
 
 const listQuery = z.object({
@@ -37,13 +37,34 @@ export const notificationsRoute = new Hono<{ Variables: Variables }>()
   })
 
   // GET /notifications/count → { unread: number }
+  // Badge = ungelesene Notifications (ausser 'feedback_resolved' — die werden
+  // durch die offenen Abnahmen unten repraesentiert) PLUS offene Reporter-
+  // Abnahmen (FTKnjlXNVlH). Letztere haengen am Feedback-Zustand, nicht an
+  // seenAt: so bleibt der Badge stehen bis der User wirklich abgenommen hat —
+  // er kann die Aufforderung nicht durch "als gelesen" wegklicken.
   .get('/count', async (c) => {
     const me = c.get('user')!;
-    const [r] = await db
+    const [notif] = await db
       .select({ count: sql<number>`count(*)::int` })
       .from(notifications)
-      .where(and(eq(notifications.userId, me.id), isNull(notifications.seenAt)));
-    return c.json({ unread: r?.count ?? 0 });
+      .where(
+        and(
+          eq(notifications.userId, me.id),
+          isNull(notifications.seenAt),
+          sql`${notifications.kind} <> 'feedback_resolved'`,
+        ),
+      );
+    const [pending] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(feedback)
+      .where(
+        and(
+          eq(feedback.submitterId, me.id),
+          eq(feedback.status, 'done'),
+          isNull(feedback.reporterConfirmation),
+        ),
+      );
+    return c.json({ unread: (notif?.count ?? 0) + (pending?.count ?? 0) });
   })
 
   // POST /notifications/:id/read

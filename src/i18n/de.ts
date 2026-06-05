@@ -1449,6 +1449,7 @@ export const de = {
     feedback_bug_resolved_text: '{actor} hat deinen Bug „{subject}" behoben',
     feedback_feature_resolved_text: '{actor} hat deinen Feature-Wunsch „{subject}" umgesetzt',
     feedback_reopened_text: '{actor} hat „{subject}" als noch nicht gelöst zurückgemeldet',
+    action_required: 'Warten auf deine Abnahme ({count})',
     unknown_actor: 'Jemand',
   },
   toast: {

@@ -176,3 +176,112 @@ body[data-theme="default-dark"] .tb-bell-dot,
 body[data-theme="glass-dark"]   .tb-bell-dot {
   border-color: var(--cream-50);
 }
+
+/* ── Aktion erforderlich: offene Reporter-Abnahmen (FTKnjlXNVlH) ───── */
+.inbox-action-section {
+  margin-bottom: 18px;
+  padding: 14px 16px 16px;
+  border-radius: 12px;
+  background: rgba(var(--accent-rgb), 0.07);
+  border: 1px solid rgba(var(--accent-rgb), 0.24);
+}
+.inbox-action-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--accent-700);
+  margin-bottom: 12px;
+}
+.inbox-action-head svg {
+  color: var(--accent-600);
+}
+.inbox-action-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.inbox-confirm-card {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 13px 14px;
+  border-radius: 9px;
+  background: var(--cream-50);
+  border: 1px solid var(--line-200, rgba(28, 26, 23, 0.1));
+}
+.inbox-confirm-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.inbox-confirm-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-900);
+}
+.inbox-confirm-resolution {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--ink-600);
+  background: rgba(94, 127, 78, 0.08);
+  border: 1px solid rgba(94, 127, 78, 0.18);
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+.inbox-confirm-resolution svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: #4a6839;
+}
+.inbox-confirm-prompt {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-700);
+}
+.inbox-confirm-reject {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.inbox-confirm-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Dark-Mode */
+body[data-theme='glass-dark'] .inbox-action-section,
+body[data-theme='default-dark'] .inbox-action-section {
+  background: rgba(var(--accent-rgb), 0.12);
+  border-color: rgba(var(--accent-rgb), 0.3);
+}
+body[data-theme='glass-dark'] .inbox-confirm-card,
+body[data-theme='default-dark'] .inbox-confirm-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+body[data-theme='glass-dark'] .inbox-confirm-title,
+body[data-theme='default-dark'] .inbox-confirm-title {
+  color: rgba(250, 247, 242, 0.95);
+}
+body[data-theme='glass-dark'] .inbox-confirm-prompt,
+body[data-theme='default-dark'] .inbox-confirm-prompt {
+  color: rgba(250, 247, 242, 0.85);
+}
+body[data-theme='glass-dark'] .inbox-confirm-resolution,
+body[data-theme='default-dark'] .inbox-confirm-resolution {
+  color: rgba(250, 247, 242, 0.7);
+  background: rgba(94, 127, 78, 0.13);
+  border-color: rgba(94, 127, 78, 0.26);
+}
+body[data-theme='glass-dark'] .inbox-action-head,
+body[data-theme='default-dark'] .inbox-action-head {
+  color: var(--accent-300, rgba(250, 247, 242, 0.9));
+}

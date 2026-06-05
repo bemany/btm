@@ -49,6 +49,30 @@ export function tx(value: Localizable, locale: 'de' | 'en'): string {
 
 export const RELEASES: Release[] = [
   {
+    version: '0.16.0',
+    date: '2026-06-05',
+    title: {
+      de: 'Feedback-Abnahme direkt in der Inbox',
+      en: 'Feedback sign-off right in the inbox',
+    },
+    changes: [
+      {
+        kind: 'feature',
+        text: {
+          de: '**Abnahme passiert jetzt in der Inbox**: Erledigte Feedbacks, die auf deine Abnahme warten, stehen ganz oben in der Inbox in einer eigenen „Warten auf deine Abnahme"-Sektion , mit „Passt so" und „Noch nicht gelöst" direkt dort. Kein Umweg mehr über die Einstellungen. _FTKnjlXNVlH_',
+          en: '**Sign-off now happens in the inbox**: resolved feedback awaiting your confirmation sits at the top of the inbox in its own "Waiting for your sign-off" section, with "Looks good" and "Not solved yet" right there. No detour through settings. _FTKnjlXNVlH_',
+        },
+      },
+      {
+        kind: 'change',
+        text: {
+          de: '**Aufforderung lässt sich nicht wegklicken**: Die Abnahme-Karte und der Inbox-Zähler hängen am Feedback-Status, nicht am Gelesen-Status der Benachrichtigung. Sie bleiben also stehen, bis du wirklich bestätigt oder zurückgewiesen hast , „als gelesen" markieren entfernt sie nicht mehr. _FTKnjlXNVlH_',
+          en: '**The prompt cannot be dismissed**: the sign-off card and the inbox badge are tied to the feedback status, not the notification read-state. They stay until you actually confirm or reject , marking as read no longer clears them. _FTKnjlXNVlH_',
+        },
+      },
+    ],
+  },
+  {
     version: '0.15.2',
     date: '2026-06-05',
     title: {

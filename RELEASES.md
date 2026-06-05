@@ -9,6 +9,15 @@ im Repo.
 
 ---
 
+## 0.16.0 - 2026-06-05
+
+**Feedback-Abnahme direkt in der Inbox**
+
+- **feature** Offene Reporter-Abnahmen erscheinen ganz oben in der Inbox in einer eigenen „Warten auf deine Abnahme"-Sektion mit „Passt so" / „Noch nicht gelöst"-Buttons (`InboxConfirmCard`). Gespeist aus der eigenen Feedback-Liste (`status = 'done' && reporterConfirmation = null`). Settings → Mein Feedback bleibt als Zweitort. _FTKnjlXNVlH_
+- **change** „Nicht wegklickbar": Abnahme-Karte und Inbox-Badge hängen am Feedback-Zustand, nicht an `seenAt`. Der Count-Endpoint zählt jetzt `(ungelesene Notifications außer feedback_resolved) + (offene Abnahmen)`, sodass der Badge bis zur tatsächlichen Abnahme stehen bleibt. Pending `feedback_resolved`-Notifications werden aus der normalen Liste ausgeblendet (oben als Aktions-Karte). _FTKnjlXNVlH_
+
+---
+
 ## 0.15.2 - 2026-06-05
 
 **Claude-Prompt enthält Reporter-Ablehnung**

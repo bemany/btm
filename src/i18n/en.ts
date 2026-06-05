@@ -1440,6 +1440,7 @@ export const en: Translations = {
     feedback_bug_resolved_text: '{actor} fixed your bug "{subject}"',
     feedback_feature_resolved_text: '{actor} shipped your feature request "{subject}"',
     feedback_reopened_text: '{actor} reported "{subject}" as not solved yet',
+    action_required: 'Waiting for your sign-off ({count})',
     unknown_actor: 'Someone',
   },
   toast: {

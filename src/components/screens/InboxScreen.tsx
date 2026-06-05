@@ -1,7 +1,7 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as api from '../../data/api';
-import type { AppNotification } from '../../data/api';
+import type { AppNotification, FeedbackEntry } from '../../data/api';
 import { useStore } from '../../store/store';
 import type { AppUser } from '../../store/types';
 import { Avatar } from '../shared/Avatar';
@@ -10,11 +10,14 @@ import { showToast } from '../shared/Toast';
 import { useT, useLocale } from '../../i18n';
 import { SYNC_KEYS } from '../../data/sync';
 
+const MY_FEEDBACK_KEY = ['btm', 'my-feedback'] as const;
+
 export function InboxScreen() {
   const t = useT();
   const [locale] = useLocale();
   const queryClient = useQueryClient();
   const users = useStore((s) => s.users);
+  const currentUser = useStore((s) => s.currentUser);
   const setUI = useStore((s) => s.setUI);
 
   const { data: notifs = [], isLoading } = useQuery({
@@ -25,12 +28,51 @@ export function InboxScreen() {
     refetchOnWindowFocus: true,
   });
 
+  // Eigene Feedbacks, um offene Reporter-Abnahmen (FTKnjlXNVlH) als prominente
+  // Aktion oben in der Inbox zu zeigen. Die Liste ist schlank (kein Screenshot).
+  const { data: myFeedback = [] } = useQuery({
+    queryKey: MY_FEEDBACK_KEY,
+    queryFn: api.listFeedback,
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+    refetchOnWindowFocus: true,
+  });
+
+  // Offen = von mir eingereicht, als erledigt markiert, aber noch nicht abgenommen.
+  const pending = useMemo(
+    () =>
+      myFeedback.filter(
+        (f) =>
+          f.submitterId === currentUser &&
+          f.status === 'done' &&
+          f.reporterConfirmation === null,
+      ),
+    [myFeedback, currentUser],
+  );
+  const pendingIds = useMemo(() => new Set(pending.map((f) => f.id)), [pending]);
+
+  // feedback_resolved-Notifications, deren Abnahme noch offen ist, blenden wir
+  // aus der normalen Liste aus — sie erscheinen oben als Aktions-Karte. Nach der
+  // Abnahme tauchen sie wieder als normale (gelesene) Info auf.
+  const visibleNotifs = useMemo(
+    () =>
+      notifs.filter(
+        (n) =>
+          !(
+            n.kind === 'feedback_resolved' &&
+            n.payload.feedbackId &&
+            pendingIds.has(n.payload.feedbackId)
+          ),
+      ),
+    [notifs, pendingIds],
+  );
+
   const { unread, read } = useMemo(() => {
     const u: AppNotification[] = [];
     const r: AppNotification[] = [];
-    for (const n of notifs) (n.seenAt ? r : u).push(n);
+    for (const n of visibleNotifs) (n.seenAt ? r : u).push(n);
     return { unread: u, read: r };
-  }, [notifs]);
+  }, [visibleNotifs]);
 
   const fmtRel = (iso: string) => {
     const ms = Date.now() - new Date(iso).getTime();
@@ -81,6 +123,8 @@ export function InboxScreen() {
     }
   };
 
+  const hasContent = pending.length > 0 || notifs.length > 0;
+
   return (
     <div className="page">
       <div className="page-head">
@@ -102,12 +146,28 @@ export function InboxScreen() {
         </div>
       </div>
 
+      {/* Aktion erforderlich: offene Reporter-Abnahmen. Bleibt stehen bis der
+          User bestätigt oder ablehnt — nicht durch "als gelesen" wegklickbar. */}
+      {pending.length > 0 && (
+        <section className="inbox-action-section">
+          <div className="inbox-action-head">
+            <Icon name="circle-alert" size={14} />
+            <span>{t('inbox.action_required', { count: pending.length })}</span>
+          </div>
+          <div className="inbox-action-list">
+            {pending.map((f) => (
+              <InboxConfirmCard key={f.id} item={f} />
+            ))}
+          </div>
+        </section>
+      )}
+
       {isLoading && notifs.length === 0 ? (
         <div className="empty-state">
-          <Icon name="loader-2" size={28} className="login-spin" />
+          <Icon name="loader-circle" size={28} className="login-spin" />
           <p>{t('common.loading')}</p>
         </div>
-      ) : notifs.length === 0 ? (
+      ) : !hasContent ? (
         <div className="empty-state">
           <Icon name="inbox" size={36} className="icon" />
           <h4>{t('inbox.empty_title')}</h4>
@@ -133,6 +193,124 @@ export function InboxScreen() {
         </div>
       )}
     </div>
+  );
+}
+
+// Abnahme-Karte in der Inbox. "Passt so" akzeptiert sofort, "Noch nicht gelöst"
+// klappt ein Begründungsfeld aus und öffnet das Feedback wieder.
+function InboxConfirmCard({ item }: { item: FeedbackEntry }) {
+  const t = useT();
+  const queryClient = useQueryClient();
+  const [rejecting, setRejecting] = useState(false);
+  const [note, setNote] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  const refresh = () => {
+    queryClient.invalidateQueries({ queryKey: MY_FEEDBACK_KEY });
+    queryClient.invalidateQueries({ queryKey: ['btm', 'feedback'] });
+    queryClient.invalidateQueries({ queryKey: SYNC_KEYS.NOTIFICATIONS });
+    queryClient.invalidateQueries({ queryKey: SYNC_KEYS.NOTIFICATION_COUNT });
+  };
+
+  const approve = async () => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      await api.confirmFeedback(item.id, { approved: true });
+      refresh();
+      showToast(t('feedback.confirm_thanks'));
+    } catch {
+      showToast(t('common.error_generic'));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const reject = async () => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      await api.confirmFeedback(item.id, { approved: false, note: note.trim() || null });
+      refresh();
+      showToast(t('feedback.confirm_reopened_toast'));
+    } catch {
+      showToast(t('common.error_generic'));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <article className="inbox-confirm-card">
+      <div className="inbox-confirm-main">
+        <span className={`fb-type-pill type-${item.type}`}>
+          <Icon name={item.type === 'bug' ? 'bug' : 'sparkles'} size={11} />
+          {t(`feedback.type_${item.type}` as 'feedback.type_bug')}
+        </span>
+        <span className="inbox-confirm-title">{item.title}</span>
+      </div>
+      {item.adminNote && (
+        <div className="inbox-confirm-resolution">
+          <Icon name="circle-check" size={12} />
+          <span>
+            <strong>{t('feedback.my_resolution_note')}</strong> {item.adminNote}
+          </span>
+        </div>
+      )}
+      <div className="inbox-confirm-prompt">{t('feedback.confirm_prompt')}</div>
+      {rejecting ? (
+        <div className="inbox-confirm-reject">
+          <textarea
+            className="fb-confirm-textarea"
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            rows={3}
+            maxLength={20_000}
+            placeholder={t('feedback.confirm_reject_placeholder')}
+            disabled={busy}
+            autoFocus
+          />
+          <div className="inbox-confirm-actions">
+            <button
+              type="button"
+              className="fb-action-btn"
+              onClick={() => setRejecting(false)}
+              disabled={busy}
+            >
+              {t('common.cancel')}
+            </button>
+            <div style={{ flex: 1 }} />
+            <button
+              type="button"
+              className="fb-action-btn fb-action-danger"
+              onClick={reject}
+              disabled={busy}
+            >
+              <Icon name="rotate-ccw" size={11} /> {t('feedback.confirm_reject_submit')}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="inbox-confirm-actions">
+          <button
+            type="button"
+            className="fb-action-btn fb-action-primary"
+            onClick={approve}
+            disabled={busy}
+          >
+            <Icon name="check" size={11} /> {t('feedback.confirm_approve')}
+          </button>
+          <button
+            type="button"
+            className="fb-action-btn"
+            onClick={() => setRejecting(true)}
+            disabled={busy}
+          >
+            <Icon name="x" size={11} /> {t('feedback.confirm_reject')}
+          </button>
+        </div>
+      )}
+    </article>
   );
 }
 
