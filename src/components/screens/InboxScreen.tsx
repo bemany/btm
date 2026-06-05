@@ -160,7 +160,9 @@ function NotifItem({ n, users, onOpen, fmtRel, unread }: NotifItemProps) {
               n.payload.feedbackType === 'bug' ? 'inbox.feedback_bug_resolved_text' : 'inbox.feedback_feature_resolved_text',
               { actor: actorName, subject },
             )
-          : `${actorName} · ${n.kind}`;
+          : n.kind === 'feedback_reopened'
+            ? t('inbox.feedback_reopened_text', { actor: n.payload.reporterName ?? actorName, subject })
+            : `${actorName} · ${n.kind}`;
 
   return (
     <button
@@ -174,7 +176,9 @@ function NotifItem({ n, users, onOpen, fmtRel, unread }: NotifItemProps) {
           {unread && <span className="inbox-dot" />}
           {text}
         </div>
-        {n.payload.excerpt && <div className="inbox-item-excerpt">{n.payload.excerpt}</div>}
+        {(n.payload.excerpt || n.payload.rejectionNote) && (
+          <div className="inbox-item-excerpt">{n.payload.excerpt ?? n.payload.rejectionNote}</div>
+        )}
       </div>
       <div className="inbox-item-time">{fmtRel(n.createdAt)}</div>
     </button>

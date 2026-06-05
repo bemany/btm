@@ -9,6 +9,16 @@ im Repo.
 
 ---
 
+## 0.15.0 - 2026-06-05
+
+**Reporter bestätigt erledigte Feedbacks**
+
+- **feature** Abnahme durch den Einreicher (`FTKnjlXNVlH`): Wird ein Feedback als erledigt markiert, bekommt der Einreicher in Einstellungen → Mein Feedback ein Abnahme-Panel. "Passt so" bestätigt die Umsetzung, "Noch nicht gelöst" öffnet das Feedback mit kurzer Begründung wieder und benachrichtigt alle Admins (Inbox + Push). Neuer Status `reporter_confirmation` (confirmed/rejected/pending) auf der Feedback-Tabelle, neuer Endpoint `POST /api/feedback/:id/confirm` (nur der Submitter), neuer Notification-Kind `feedback_reopened`.
+- **change** Admin-Feedback-Liste zeigt pro Karte den Abnahme-Status (ausstehend / abgenommen / abgelehnt) plus die Reporter-Begründung bei Ablehnung.
+- **db** Migration `0030_feedback_reporter_confirmation.sql` (3 neue Spalten auf `feedback`).
+
+---
+
 ## 0.14.1 — 2026-06-04
 
 **Notiz-Prompt ab Review + alle Pfade · Dark-Mode-Feinschliff**

@@ -500,6 +500,13 @@ export const feedback = pgTable(
       .notNull()
       .default('med'),
     adminNote: text('admin_note'),
+    // FTKnjlXNVlH: Reporter-Bestaetigung nach Resolve. NULL = noch ausstehend
+    // (nur relevant solange status='done'). 'confirmed' = Einreicher hat das
+    // Ergebnis abgenommen. 'rejected' = passt noch nicht -> Feedback springt
+    // serverseitig zurueck auf 'open' und Admins werden benachrichtigt.
+    reporterConfirmation: text('reporter_confirmation', { enum: ['confirmed', 'rejected'] }),
+    reporterConfirmationNote: text('reporter_confirmation_note'),
+    reporterConfirmedAt: timestamp('reporter_confirmed_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },

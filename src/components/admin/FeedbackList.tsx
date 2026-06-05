@@ -591,7 +591,31 @@ export function FeedbackList() {
                       <Icon name="link-2" size={10} /> {item.contextPath}
                     </span>
                   )}
+                  {item.status === 'done' && item.reporterConfirmation === null && (
+                    <span className="fb-confirm-tag tag-pending">
+                      <Icon name="hourglass" size={10} /> {t('feedback.confirm_admin_pending')}
+                    </span>
+                  )}
+                  {item.reporterConfirmation === 'confirmed' && (
+                    <span className="fb-confirm-tag tag-confirmed">
+                      <Icon name="circle-check" size={10} /> {t('feedback.confirm_admin_confirmed')}
+                    </span>
+                  )}
+                  {item.reporterConfirmation === 'rejected' && (
+                    <span className="fb-confirm-tag tag-rejected">
+                      <Icon name="rotate-ccw" size={10} /> {t('feedback.confirm_admin_rejected')}
+                    </span>
+                  )}
                 </div>
+                {item.reporterConfirmation === 'rejected' && item.reporterConfirmationNote && (
+                  <div className="fb-admin-reject-note">
+                    <Icon name="message-square" size={11} />
+                    <span>
+                      <strong>{t('feedback.confirm_admin_reject_note')}</strong>{' '}
+                      {item.reporterConfirmationNote}
+                    </span>
+                  </div>
+                )}
                 <div className="fb-admin-card-actions">
                   {editingId === item.id ? (
                     <>

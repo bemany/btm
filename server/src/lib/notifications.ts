@@ -9,7 +9,12 @@ import { notifications } from '../db/schema.js';
 import { emit } from './events.js';
 import { sendPushToUser } from './push.js';
 
-export type NotificationKind = 'mention' | 'review_request' | 'feedback_resolved' | 'reminder';
+export type NotificationKind =
+  | 'mention'
+  | 'review_request'
+  | 'feedback_resolved'
+  | 'feedback_reopened'
+  | 'reminder';
 
 export interface MentionPayload {
   commentId: string;
@@ -24,6 +29,14 @@ export interface FeedbackResolvedPayload {
   feedbackType: 'bug' | 'feature';
   feedbackTitle: string;      // snapshot
   resolutionNote: string | null; // optionaler Admin-Kommentar
+}
+
+export interface FeedbackReopenedPayload {
+  feedbackId: string;
+  feedbackType: 'bug' | 'feature';
+  feedbackTitle: string;          // snapshot
+  reporterName: string;           // wer abgelehnt hat
+  rejectionNote: string | null;   // Begruendung des Reporters
 }
 
 export interface CreateNotificationArgs {
@@ -44,6 +57,8 @@ function pushTitle(kind: NotificationKind, payload: CreateNotificationArgs['payl
       return { title: 'BTM — Erinnerung', body: p.taskTitle ?? 'Aufgaben-Erinnerung', url: p.taskUrl ?? '/inbox' };
     case 'feedback_resolved':
       return { title: 'BTM — Feedback umgesetzt', body: p.feedbackTitle ?? 'Dein Feedback wurde bearbeitet', url: '/inbox' };
+    case 'feedback_reopened':
+      return { title: 'BTM: Feedback wieder offen', body: p.feedbackTitle ?? 'Ein Reporter hat ein erledigtes Feedback abgelehnt', url: '/admin/feedback' };
     default:
       return { title: 'BTM', body: 'Neue Benachrichtigung', url: '/inbox' };
   }

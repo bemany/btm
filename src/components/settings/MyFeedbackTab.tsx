@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as api from '../../data/api';
 import type { FeedbackEntry } from '../../data/api';
@@ -74,6 +75,24 @@ export function MyFeedbackTab() {
                     </span>
                   </div>
                 )}
+
+                {/* FTKnjlXNVlH: Reporter-Abnahme nach Resolve */}
+                {item.status === 'done' && item.reporterConfirmation === null && (
+                  <ConfirmPanel item={item} />
+                )}
+                {item.reporterConfirmation === 'confirmed' && (
+                  <div className="fb-my-confirmed">
+                    <Icon name="circle-check" size={12} />
+                    <span>{t('feedback.confirm_confirmed_badge')}</span>
+                  </div>
+                )}
+                {item.status !== 'done' && item.reporterConfirmation === 'rejected' && (
+                  <div className="fb-my-reopened">
+                    <Icon name="rotate-ccw" size={12} />
+                    <span>{t('feedback.confirm_reopened_badge')}</span>
+                  </div>
+                )}
+
                 <div className="fb-my-card-foot">
                   <span className="fb-my-card-date">
                     {new Date(item.createdAt).toLocaleString(
@@ -95,6 +114,110 @@ export function MyFeedbackTab() {
               </article>
             );
           })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Abnahme-Panel: „Passt so" akzeptiert sofort. „Noch nicht gelöst" klappt ein
+// Begründungs-Feld aus und schickt das Feedback zurück auf 'open'.
+function ConfirmPanel({ item }: { item: FeedbackEntry }) {
+  const t = useT();
+  const queryClient = useQueryClient();
+  const [rejecting, setRejecting] = useState(false);
+  const [note, setNote] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  const refresh = () => {
+    queryClient.invalidateQueries({ queryKey: MY_FEEDBACK_KEY });
+    queryClient.invalidateQueries({ queryKey: ['btm', 'feedback'] });
+  };
+
+  const approve = async () => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      await api.confirmFeedback(item.id, { approved: true });
+      refresh();
+      showToast(t('feedback.confirm_thanks'));
+    } catch {
+      showToast(t('common.error_generic'));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const reject = async () => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      await api.confirmFeedback(item.id, { approved: false, note: note.trim() || null });
+      refresh();
+      showToast(t('feedback.confirm_reopened_toast'));
+    } catch {
+      showToast(t('common.error_generic'));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="fb-confirm">
+      <div className="fb-confirm-prompt">
+        <Icon name="circle-help" size={13} />
+        <span>{t('feedback.confirm_prompt')}</span>
+      </div>
+      {rejecting ? (
+        <div className="fb-confirm-reject">
+          <textarea
+            className="fb-confirm-textarea"
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            rows={3}
+            maxLength={20_000}
+            placeholder={t('feedback.confirm_reject_placeholder')}
+            disabled={busy}
+            autoFocus
+          />
+          <div className="fb-confirm-actions">
+            <button
+              type="button"
+              className="fb-action-btn"
+              onClick={() => setRejecting(false)}
+              disabled={busy}
+            >
+              {t('common.cancel')}
+            </button>
+            <div style={{ flex: 1 }} />
+            <button
+              type="button"
+              className="fb-action-btn fb-action-danger"
+              onClick={reject}
+              disabled={busy}
+            >
+              <Icon name="rotate-ccw" size={11} /> {t('feedback.confirm_reject_submit')}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="fb-confirm-actions">
+          <button
+            type="button"
+            className="fb-action-btn fb-action-primary"
+            onClick={approve}
+            disabled={busy}
+          >
+            <Icon name="check" size={11} /> {t('feedback.confirm_approve')}
+          </button>
+          <button
+            type="button"
+            className="fb-action-btn"
+            onClick={() => setRejecting(true)}
+            disabled={busy}
+          >
+            <Icon name="x" size={11} /> {t('feedback.confirm_reject')}
+          </button>
         </div>
       )}
     </div>

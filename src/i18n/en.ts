@@ -633,6 +633,20 @@ export const en: Translations = {
     my_empty: "You haven't submitted any feedback yet.",
     my_resolution_note: 'Note:',
     my_delete_confirm: 'Really delete this feedback?',
+    // FTKnjlXNVlH: reporter confirmation
+    confirm_prompt: 'Was this resolved the way you wanted?',
+    confirm_approve: 'Looks good',
+    confirm_reject: 'Not solved yet',
+    confirm_reject_placeholder: "What's still missing or off? (helps us follow up)",
+    confirm_reject_submit: 'Reopen',
+    confirm_thanks: 'Thanks for confirming!',
+    confirm_reopened_toast: 'Feedback reopened, we will keep working on it.',
+    confirm_confirmed_badge: 'You confirmed this as resolved.',
+    confirm_reopened_badge: 'You reported this as not solved yet.',
+    confirm_admin_pending: 'Awaiting reporter confirmation',
+    confirm_admin_confirmed: 'Confirmed by reporter',
+    confirm_admin_rejected: 'Rejected by reporter',
+    confirm_admin_reject_note: 'Reporter feedback:',
   },
   completion: {
     title: 'Complete task',
@@ -1423,6 +1437,7 @@ export const en: Translations = {
     review_request_text: '{actor} submitted "{subject}" for review',
     feedback_bug_resolved_text: '{actor} fixed your bug "{subject}"',
     feedback_feature_resolved_text: '{actor} shipped your feature request "{subject}"',
+    feedback_reopened_text: '{actor} reported "{subject}" as not solved yet',
     unknown_actor: 'Someone',
   },
   toast: {

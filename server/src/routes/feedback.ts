@@ -52,6 +52,14 @@ const resolveSchema = z.object({
   resolutionNote: z.string().max(20_000).optional().nullable(),
 });
 
+// FTKnjlXNVlH: Reporter nimmt das Ergebnis ab (approved) oder lehnt ab.
+// Bei Ablehnung ist eine Begruendung erwuenscht (aber nicht hart erzwungen,
+// damit der Button auch ohne Tipparbeit nutzbar bleibt).
+const confirmSchema = z.object({
+  approved: z.boolean(),
+  note: z.string().max(20_000).optional().nullable(),
+});
+
 export const feedbackRoute = new Hono<{ Variables: Variables }>()
   .use('*', requireAuth)
   .get('/', async (c) => {
@@ -98,9 +106,19 @@ export const feedbackRoute = new Hono<{ Variables: Variables }>()
       title?: string;
       body?: string;
       type?: 'bug' | 'feature';
+      reporterConfirmation?: 'confirmed' | 'rejected' | null;
+      reporterConfirmationNote?: string | null;
+      reporterConfirmedAt?: Date | null;
       updatedAt: Date;
     } = { updatedAt: new Date() };
-    if (body.status !== undefined) patch.status = body.status;
+    if (body.status !== undefined) {
+      patch.status = body.status;
+      // Status-Wechsel startet einen frischen Bestaetigungs-Zyklus: eine alte
+      // Reporter-Abnahme gilt nicht mehr fuer den neuen Stand.
+      patch.reporterConfirmation = null;
+      patch.reporterConfirmationNote = null;
+      patch.reporterConfirmedAt = null;
+    }
     if (body.priority !== undefined) patch.priority = body.priority;
     if (body.adminNote !== undefined) patch.adminNote = body.adminNote;
     if (body.title !== undefined) patch.title = body.title;
@@ -142,6 +160,10 @@ export const feedbackRoute = new Hono<{ Variables: Variables }>()
       .set({
         status: 'done',
         adminNote: resolutionNote,
+        // Frischer Bestaetigungs-Zyklus: Reporter soll den neuen Stand abnehmen.
+        reporterConfirmation: null,
+        reporterConfirmationNote: null,
+        reporterConfirmedAt: null,
         updatedAt: new Date(),
       })
       .where(eq(feedback.id, id))
@@ -199,7 +221,80 @@ export const feedbackRoute = new Hono<{ Variables: Variables }>()
     }
 
     return c.json({ feedback: row });
+  })
+
+  // ── Reporter-Bestaetigung (FTKnjlXNVlH) ────────────────────────────
+  // Der Einreicher prueft ein als 'done' markiertes Feedback und nimmt es
+  // entweder ab (approved=true) oder lehnt ab (approved=false). Bei Ablehnung
+  // springt das Feedback zurueck auf 'open' und alle Admins werden benachrich-
+  // tigt, damit weiter daran gearbeitet wird. Nur der Submitter selbst darf
+  // bestaetigen, und nur solange der Status 'done' ist.
+  .post('/:id/confirm', async (c) => {
+    const me = c.get('user')!;
+    const id = c.req.param('id');
+    const { approved, note } = confirmSchema.parse(await c.req.json().catch(() => ({})));
+    const trimmedNote = (note ?? '').trim() || null;
+
+    const [item] = await db.select().from(feedback).where(eq(feedback.id, id)).limit(1);
+    if (!item) return c.json({ error: 'not found' }, 404);
+    if (item.submitterId !== me.id) return c.json({ error: 'forbidden' }, 403);
+    if (item.status !== 'done') {
+      return c.json({ error: 'not_resolved' }, 409);
+    }
+
+    if (approved) {
+      // Abnahme: Status bleibt 'done', Bestaetigung festhalten.
+      const [row] = await db
+        .update(feedback)
+        .set({
+          reporterConfirmation: 'confirmed',
+          reporterConfirmationNote: trimmedNote,
+          reporterConfirmedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(feedback.id, id))
+        .returning();
+      return c.json({ feedback: row });
+    }
+
+    // Ablehnung: zurueck auf 'open', Begruendung festhalten, Admins benachrichtigen.
+    const [row] = await db
+      .update(feedback)
+      .set({
+        status: 'open',
+        reporterConfirmation: 'rejected',
+        reporterConfirmationNote: trimmedNote,
+        reporterConfirmedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(feedback.id, id))
+      .returning();
+
+    // Alle aktiven Admins benachrichtigen (In-App + Push).
+    const admins = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(and(eq(users.role, 'admin'), eq(users.status, 'active')));
+    await Promise.all(
+      admins
+        .filter((a) => a.id !== me.id) // sich selbst nicht benachrichtigen
+        .map((a) =>
+          createNotification({
+            userId: a.id,
+            actorId: me.id,
+            kind: 'feedback_reopened',
+            payload: {
+              feedbackId: row.id,
+              feedbackType: row.type,
+              feedbackTitle: row.title,
+              reporterName: me.name || me.email,
+              rejectionNote: trimmedNote,
+            },
+          }),
+        ),
+    );
+
+    return c.json({ feedback: row });
   });
 
 void or;
-void and;

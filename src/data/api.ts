@@ -551,6 +551,10 @@ export interface FeedbackEntry {
   status: FeedbackStatus;
   priority: FeedbackPriority;
   adminNote: string | null;
+  /** FTKnjlXNVlH: Reporter-Abnahme nach Resolve. null = ausstehend (bei done). */
+  reporterConfirmation: 'confirmed' | 'rejected' | null;
+  reporterConfirmationNote: string | null;
+  reporterConfirmedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -594,6 +598,21 @@ export async function updateFeedback(
 }
 export async function deleteFeedback(id: string): Promise<void> {
   await apiFetch(`/feedback/${id}`, { method: 'DELETE' });
+}
+/**
+ * FTKnjlXNVlH: Reporter nimmt ein erledigtes Feedback ab (`approved=true`)
+ * oder lehnt es ab (`approved=false` -> Feedback springt zurueck auf 'open'
+ * und Admins werden benachrichtigt). Nur der Einreicher darf das aufrufen.
+ */
+export async function confirmFeedback(
+  id: string,
+  input: { approved: boolean; note?: string | null },
+): Promise<FeedbackEntry> {
+  const { feedback } = await apiFetch<{ feedback: FeedbackEntry }>(`/feedback/${id}/confirm`, {
+    method: 'POST',
+    body: input,
+  });
+  return feedback;
 }
 
 // ── Comments ───────────────────────────────────────────────────────────
@@ -650,7 +669,7 @@ export async function deleteComment(id: string): Promise<void> {
 export interface AppNotification {
   id: string;
   userId: string;
-  kind: 'mention' | 'review_request' | 'feedback_resolved';
+  kind: 'mention' | 'review_request' | 'feedback_resolved' | 'feedback_reopened';
   actorId: string | null;
   payload: {
     // mention / review_request
@@ -659,11 +678,14 @@ export interface AppNotification {
     subjectId?: string;
     subjectTitle?: string;
     excerpt?: string;
-    // feedback_resolved
+    // feedback_resolved / feedback_reopened
     feedbackId?: string;
     feedbackType?: 'bug' | 'feature';
     feedbackTitle?: string;
     resolutionNote?: string | null;
+    // feedback_reopened
+    reporterName?: string;
+    rejectionNote?: string | null;
   };
   seenAt: string | null;
   createdAt: string;

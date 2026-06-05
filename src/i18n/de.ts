@@ -635,6 +635,20 @@ export const de = {
     my_empty: 'Du hast noch kein Feedback eingereicht.',
     my_resolution_note: 'Notiz:',
     my_delete_confirm: 'Dieses Feedback wirklich löschen?',
+    // FTKnjlXNVlH: Reporter-Abnahme
+    confirm_prompt: 'Ist dein Anliegen so umgesetzt, wie du es wolltest?',
+    confirm_approve: 'Passt so',
+    confirm_reject: 'Noch nicht gelöst',
+    confirm_reject_placeholder: 'Was fehlt noch oder passt nicht? (hilft uns beim Nacharbeiten)',
+    confirm_reject_submit: 'Wieder öffnen',
+    confirm_thanks: 'Danke für die Bestätigung!',
+    confirm_reopened_toast: 'Feedback wurde wieder geöffnet, wir arbeiten weiter daran.',
+    confirm_confirmed_badge: 'Von dir als erledigt bestätigt.',
+    confirm_reopened_badge: 'Du hast das als noch nicht gelöst zurückgemeldet.',
+    confirm_admin_pending: 'Wartet auf Reporter-Abnahme',
+    confirm_admin_confirmed: 'Vom Reporter abgenommen',
+    confirm_admin_rejected: 'Vom Reporter abgelehnt',
+    confirm_admin_reject_note: 'Reporter-Begründung:',
   },
   completion: {
     title: 'Aufgabe abschließen',
@@ -1432,6 +1446,7 @@ export const de = {
     review_request_text: '{actor} hat „{subject}" zur Review gestellt',
     feedback_bug_resolved_text: '{actor} hat deinen Bug „{subject}" behoben',
     feedback_feature_resolved_text: '{actor} hat deinen Feature-Wunsch „{subject}" umgesetzt',
+    feedback_reopened_text: '{actor} hat „{subject}" als noch nicht gelöst zurückgemeldet',
     unknown_actor: 'Jemand',
   },
   toast: {

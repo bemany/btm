@@ -49,6 +49,30 @@ export function tx(value: Localizable, locale: 'de' | 'en'): string {
 
 export const RELEASES: Release[] = [
   {
+    version: '0.15.0',
+    date: '2026-06-05',
+    title: {
+      de: 'Reporter bestätigt erledigte Feedbacks',
+      en: 'Reporters confirm resolved feedback',
+    },
+    changes: [
+      {
+        kind: 'feature',
+        text: {
+          de: '**Abnahme durch den Einreicher**: Wird ein Feedback als erledigt markiert, taucht beim Einreicher (Einstellungen → Mein Feedback) ein Abnahme-Panel auf: "Passt so" bestätigt, "Noch nicht gelöst" öffnet das Feedback mit einer kurzen Begründung wieder und benachrichtigt die Admins (Inbox + Push). So bleibt nichts fälschlich als erledigt liegen. _FTKnjlXNVlH_',
+          en: '**Reporter sign-off**: when feedback is marked resolved, the reporter (Settings → My Feedback) gets a confirmation panel: "Looks good" confirms it, "Not solved yet" reopens it with a short reason and notifies the admins (inbox + push). Nothing stays falsely closed. _FTKnjlXNVlH_',
+        },
+      },
+      {
+        kind: 'change',
+        text: {
+          de: '**Abnahme-Status im Admin-Feedback**: jede Karte zeigt jetzt, ob die Reporter-Abnahme aussteht, bestätigt oder abgelehnt wurde — bei Ablehnung inklusive der Begründung des Reporters.',
+          en: '**Confirmation status in admin feedback**: every card now shows whether reporter sign-off is pending, confirmed or rejected — including the reporter\'s reason on rejection.',
+        },
+      },
+    ],
+  },
+  {
     version: '0.14.1',
     date: '2026-06-04',
     title: {
